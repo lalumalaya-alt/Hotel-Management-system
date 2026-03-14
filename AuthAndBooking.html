@@ -361,15 +361,11 @@
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);setTimeout(()=>charts(r),200);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();return()=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});};},[]);
       const charts=(d)=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});cr.current={};
         const palette=['#001f3f','#0074D9','#34a853','#fbbc04','#ea4335','#6f42c1','#20c997','#e67e22','#3498db','#9b59b6'];
-        // 2. Room Types Bar
-        const c2=document.getElementById('roomTypeChart');
-        if(c2){const rt=d.roomTypeBreakdown||{};const rtLabels=Object.keys(rt);const rtData=Object.values(rt);const rtColors=rtLabels.map((_,i)=>palette[i%palette.length]);
-        cr.current.rt=new Chart(c2,{type:'bar',data:{labels:rtLabels,datasets:[{label:'Rooms',data:rtData,backgroundColor:rtColors.map(c=>c+'B3'),borderColor:rtColors,borderWidth:2,borderRadius:Number.MAX_VALUE,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:'Rooms by Type',color:'#001f3f',font:{size:16,weight:'bold'}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#666'},grid:{color:'rgba(0,0,0,0.06)'}},x:{grid:{display:false},ticks:{color:'#666'}}}}});}
         // 3. Invoice Status Doughnut
         const c5=document.getElementById('invStatusChart');
         if(c5){const iv=d.invoiceStats||{};cr.current.is=new Chart(c5,{type:'doughnut',data:{labels:['Draft','Sent','Paid','Overdue','Cancelled'],datasets:[{data:[iv.draftInvoices||0,iv.sentInvoices||0,iv.paidInvoices||0,iv.overdueInvoices||0,iv.cancelledInvoices||0],backgroundColor:['#6c757d','#006d6f','#00a89d','#f39c12','#d35400'],borderColor:'#fff',borderWidth:2,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#333',padding:12,usePointStyle:true}},title:{display:true,text:'Invoice Status',color:'#001f3f',font:{size:16,weight:'bold'}}}}});}
       };
-      if(ld)return(<div><div className="kpi-cards">{[...Array(4)].map((_,i)=><div key={i} className="skeleton" style={{height:'130px',borderRadius:'8px'}}></div>)}</div><div className="dashboard-grid-9">{[...Array(9)].map((_,i)=><DashboardCardSkeleton key={i}/>)}</div><div className="dashboard-grid-2"><div className="skeleton" style={{height:'380px',borderRadius:'4px',gridColumn:'1 / -1'}}></div><ChartSkeleton/><ChartSkeleton/><ChartSkeleton/></div></div>);
+      if(ld)return(<div><div className="kpi-cards">{[...Array(4)].map((_,i)=><div key={i} className="skeleton" style={{height:'130px',borderRadius:'8px'}}></div>)}</div><div className="dashboard-grid-9">{[...Array(9)].map((_,i)=><DashboardCardSkeleton key={i}/>)}</div><div className="dashboard-grid-2"><div className="skeleton" style={{height:'380px',borderRadius:'4px',gridColumn:'1 / -1'}}></div><ChartSkeleton/><ChartSkeleton/></div></div>);
       const f=st?.financeSummary||{};const b=st?.bookingRevenue||{};const q=st?.quoteStats||{};const inv=st?.invoiceStats||{};const rb=st?.recentBookings||[];
       const occRate=st?.totalRooms>0?Math.round((st?.bookedRooms/st?.totalRooms)*100):0;
       return(<div>
@@ -417,7 +413,6 @@
               })}
             </div>
           </div>
-          <div className="chart-card"><div className="chart-container"><canvas id="roomTypeChart"></canvas></div></div>
           <div className="chart-card"><div className="chart-container"><canvas id="invStatusChart"></canvas></div></div>
         </div>
       </div>);
