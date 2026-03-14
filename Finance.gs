@@ -1351,7 +1351,7 @@ function setupDemoData() {
   // SETTINGS (14 columns, 1 data row)
   const settingsSheet = ss.insertSheet(SETTINGS_SHEET_NAME);
   settingsSheet.appendRow(["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "NextQuoteNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"]);
-  settingsSheet.appendRow(["MRI Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, 6, "", "", 4, 1]);
+  settingsSheet.appendRow(["Hill View Eco Retreat", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, 6, "", "", 4, 1]);
 
   // BUDGETS
   const budgetsSheet = ss.insertSheet(BUDGETS_SHEET_NAME);
