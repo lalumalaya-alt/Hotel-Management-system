@@ -503,7 +503,7 @@
       const isAdmin=role==='admin';
       const editRoomNos=isEdit?(booking.roomNo||'').split(',').map(r=>r.trim()).filter(r=>r):[];
       const [selectedRooms,setSelectedRooms]=useState(editRoomNos);
-      const [fd,setFd]=useState({guestName:booking?.guestName||'',phone:booking?.phone||'',email:booking?.email||'',checkIn:booking?.checkIn?booking.checkIn.slice(0,10):'',checkOut:booking?.checkOut?booking.checkOut.slice(0,10):'',checkInTime:booking?.checkInTime||'14:00',checkOutTime:booking?.checkOutTime||'12:00',advancePaid:booking?.advancePaid||'0',paymentMethod:booking?.paymentMethod||'Cash',foodPlan:booking?.foodPlan||'None',discount:booking?.discount||'0',tax:booking?.tax||'0'});
+      const [fd,setFd]=useState({guestName:booking?.guestName||'',phone:booking?.phone||'',email:booking?.email||'',checkIn:booking?.checkIn?booking.checkIn.slice(0,10):'',checkOut:booking?.checkOut?booking.checkOut.slice(0,10):'',checkInTime:booking?.checkInTime||'14:00',checkOutTime:booking?.checkOutTime||'12:00',advancePaid:booking?.advancePaid||'0',paymentMethod:booking?.paymentMethod||'',foodPlan:booking?.foodPlan||'None',discount:booking?.discount||'0',tax:booking?.tax||'0'});
       const [sv,setSv]=useState(false);
       const [customers,setCustomers]=useState([]);const [selCust,setSelCust]=useState('');
 
@@ -578,7 +578,7 @@
           <div className="form-group"><label>Check-in Time</label><input type="time" value={fd.checkInTime} onChange={e=>setFd({...fd,checkInTime:e.target.value})}/></div>
           <div className="form-group"><label>Check-out Time</label><input type="time" value={fd.checkOutTime} onChange={e=>setFd({...fd,checkOutTime:e.target.value})}/></div>
           <div className="form-group"><label>Advance Paid</label><input type="number" step="0.01" min="0" value={fd.advancePaid} onChange={e=>setFd({...fd,advancePaid:e.target.value})}/></div>
-          <div className="form-group"><label>Mode of Payment</label><select value={fd.paymentMethod} onChange={e=>setFd({...fd,paymentMethod:e.target.value})}><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Online</option><option>UPI</option></select></div>
+          <div className="form-group"><label>Mode of Payment *</label><select value={fd.paymentMethod} onChange={e=>setFd({...fd,paymentMethod:e.target.value})} required><option value="" disabled>Please select</option><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Online</option><option>UPI</option></select></div>
           <div className="form-group"><label>Food Plan</label><select value={fd.foodPlan} onChange={e=>setFd({...fd,foodPlan:e.target.value})}><option value="None">None</option><option value="Including Breakfast">Including Breakfast</option><option value="Including Breakfast and Dinner">Including Breakfast and Dinner</option></select></div>
         </div>
         {calcTotal&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Room Rate x {calcTotal.nights} night(s) x {selectedRooms.length||editRoomNos.length} room(s)</span><span>{fmtCur(calcTotal.base)}</span></div><div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(calcTotal.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
