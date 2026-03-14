@@ -1498,3 +1498,64 @@ function getSettings() {
     return { success: false, message: err.message };
   }
 }
+
+
+function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
+  try {
+    const ciReq = new Date(checkInStr);
+    const coReq = new Date(checkOutStr);
+    if (isNaN(ciReq.getTime()) || isNaN(coReq.getTime())) return [];
+
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+    const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
+
+    if (!roomsSheet || !bookingsSheet) return [];
+
+    const roomsData = roomsSheet.getDataRange().getValues();
+    const bookingsData = bookingsSheet.getDataRange().getValues();
+
+    let allRooms = [];
+    for (let i = 1; i < roomsData.length; i++) {
+      allRooms.push({
+        roomNo: (roomsData[i][ROOM_NO_COL] || "").toString().trim(),
+        roomType: (roomsData[i][ROOM_TYPE_COL] || "").toString(),
+        roomRate: parseFloat(roomsData[i][ROOM_RATE_COL]) || 0,
+        baseStatus: (roomsData[i][ROOM_STATUS_COL] || "").toString().toLowerCase(),
+        isAvailable: true // Assume available until proven otherwise
+      });
+    }
+
+    for (let i = 1; i < bookingsData.length; i++) {
+      const bStatus = (bookingsData[i][BOOKING_STATUS_COL] || "").toString().toLowerCase();
+      const bTicket = (bookingsData[i][TICKET_ID_COL] || "").toString();
+
+      // Skip if this is the booking we are currently editing
+      if (excludeTicketId && bTicket === excludeTicketId) continue;
+
+      if (bStatus === 'booked' || bStatus === 'checked in') {
+        const bCi = new Date(bookingsData[i][CHECK_IN_COL]);
+        const bCo = new Date(bookingsData[i][CHECK_OUT_COL]);
+
+        // Check for overlap: requested CheckIn < booked CheckOut AND requested CheckOut > booked CheckIn
+        if (ciReq < bCo && coReq > bCi) {
+          const bRooms = (bookingsData[i][BOOKING_ROOM_NO_COL] || "").toString().split(',').map(r => r.trim());
+          bRooms.forEach(br => {
+            const rm = allRooms.find(r => r.roomNo === br);
+            if (rm) rm.isAvailable = false;
+          });
+        }
+      }
+    }
+
+    // Also mark rooms as unavailable if their base status is Maintenance
+    allRooms.forEach(rm => {
+      if (rm.baseStatus === 'maintenance') rm.isAvailable = false;
+    });
+
+    return allRooms;
+  } catch (err) {
+    Logger.log("Error in getRoomAvailability: " + err.message);
+    return [];
+  }
+}
