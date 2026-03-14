@@ -397,7 +397,13 @@
           </div>
           <div className="chart-card">
             <div style={{padding:'10px 20px',color:'#001f3f',fontSize:'16px',fontWeight:'bold',textAlign:'center'}}>Room Occupancy</div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'8px',padding:'20px',justifyContent:'center',alignItems:'flex-start',height:'100%',overflowY:'auto'}}>
+            <div style={{display:'flex',justifyContent:'center',gap:'15px',fontSize:'12px',paddingBottom:'10px',borderBottom:'1px solid #eee',flexWrap:'wrap'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',backgroundColor:'#34a853',borderRadius:'2px'}}></span> Available</div>
+              <div style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',backgroundColor:'#0074D9',borderRadius:'2px'}}></span> Booked</div>
+              <div style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',backgroundColor:'#6f42c1',borderRadius:'2px'}}></span> Reserved</div>
+              <div style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',backgroundColor:'#fbbc04',borderRadius:'2px'}}></span> Maintenance</div>
+            </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'10px',padding:'20px',justifyContent:'center',alignItems:'flex-start',height:'100%',overflowY:'auto'}}>
               {st?.allRoomsDetails?.map((rm, i) => {
                 const s = (rm.status || '').toLowerCase();
                 let bg = '#e9ecef';
@@ -406,7 +412,7 @@
                 else if(s==='maintenance') bg = '#fbbc04';
                 else if(s==='reserved') bg = '#6f42c1';
                 return (
-                  <div key={i} title={`${rm.roomNo} - ${rm.type} (${rm.status})`} style={{width:'32px',height:'32px',backgroundColor:bg,borderRadius:'4px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'bold',boxShadow:'0 2px 4px rgba(0,0,0,0.1)',cursor:'help'}}>
+                  <div key={i} title={`${rm.roomNo} - ${rm.type} (${rm.status})`} style={{width:'64px',height:'64px',backgroundColor:bg,borderRadius:'6px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'16px',fontWeight:'bold',boxShadow:'0 2px 4px rgba(0,0,0,0.15)',cursor:'help'}}>
                     {rm.roomNo}
                   </div>
                 );
