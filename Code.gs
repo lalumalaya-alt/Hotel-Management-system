@@ -1501,3 +1501,79 @@ function getActiveCheckInRooms() {
 /***************************************************
  * CHECKOUT FUNCTIONS (REVAMPED)
  ***************************************************/
+
+/***************************************************
+ * DYNAMIC SHEET MANAGER
+ * Automatically adds, modifies, or deletes sheets and headers.
+ * Example config usage:
+ * manageSheetsDataStructure([
+ *   { name: "MyNewSheet", action: "add", headers: ["ID", "Name", "Date"] },
+ *   { name: "OldSheet", action: "delete" },
+ *   { name: "ExistingSheet", action: "modify", headers: ["UpdatedID", "UpdatedName"] }
+ * ]);
+ ***************************************************/
+function manageSheetsDataStructure(configArray) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    let results = [];
+
+    for (let i = 0; i < configArray.length; i++) {
+      const config = configArray[i];
+      const sheetName = config.name;
+      const action = (config.action || '').toLowerCase();
+      const headers = config.headers || [];
+
+      if (!sheetName) continue;
+
+      let sheet = ss.getSheetByName(sheetName);
+
+      if (action === 'delete') {
+        if (sheet) {
+          ss.deleteSheet(sheet);
+          results.push(`Deleted sheet: ${sheetName}`);
+        } else {
+          results.push(`Sheet ${sheetName} not found for deletion.`);
+        }
+      }
+      else if (action === 'add') {
+        if (!sheet) {
+          sheet = ss.insertSheet(sheetName);
+          results.push(`Added sheet: ${sheetName}`);
+
+          if (headers.length > 0) {
+            sheet.appendRow(headers);
+            const headerRange = sheet.getRange(1, 1, 1, headers.length);
+            headerRange.setFontWeight("bold");
+            headerRange.setBackground("#001f3f");
+            headerRange.setFontColor("#ffffff");
+            sheet.setFrozenRows(1);
+          }
+        } else {
+          results.push(`Sheet ${sheetName} already exists, skipping add.`);
+        }
+      }
+      else if (action === 'modify') {
+        if (sheet) {
+          if (headers.length > 0) {
+            // Overwrite the first row with new headers
+            const headerRange = sheet.getRange(1, 1, 1, headers.length);
+            headerRange.setValues([headers]);
+            headerRange.setFontWeight("bold");
+            headerRange.setBackground("#001f3f");
+            headerRange.setFontColor("#ffffff");
+            sheet.setFrozenRows(1);
+            results.push(`Modified headers for sheet: ${sheetName}`);
+          }
+        } else {
+          results.push(`Sheet ${sheetName} not found for modification.`);
+        }
+      }
+    }
+
+    SpreadsheetApp.flush();
+    return { success: true, messages: results };
+  } catch (err) {
+    Logger.log("Error in manageSheetsDataStructure: " + err.message);
+    return { success: false, message: err.message };
+  }
+}
