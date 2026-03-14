@@ -889,7 +889,7 @@ function updateBooking(rowIndex, bookingData) {
 
     // Read existing read-only fields
     const existingTicket = sheet.getRange(rowIndex, TICKET_ID_COL + 1).getValue();
-    const existingRoomNo = sheet.getRange(rowIndex, BOOKING_ROOM_NO_COL + 1).getValue();
+    const existingRoomNoStr = (sheet.getRange(rowIndex, BOOKING_ROOM_NO_COL + 1).getValue() || '').toString();
     const existingRate = parseFloat(sheet.getRange(rowIndex, ROOM_RATE_BOOK_COL + 1).getValue()) || 0;
     const existingStatus = (sheet.getRange(rowIndex, BOOKING_STATUS_COL + 1).getValue() || '').toString();
     const existingPaymentStatus = (sheet.getRange(rowIndex, PAYMENT_STATUS_COL + 1).getValue() || 'Unpaid').toString();
@@ -910,25 +910,76 @@ function updateBooking(rowIndex, bookingData) {
       return { success: false, message: "Check-out must be after check-in." };
     }
 
+    // Handle Room Updates
+    let finalRoomNosStr = existingRoomNoStr;
+    let finalRate = existingRate;
+    let finalNumRooms = parseFloat(sheet.getRange(rowIndex, NUM_ROOMS_COL + 1).getValue()) || 1;
+
+    if (bookingData.roomNos && bookingData.roomNos !== existingRoomNoStr) {
+      const newRoomsArr = bookingData.roomNos.split(',').map(r => r.trim()).filter(r => r);
+      const oldRoomsArr = existingRoomNoStr.split(',').map(r => r.trim()).filter(r => r);
+
+      const roomsSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(ROOMS_SHEET_NAME);
+      const roomsData = roomsSheet.getDataRange().getValues();
+
+      let newTotalRate = 0;
+
+      // Calculate new rate and mark new rooms as Booked
+      for (let r = 0; r < newRoomsArr.length; r++) {
+        let found = false;
+        for (let i = 1; i < roomsData.length; i++) {
+          if ((roomsData[i][ROOM_NO_COL] || "").toString() === newRoomsArr[r]) {
+            newTotalRate += parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
+            roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Booked");
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return { success: false, message: `Room ${newRoomsArr[r]} not found.` };
+        }
+      }
+
+      // Mark old rooms as Available (if they are not in the new array)
+      for (let r = 0; r < oldRoomsArr.length; r++) {
+        if (newRoomsArr.indexOf(oldRoomsArr[r]) === -1) {
+          for (let i = 1; i < roomsData.length; i++) {
+            if ((roomsData[i][ROOM_NO_COL] || "").toString() === oldRoomsArr[r]) {
+              roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Available");
+              break;
+            }
+          }
+        }
+      }
+
+      finalRoomNosStr = bookingData.roomNos;
+      finalRate = newTotalRate;
+      finalNumRooms = newRoomsArr.length;
+    }
+
     // Recalculate financials
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
     const discount = parseFloat(bookingData.discount || 0) || 0;
     const tax = parseFloat(bookingData.tax || 0) || 0;
-    const baseAmount = existingRate * nights;
+    const baseAmount = finalRate * nights;
     const finalAmount = baseAmount - discount + tax;
+
+    // Determine new payment status based on updated amounts
+    const advancePaid = bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) || 0 : existingAmountPaid;
+    let paymentStatus = "Unpaid";
+    if (advancePaid >= finalAmount) paymentStatus = "Paid";
+    else if (advancePaid > 0) paymentStatus = "Partial";
 
     // Build complete row (25 columns)
     const existingCheckInTime = (sheet.getRange(rowIndex, CHECKIN_TIME_COL + 1).getValue() || '14:00').toString();
     const existingCheckOutTime = (sheet.getRange(rowIndex, CHECKOUT_TIME_COL + 1).getValue() || '12:00').toString();
     const existingFoodPlan = (sheet.getRange(rowIndex, FOOD_PLAN_COL + 1).getValue() || 'None').toString();
-    const existingAdvancePaid = parseFloat(sheet.getRange(rowIndex, ADVANCE_PAID_COL + 1).getValue()) || 0;
-    const existingNumRooms = parseFloat(sheet.getRange(rowIndex, NUM_ROOMS_COL + 1).getValue()) || 1;
     const existingLinkedCheckIn = (sheet.getRange(rowIndex, LINKED_CHECKIN_COL + 1).getValue() || '').toString();
 
     const row = [
       existingTicket,
-      existingRoomNo,
+      finalRoomNosStr,
       (bookingData.guestName || '').trim(),
       (bookingData.phone || '').trim(),
       (bookingData.email || '').trim(),
@@ -939,18 +990,18 @@ function updateBooking(rowIndex, bookingData) {
       checkInDate.toISOString(),
       checkOutDate.toISOString(),
       existingStatus,
-      existingRate,
+      finalRate,
       discount,
       tax,
       bookingData.paymentMethod || 'Cash',
       finalAmount,
-      existingPaymentStatus,
-      existingAmountPaid,
+      paymentStatus,
+      advancePaid,
       bookingData.checkInTime || existingCheckInTime,
       bookingData.checkOutTime || existingCheckOutTime,
       bookingData.foodPlan || existingFoodPlan,
-      bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) || 0 : existingAdvancePaid,
-      existingNumRooms,
+      advancePaid,
+      finalNumRooms,
       existingLinkedCheckIn
     ];
 
