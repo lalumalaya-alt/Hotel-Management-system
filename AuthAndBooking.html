@@ -361,9 +361,6 @@
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);setTimeout(()=>charts(r),200);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();return()=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});};},[]);
       const charts=(d)=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});cr.current={};
         const palette=['#001f3f','#0074D9','#34a853','#fbbc04','#ea4335','#6f42c1','#20c997','#e67e22','#3498db','#9b59b6'];
-        // 1. Room Occupancy Doughnut
-        const c1=document.getElementById('roomChart');
-        if(c1)cr.current.r=new Chart(c1,{type:'doughnut',data:{labels:['Booked','Available','Maintenance'],datasets:[{data:[d.bookedRooms||0,d.availableRooms||0,d.maintenanceRooms||0],backgroundColor:['#0074D9','#34a853','#fbbc04'],borderColor:'#fff',borderWidth:2,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#333',padding:12,usePointStyle:true}},title:{display:true,text:'Room Occupancy',color:'#001f3f',font:{size:16,weight:'bold'}}}}});
         // 2. Room Types Bar
         const c2=document.getElementById('roomTypeChart');
         if(c2){const rt=d.roomTypeBreakdown||{};const rtLabels=Object.keys(rt);const rtData=Object.values(rt);const rtColors=rtLabels.map((_,i)=>palette[i%palette.length]);
@@ -402,7 +399,24 @@
               {rb.length>0?rb.map((r,i)=>{const avatarColors=['#0074D9','#34a853','#6f42c1','#e67e22','#ea4335','#006d6f','#d35400','#3498db','#9b59b6','#20c997'];const initials=(r.guestName||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();return(<tr key={i}><td style={{fontWeight:600,color:'#333'}}><div style={{display:'flex',alignItems:'center'}}><span className="guest-avatar" style={{background:avatarColors[i%avatarColors.length]}}>{initials}</span>{r.guestName}</div></td><td><span className="room-badge">#{r.roomNo}</span></td><td style={{color:'#555',fontSize:'12px'}}><i className="fas fa-calendar-alt" style={{color:'var(--navy-accent)',marginRight:'4px'}}></i>{fmtDate(r.checkIn)}</td><td style={{fontWeight:600,color:'var(--navy-primary)'}}>{fmtCur(r.totalAmount)}</td><td><span className={`status-badge ${statusCls(r.status)}`}>{r.status}</span></td></tr>);}):<tr><td colSpan="5" style={{textAlign:'center',color:'#999',padding:'30px'}}><i className="fas fa-inbox" style={{fontSize:'24px',display:'block',marginBottom:'8px',color:'#ccc'}}></i>No bookings yet</td></tr>}
             </tbody></table></div>
           </div>
-          <div className="chart-card"><div className="chart-container"><canvas id="roomChart"></canvas></div></div>
+          <div className="chart-card">
+            <div style={{padding:'10px 20px',color:'#001f3f',fontSize:'16px',fontWeight:'bold',textAlign:'center'}}>Room Occupancy</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'8px',padding:'20px',justifyContent:'center',alignItems:'flex-start',height:'100%',overflowY:'auto'}}>
+              {st?.allRoomsDetails?.map((rm, i) => {
+                const s = (rm.status || '').toLowerCase();
+                let bg = '#e9ecef';
+                if(s==='available') bg = '#34a853';
+                else if(s==='booked') bg = '#0074D9';
+                else if(s==='maintenance') bg = '#fbbc04';
+                else if(s==='reserved') bg = '#6f42c1';
+                return (
+                  <div key={i} title={`${rm.roomNo} - ${rm.type} (${rm.status})`} style={{width:'32px',height:'32px',backgroundColor:bg,borderRadius:'4px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'bold',boxShadow:'0 2px 4px rgba(0,0,0,0.1)',cursor:'help'}}>
+                    {rm.roomNo}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <div className="chart-card"><div className="chart-container"><canvas id="roomTypeChart"></canvas></div></div>
           <div className="chart-card"><div className="chart-container"><canvas id="invStatusChart"></canvas></div></div>
         </div>
