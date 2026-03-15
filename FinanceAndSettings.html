@@ -4,6 +4,7 @@
       const [mode,setMode]=useState('');
       const [rooms,setRooms]=useState([]);
       const [selectedRooms,setSelectedRooms]=useState([]);
+      const [origRooms,setOrigRooms]=useState([]);
       const [pendingBookings,setPendingBookings]=useState([]);
       const [selBooking,setSelBooking]=useState('');
       const [linkedBooking,setLinkedBooking]=useState(null);
@@ -13,7 +14,7 @@
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});
 
       useEffect(()=>{
-        google.script.run.withSuccessHandler(r=>{setRooms((Array.isArray(r)?r:[]).filter(rm=>(rm.roomStatus||'').toLowerCase()==='available'));}).withFailureHandler(()=>{}).getAllRooms();
+        google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllRooms();
         loadCheckIns();
         return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
@@ -44,11 +45,12 @@
           setLinkedBooking(bk);
           const bkRooms=bk.roomNo?bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r):[];
           setSelectedRooms(bkRooms);
+          setOrigRooms(bkRooms);
           setFd(p=>({...p,guestName:bk.guestName||'',mobile:bk.phone||'',email:bk.email||'',checkInDate:bk.checkIn?bk.checkIn.split('T')[0]:p.checkInDate,checkInTime:bk.checkInTime||'14:00',checkOutDate:bk.checkOut?bk.checkOut.split('T')[0]:'',checkOutTime:bk.checkOutTime||'12:00',foodPlan:bk.foodPlan||'None',advancePaid:bk.advancePaid||0}));
         }
       };
 
-      const resetForm=(keepMode=false)=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelBooking('');if(!keepMode)setMode('');};
+      const resetForm=(keepMode=false)=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});setSelectedRooms([]);setOrigRooms([]);setLinkedBooking(null);setSelBooking('');if(!keepMode)setMode('');};
 
       const submit=(e)=>{e.preventDefault();
         if(!fd.guestName.trim()){Swal.fire({icon:'warning',text:'Guest Name is required.'});return;}
@@ -64,7 +66,7 @@
         });
       };
 
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-door-open"></i> Check-In</h2><div style={{display:'flex',gap:'10px'}}><button className="btn btn-secondary" onClick={()=>resetForm(false)}><i className="fas fa-eraser"></i> Clear</button><button className="btn btn-primary" onClick={()=>{loadCheckIns();google.script.run.withSuccessHandler(r=>{setRooms((Array.isArray(r)?r:[]).filter(rm=>(rm.roomStatus||'').toLowerCase()==='available'));}).getAllRooms();}}><i className="fas fa-sync"></i> Refresh</button></div></div>
+      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-door-open"></i> Check-In</h2><div style={{display:'flex',gap:'10px'}}><button className="btn btn-secondary" onClick={()=>resetForm(false)}><i className="fas fa-eraser"></i> Clear</button><button className="btn btn-primary" onClick={()=>{loadCheckIns();google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();}}><i className="fas fa-sync"></i> Refresh</button></div></div>
 
         <div style={{marginBottom:'20px',background:'#f8f9fa',padding:'20px',borderRadius:'6px',border:'1px solid #dee2e6'}}>
           <div className="form-group" style={{maxWidth:'300px',marginBottom:mode==='advance'?'15px':'0'}}><label>Select Check-In Mode</label>
@@ -108,7 +110,7 @@
           </div>
 
           <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'8px',color:'#555',fontWeight:500,fontSize:'14px'}}>Select Rooms * ({selectedRooms.length} selected)</label>
-            <div className="room-tiles-grid">{rooms.map(rm=><div key={rm.roomNo} className={'room-tile'+(selectedRooms.includes(rm.roomNo.toString())?' multi-selected':'')} onClick={()=>toggleRoom(rm.roomNo.toString())}>
+            <div className="room-tiles-grid">{rooms.filter(rm=>(rm.roomStatus||'').toLowerCase()==='available'||origRooms.includes(rm.roomNo.toString())).map(rm=><div key={rm.roomNo} className={'room-tile'+(selectedRooms.includes(rm.roomNo.toString())?' multi-selected':'')} onClick={()=>toggleRoom(rm.roomNo.toString())}>
               <div className="room-number">#{rm.roomNo}</div><div className="room-type">{rm.roomType}</div><div className="room-rate">{fmtCur(rm.roomRate)}/night</div>
             </div>)}</div>
           </div>

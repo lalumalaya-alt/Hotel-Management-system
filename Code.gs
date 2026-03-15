@@ -1195,14 +1195,32 @@ function addCheckIn(checkInData) {
       now
     ]);
 
-    // If linked to advance booking, update booking status
+    // If linked to advance booking, update booking status and free any removed rooms
     if (checkInData.linkedTicketId) {
       const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
       const bData = bookingsSheet.getDataRange().getValues();
       for (let i = 1; i < bData.length; i++) {
         if ((bData[i][TICKET_ID_COL] || '').toString() === checkInData.linkedTicketId) {
+          const oldRoomsStr = (bData[i][BOOKING_ROOM_NO_COL] || '').toString();
+          const oldRoomsArr = oldRoomsStr.split(',').map(r => r.trim()).filter(r => r);
+
+          // If any originally booked rooms were NOT checked into, release them
+          for (let r = 0; r < oldRoomsArr.length; r++) {
+            if (roomNosArr.indexOf(oldRoomsArr[r]) === -1) {
+              for (let j = 1; j < roomsData.length; j++) {
+                if ((roomsData[j][ROOM_NO_COL] || "").toString() === oldRoomsArr[r]) {
+                  roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+                  break;
+                }
+              }
+            }
+          }
+
+          // Update booking status and synced room list
           bookingsSheet.getRange(i + 1, BOOKING_STATUS_COL + 1).setValue("Checked In");
           bookingsSheet.getRange(i + 1, LINKED_CHECKIN_COL + 1).setValue(checkInId);
+          bookingsSheet.getRange(i + 1, BOOKING_ROOM_NO_COL + 1).setValue(roomNumbers);
+          bookingsSheet.getRange(i + 1, NUM_ROOMS_COL + 1).setValue(roomNosArr.length);
           break;
         }
       }
