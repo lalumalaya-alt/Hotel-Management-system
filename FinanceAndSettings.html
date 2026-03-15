@@ -1,7 +1,7 @@
 <script type="text/babel">
 
     function CheckInView({user,role}){
-      const [mode,setMode]=useState('walkin');
+      const [mode,setMode]=useState('');
       const [rooms,setRooms]=useState([]);
       const [selectedRooms,setSelectedRooms]=useState([]);
       const [searchQ,setSearchQ]=useState('');
@@ -60,20 +60,29 @@
       };
 
       return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-door-open"></i> Check-In</h2><button className="btn btn-primary" onClick={()=>{loadCheckIns();google.script.run.withSuccessHandler(r=>{setRooms((Array.isArray(r)?r:[]).filter(rm=>(rm.roomStatus||'').toLowerCase()==='available'));}).getAllRooms();}}><i className="fas fa-sync"></i> Refresh</button></div>
-        <div className="checkin-mode-toggle"><button className={mode==='advance'?'active':''} onClick={()=>{setMode('advance');resetForm();}}><i className="fas fa-calendar-check"></i> Advance Booking</button><button className={mode==='walkin'?'active':''} onClick={()=>{setMode('walkin');resetForm();}}><i className="fas fa-walking"></i> Walk-In</button></div>
 
-        {mode==='advance'&&<div style={{marginBottom:'20px',background:'#f8f9fa',padding:'15px',borderRadius:'4px',border:'1px solid #dee2e6'}}>
-          <h4 style={{color:'var(--navy-primary)',marginBottom:'10px'}}><i className="fas fa-search"></i> Search Advance Booking</h4>
-          <div style={{display:'flex',gap:'10px'}}><input value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')doSearch();}} placeholder="Search by guest name..." style={{flex:1,padding:'10px',border:'1.5px solid #d0d0d0',borderRadius:'3px',fontSize:'16px'}}/><button className="btn btn-primary" onClick={doSearch} disabled={searching}>{searching?<i className="fas fa-spinner fa-spin"/>:<><i className="fas fa-search"></i> Search</>}</button></div>
-          {searchResults.length>0&&<div style={{marginTop:'10px',maxHeight:'200px',overflowY:'auto',border:'1px solid #dee2e6',borderRadius:'4px'}}>
-            {searchResults.map((bk,i)=><div key={i} onClick={()=>pickBooking(bk)} style={{padding:'10px 15px',borderBottom:'1px solid #eee',cursor:'pointer',fontSize:'14px',display:'flex',justifyContent:'space-between'}} onMouseEnter={e=>e.currentTarget.style.background='#f0f4ff'} onMouseLeave={e=>e.currentTarget.style.background='white'}>
-              <span><strong>{bk.guestName}</strong> — Room(s): {bk.roomNo}</span><span style={{color:'#666'}}>{bk.ticketId} | {fmtDate(bk.checkIn)}</span>
-            </div>)}
+        <div style={{marginBottom:'20px',background:'#f8f9fa',padding:'20px',borderRadius:'6px',border:'1px solid #dee2e6'}}>
+          <div className="form-group" style={{maxWidth:'300px',marginBottom:mode==='advance'?'15px':'0'}}><label>Select Check-In Mode</label>
+            <select value={mode} onChange={(e)=>{setMode(e.target.value);resetForm();}} style={{padding:'10px',fontSize:'15px',width:'100%',borderRadius:'4px',border:'1px solid #ccc'}}>
+              <option value="" disabled>Please select</option>
+              <option value="advance">Advance booking</option>
+              <option value="walkin">Walk-in</option>
+            </select>
+          </div>
+
+          {mode==='advance'&&<div>
+            <h4 style={{color:'var(--navy-primary)',marginBottom:'10px'}}><i className="fas fa-search"></i> Search Advance Booking</h4>
+            <div style={{display:'flex',gap:'10px'}}><input value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')doSearch();}} placeholder="Search by guest name..." style={{flex:1,padding:'10px',border:'1.5px solid #d0d0d0',borderRadius:'4px',fontSize:'15px'}}/><button className="btn btn-primary" onClick={doSearch} disabled={searching}>{searching?<i className="fas fa-spinner fa-spin"/>:<><i className="fas fa-search"></i> Search</>}</button></div>
+            {searchResults.length>0&&<div style={{marginTop:'10px',maxHeight:'200px',overflowY:'auto',border:'1px solid #dee2e6',borderRadius:'4px',background:'#fff'}}>
+              {searchResults.map((bk,i)=><div key={i} onClick={()=>pickBooking(bk)} style={{padding:'10px 15px',borderBottom:'1px solid #eee',cursor:'pointer',fontSize:'14px',display:'flex',justifyContent:'space-between'}} onMouseEnter={e=>e.currentTarget.style.background='#f0f4ff'} onMouseLeave={e=>e.currentTarget.style.background='white'}>
+                <span><strong>{bk.guestName}</strong> — Room(s): {bk.roomNo}</span><span style={{color:'#666'}}>{bk.ticketId} | {fmtDate(bk.checkIn)}</span>
+              </div>)}
+            </div>}
+            {linkedBooking&&<div style={{marginTop:'10px',padding:'10px',background:'#d4edda',borderRadius:'4px',color:'#155724',fontSize:'14px'}}><i className="fas fa-check-circle"></i> Linked to booking: <strong>{linkedBooking.ticketId}</strong> — {linkedBooking.guestName}</div>}
           </div>}
-          {linkedBooking&&<div style={{marginTop:'10px',padding:'10px',background:'#d4edda',borderRadius:'4px',color:'#155724',fontSize:'14px'}}><i className="fas fa-check-circle"></i> Linked to booking: <strong>{linkedBooking.ticketId}</strong> — {linkedBooking.guestName}</div>}
-        </div>}
+        </div>
 
-        <form onSubmit={submit}>
+        {mode!==''&&<form onSubmit={submit}>
           <div className="form-grid">
             <div className="form-group"><label>Guest Name *</label><input value={fd.guestName} onChange={e=>setFd({...fd,guestName:e.target.value})} required/></div>
             <div className="form-group"><label>Company Name</label><input value={fd.companyName} onChange={e=>setFd({...fd,companyName:e.target.value})}/></div>
@@ -105,7 +114,7 @@
           </div>
 
           <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>
-        </form>
+        </form>}
 
         <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
           {ld&&<TableSkeleton rows={5} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="ciT" className="display" style={{width:'100%'}}></table></div>
