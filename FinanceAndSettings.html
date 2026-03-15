@@ -56,7 +56,8 @@
             setOrigRooms(bkRooms);
           }
 
-          setFd(p=>({...p,guestName:bk.guestName||'',mobile:bk.phone||'',email:bk.email||'',checkInDate:bk.checkIn?bk.checkIn.split('T')[0]:p.checkInDate,checkInTime:bk.checkInTime||'14:00',checkOutDate:bk.checkOut?bk.checkOut.split('T')[0]:'',checkOutTime:bk.checkOutTime||'12:00',foodPlan:bk.foodPlan||'None',advancePaid:bk.advancePaid||0}));
+          const fixRentAmt = bk.fixRoomRent !== undefined && bk.fixRoomRent !== '' ? parseFloat(bk.fixRoomRent) : 0;
+          setFd(p=>({...p,guestName:bk.guestName||'',mobile:bk.phone||'',email:bk.email||'',checkInDate:bk.checkIn?bk.checkIn.split('T')[0]:p.checkInDate,checkInTime:bk.checkInTime||'14:00',checkOutDate:bk.checkOut?bk.checkOut.split('T')[0]:'',checkOutTime:bk.checkOutTime||'12:00',foodPlan:bk.foodPlan||'None',advancePaid:bk.advancePaid||0,gstType:bk.gstType||'Excluding',fixRoomRent:fixRentAmt>0?'Yes':'No',fixRoomRentAmount:fixRentAmt,discountPercent:bk.discountPercent||0}));
         }
       };
 

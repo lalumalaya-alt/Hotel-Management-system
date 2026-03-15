@@ -168,6 +168,9 @@ const FOOD_PLAN_COL        = 21;
 const ADVANCE_PAID_COL     = 22;
 const NUM_ROOMS_COL        = 23;
 const LINKED_CHECKIN_COL   = 24;
+const BOOKING_GST_TYPE_COL = 25;
+const BOOKING_FIX_RENT_COL = 26;
+const BOOKING_DISC_PCT_COL = 27;
 
 // CHECKIN sheet columns (0-based)
 const CI_ID_COL             = 0;
@@ -617,6 +620,15 @@ function bookRoom(bookingDetails) {
     const foodPlan = bookingDetails.foodPlan || "None";
     const advancePaid = parseFloat(bookingDetails.advancePaid || "0") || 0;
 
+    let gstType = bookingDetails.gstType || 'Excluding';
+    let fixRoomRentAmount = bookingDetails.fixRoomRentAmount ? parseFloat(bookingDetails.fixRoomRentAmount) : '';
+    let discountPercent = parseFloat(bookingDetails.discountPercent) || 0;
+
+    // Override room rate if fixed rent is specified
+    if (fixRoomRentAmount !== '' && !isNaN(fixRoomRentAmount)) {
+      totalRoomRate = fixRoomRentAmount;
+    }
+
     let discount = parseFloat(bookingDetails.discount || "0") || 0;
     let tax = parseFloat(bookingDetails.tax || "0") || 0;
     let paymentMethod = bookingDetails.paymentMethod || "Cash";
@@ -654,7 +666,10 @@ function bookRoom(bookingDetails) {
       foodPlan,
       advancePaid,
       numRoomsCount,
-      ""
+      "",
+      gstType,
+      fixRoomRentAmount,
+      discountPercent
     ]);
 
     // Mark all selected rooms as Booked (only if physical rooms were assigned)
@@ -989,6 +1004,16 @@ function updateBooking(rowIndex, bookingData) {
     // Recalculate financials
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
+
+    // Apply overriding fixed rent
+    let gstType = bookingData.gstType || 'Excluding';
+    let fixRoomRentAmount = bookingData.fixRoomRentAmount ? parseFloat(bookingData.fixRoomRentAmount) : '';
+    let discountPercent = parseFloat(bookingData.discountPercent) || 0;
+
+    if (fixRoomRentAmount !== '' && !isNaN(fixRoomRentAmount)) {
+      finalRate = fixRoomRentAmount;
+    }
+
     const discount = parseFloat(bookingData.discount || 0) || 0;
     const tax = parseFloat(bookingData.tax || 0) || 0;
     const baseAmount = finalRate * nights;
@@ -1031,10 +1056,13 @@ function updateBooking(rowIndex, bookingData) {
       bookingData.foodPlan || existingFoodPlan,
       advancePaid,
       finalNumRooms,
-      existingLinkedCheckIn
+      existingLinkedCheckIn,
+      gstType,
+      fixRoomRentAmount,
+      discountPercent
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 25).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 28).setValues([row]);
     SpreadsheetApp.flush();
 
     return { success: true, message: "Booking updated successfully." };

@@ -601,7 +601,8 @@ function convertQuoteToInvoice(quoteRowIndex, user) {
             'Booked',
             roomRate, 0, 0, 'Invoice',
             baseAmount, 'Unpaid', 0,
-            '', '', 'None', 0, qty, ''
+            '', '', 'None', 0, qty, '',
+            'Excluding', '', 0
           ]);
         }
       });
@@ -1334,7 +1335,7 @@ function setupDemoData() {
 
   // BOOKINGS
   const bookingsSheet = ss.insertSheet(BOOKINGS_SHEET_NAME);
-  bookingsSheet.appendRow(["TicketID", "RoomNo", "GuestName", "Phone", "Email", "City", "MaritalStatus", "OccupancyType", "FamilyDetails", "CheckIn", "CheckOut", "Status", "RoomRate", "Discount", "Tax", "PaymentMethod", "TotalAmount", "PaymentStatus", "AmountPaid", "CheckInTime", "CheckOutTime", "FoodPlan", "AdvancePaid", "NumberOfRooms", "LinkedCheckInID"]);
+  bookingsSheet.appendRow(["TicketID", "RoomNo", "GuestName", "Phone", "Email", "City", "MaritalStatus", "OccupancyType", "FamilyDetails", "CheckIn", "CheckOut", "Status", "RoomRate", "Discount", "Tax", "PaymentMethod", "TotalAmount", "PaymentStatus", "AmountPaid", "CheckInTime", "CheckOutTime", "FoodPlan", "AdvancePaid", "NumberOfRooms", "LinkedCheckInID", "GSTType", "FixRoomRent", "DiscountPercent"]);
 
   // QUOTES (26 columns)
   const quotesSheet = ss.insertSheet(QUOTES_SHEET_NAME);

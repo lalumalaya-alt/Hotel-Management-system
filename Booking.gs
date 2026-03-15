@@ -592,7 +592,10 @@ function getAllBookings() {
         foodPlan: (row[FOOD_PLAN_COL] || "None").toString(),
         advancePaid: parseFloat(row[ADVANCE_PAID_COL]) || 0,
         numberOfRooms: parseInt(row[NUM_ROOMS_COL]) || 1,
-        linkedCheckInId: (row[LINKED_CHECKIN_COL] || "").toString()
+        linkedCheckInId: (row[LINKED_CHECKIN_COL] || "").toString(),
+        gstType: (row[BOOKING_GST_TYPE_COL] || "Excluding").toString(),
+        fixRoomRent: (row[BOOKING_FIX_RENT_COL] !== undefined && row[BOOKING_FIX_RENT_COL] !== "") ? parseFloat(row[BOOKING_FIX_RENT_COL]) : '',
+        discountPercent: parseFloat(row[BOOKING_DISC_PCT_COL]) || 0
       });
     }
     return bookings;
