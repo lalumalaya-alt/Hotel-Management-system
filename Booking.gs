@@ -1571,3 +1571,94 @@ function getPendingBookings() {
     return [];
   }
 }
+
+
+function getRoomTypeAvailability(checkInStr, checkOutStr, excludeTicketId) {
+  try {
+    const ciReq = new Date(checkInStr);
+    const coReq = new Date(checkOutStr);
+    if (isNaN(ciReq.getTime()) || isNaN(coReq.getTime())) return [];
+
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+    const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
+
+    if (!roomsSheet || !bookingsSheet) return [];
+
+    const roomsData = roomsSheet.getDataRange().getValues();
+    const bookingsData = bookingsSheet.getDataRange().getValues();
+
+    // 1. Group total physical rooms by type (excluding Maintenance)
+    let typeInventory = {};
+    for (let i = 1; i < roomsData.length; i++) {
+      const rType = (roomsData[i][ROOM_TYPE_COL] || "").toString().trim();
+      const rStatus = (roomsData[i][ROOM_STATUS_COL] || "").toString().toLowerCase();
+      const rRate = parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
+
+      if (!typeInventory[rType]) {
+        typeInventory[rType] = { type: rType, total: 0, booked: 0, available: 0, rate: rRate };
+      }
+
+      // If it's physically out of order, don't count it in the total
+      if (rStatus !== 'maintenance') {
+        typeInventory[rType].total += 1;
+      }
+    }
+
+    // 2. Parse existing bookings to subtract overlaps
+    for (let i = 1; i < bookingsData.length; i++) {
+      const bStatus = (bookingsData[i][BOOKING_STATUS_COL] || "").toString().toLowerCase();
+      const bTicket = (bookingsData[i][TICKET_ID_COL] || "").toString();
+
+      if (excludeTicketId && bTicket === excludeTicketId) continue;
+
+      if (bStatus === 'booked' || bStatus === 'checked in') {
+        const bCi = new Date(bookingsData[i][CHECK_IN_COL]);
+        const bCo = new Date(bookingsData[i][CHECK_OUT_COL]);
+
+        // Overlap condition
+        if (ciReq < bCo && coReq > bCi) {
+          const bRoomsStr = (bookingsData[i][BOOKING_ROOM_NO_COL] || "").toString().trim();
+
+          // Bookings can now be either literal room numbers "101, 102" OR "Cottage (2), Family (1)"
+          if (bRoomsStr.includes('(')) {
+            // It's a room type string: "Cottage (2), Family (1)"
+            const parts = bRoomsStr.split(',');
+            parts.forEach(p => {
+              const match = p.match(/(.+?)\s*\((\d+)\)/);
+              if (match) {
+                const tName = match[1].trim();
+                const qty = parseInt(match[2]);
+                if (typeInventory[tName]) typeInventory[tName].booked += qty;
+              }
+            });
+          } else {
+            // It's specific room numbers (legacy or checked-in bookings)
+            const rNos = bRoomsStr.split(',').map(r => r.trim());
+            rNos.forEach(rn => {
+              // Find the type of this room
+              for (let r = 1; r < roomsData.length; r++) {
+                if ((roomsData[r][ROOM_NO_COL] || "").toString().trim() === rn) {
+                  const tName = (roomsData[r][ROOM_TYPE_COL] || "").toString().trim();
+                  if (typeInventory[tName]) typeInventory[tName].booked += 1;
+                  break;
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Calculate final availability
+    return Object.values(typeInventory).map(t => {
+      t.available = t.total - t.booked;
+      if (t.available < 0) t.available = 0;
+      return t;
+    });
+
+  } catch (err) {
+    Logger.log("Error in getRoomTypeAvailability: " + err.message);
+    return [];
+  }
+}

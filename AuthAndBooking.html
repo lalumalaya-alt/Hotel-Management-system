@@ -512,7 +512,7 @@
 
       useEffect(()=>{google.script.run.withSuccessHandler(r=>{setCustomers(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllCustomers();},[]);
 
-      // Fetch dynamic room availability whenever dates change
+      // Fetch dynamic room type availability whenever dates change
       useEffect(() => {
         if(fd.checkIn && fd.checkOut) {
           const ci = new Date(fd.checkIn);
@@ -522,12 +522,16 @@
             google.script.run.withSuccessHandler(res => {
               setDynRooms(res);
               setChkLd(false);
-              // Deselect any rooms that are now unavailable
-              setSelectedRooms(prev => prev.filter(rn => {
-                const r = res.find(x => x.roomNo === rn);
-                return r && r.isAvailable;
+              // Filter out any selected types that are now unavailable
+              setSelectedRooms(prev => prev.filter(rt => {
+                const parts = rt.match(/(.+?)\s*\((\d+)\)/);
+                if (!parts) return false;
+                const rType = parts[1];
+                const qty = parseInt(parts[2]);
+                const availableType = res.find(x => x.type === rType);
+                return availableType && availableType.available >= qty;
               }));
-            }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkIn, fd.checkOut, booking?.ticketId);
+            }).withFailureHandler(() => setChkLd(false)).getRoomTypeAvailability(fd.checkIn, fd.checkOut, booking?.ticketId);
           } else {
             setDynRooms(null);
           }
@@ -537,15 +541,40 @@
       }, [fd.checkIn, fd.checkOut, booking]);
 
       const pickCustomer=(val)=>{setSelCust(val);if(val){const c=customers.find(x=>x.customerId===val);if(c)setFd(p=>({...p,guestName:c.name||p.guestName,phone:c.phone||p.phone,email:c.email||p.email}));}};
-      const toggleRoom=(rn, isAvail)=>{if(!isAvail)return;setSelectedRooms(prev=>prev.indexOf(rn)!==-1?prev.filter(r=>r!==rn):[...prev,rn]);};
 
-      // Calculate combined rate from dynamic rooms if available, else static
-      const combinedRate=selectedRooms.reduce((sum,rn)=>{const rm=(dynRooms||rooms).find(r=>r.roomNo===rn);return sum+(rm?parseFloat(rm.roomRate):0);},0);
+      const setRoomQuantity=(rType, qty)=>{
+        qty = parseInt(qty) || 0;
+        setSelectedRooms(prev => {
+          let filtered = prev.filter(rt => !rt.startsWith(rType + ' ('));
+          if (qty > 0) {
+            filtered.push(`${rType} (${qty})`);
+          }
+          return filtered;
+        });
+      };
+
+      const getRoomQuantity=(rType)=>{
+        const found = selectedRooms.find(rt => rt.startsWith(rType + ' ('));
+        if (!found) return 0;
+        const match = found.match(/(.+?)\s*\((\d+)\)/);
+        return match ? parseInt(match[2]) : 0;
+      };
+
+      // Calculate combined rate from selected types
+      const combinedRate=selectedRooms.reduce((sum,rt)=>{
+        const match = rt.match(/(.+?)\s*\((\d+)\)/);
+        if(!match) return sum;
+        const rType = match[1];
+        const qty = parseInt(match[2]);
+        const rm = (dynRooms || []).find(r => r.type === rType);
+        return sum + (rm ? (parseFloat(rm.rate) * qty) : 0);
+      },0);
+
       // In edit mode, if dates or rooms haven't loaded yet and no changes made, default to booking.roomRate, otherwise use combinedRate.
       const editRate = combinedRate > 0 ? combinedRate : (isEdit ? (booking.roomRate || 0) : 0);
 
       const submit=(e)=>{e.preventDefault();if(selectedRooms.length===0){Swal.fire({icon:'warning',text:'Please select at least one room'});return;}setSv(true);
-        const payload={...fd,roomNos:selectedRooms.join(',')};
+        const payload={...fd,roomNos:selectedRooms.join(','), combinedRate: editRate};
         if(isEdit){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).updateBooking(booking.rowIndex,payload);}
         else{google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).bookRoom(payload);}};
       const calcTotal=(()=>{if(!fd.checkIn||!fd.checkOut)return null;const ci=new Date(fd.checkIn);const co=new Date(fd.checkOut);if(isNaN(ci)||isNaN(co)||co<=ci)return null;let n=Math.ceil((co-ci)/(1000*3600*24));if(n<1)n=1;const base=editRate*n;const d=parseFloat(fd.discount)||0;const t=parseFloat(fd.tax)||0;return{nights:n,base,disc:d,tax:t,total:base-d+t};})();
@@ -558,18 +587,37 @@
           <div className="form-group"><label>Check-out Date *</label><input type="date" value={fd.checkOut} onChange={e=>setFd({...fd,checkOut:e.target.value})} required/></div>
         </div>
 
-        <div className="form-group"><label>Select Room(s) * <span style={{fontSize:'12px',color:'#666'}}>(dates required first)</span></label>
+        <div className="form-group"><label>Select Room Types & Quantity * <span style={{fontSize:'12px',color:'#666'}}>(dates required first)</span></label>
           {!dynRooms ? (
             <div style={{padding:'20px',background:'#f8f9fa',border:'1px dashed #ccc',borderRadius:'8px',textAlign:'center',color:'#666'}}>
-              {chkLd ? <><i className="fas fa-spinner fa-spin"></i> Checking availability...</> : <><i className="fas fa-calendar-alt"></i> Please select Check-in and Check-out dates above to view available rooms.</>}
+              {chkLd ? <><i className="fas fa-spinner fa-spin"></i> Checking availability...</> : <><i className="fas fa-calendar-alt"></i> Please select Check-in and Check-out dates above to view available room types.</>}
             </div>
           ) : (
-            <div className="room-tiles-grid">
+            <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
               {dynRooms.length===0&&<p style={{padding:'20px',color:'#666'}}>No rooms configured</p>}
-              {dynRooms.map(r=>(<div key={r.roomNo} className={`room-tile ${!r.isAvailable?'booked':''} ${selectedRooms.indexOf(r.roomNo)!==-1?'selected':''}`} onClick={()=>toggleRoom(r.roomNo, r.isAvailable)} style={!r.isAvailable?{background:'#e9ecef',borderColor:'#dee2e6',cursor:'not-allowed',opacity:0.7}:{}}><div className="room-check">{selectedRooms.indexOf(r.roomNo)!==-1&&<i className="fas fa-check-circle"></i>}</div><div className="room-number" style={!r.isAvailable?{color:'#6c757d'}:{}}>#{r.roomNo}</div><div className="room-type">{r.roomType}</div><div className="room-rate">{!r.isAvailable?'Unavailable':fmtCur(r.roomRate)+'/night'}</div></div>))}
+              {dynRooms.map(rt=>{
+                 const max = rt.available;
+                 const currentVal = getRoomQuantity(rt.type);
+                 return (
+                   <div key={rt.type} style={{display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f8f9fa', padding:'12px', border:'1px solid #dee2e6', borderRadius:'6px'}}>
+                     <div>
+                       <strong style={{fontSize:'15px', color:'var(--navy-primary)'}}>{rt.type}</strong>
+                       <div style={{color:'#666', fontSize:'13px'}}>{fmtCur(rt.rate)}/night • {max} Available</div>
+                     </div>
+                     <div>
+                       <input type="number" min="0" max={max} value={currentVal} onChange={(e)=>{
+                         let val = parseInt(e.target.value) || 0;
+                         if (val > max) val = max;
+                         if (val < 0) val = 0;
+                         setRoomQuantity(rt.type, val);
+                       }} style={{width:'80px', padding:'6px', borderRadius:'4px', border:'1px solid #ccc', textAlign:'center', fontSize:'15px'}} />
+                     </div>
+                   </div>
+                 );
+              })}
             </div>
           )}
-          {selectedRooms.length>0&&<p style={{marginTop:'8px',color:'var(--navy-primary)',fontWeight:'600'}}>Selected: {selectedRooms.map(r=>'#'+r).join(', ')} — Combined Rate: {fmtCur(editRate)}/night</p>}
+          {selectedRooms.length>0&&<p style={{marginTop:'8px',color:'var(--navy-primary)',fontWeight:'600'}}>Selected: {selectedRooms.join(', ')} — Combined Rate: {fmtCur(editRate)}/night</p>}
         </div>
 
         <div className="form-grid">
@@ -582,7 +630,7 @@
           <div className="form-group"><label>Mode of Payment *</label><select value={fd.paymentMethod} onChange={e=>setFd({...fd,paymentMethod:e.target.value})} required><option value="" disabled>Please select</option><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Online</option><option>UPI</option></select></div>
           <div className="form-group"><label>Food Plan</label><select value={fd.foodPlan} onChange={e=>setFd({...fd,foodPlan:e.target.value})}><option value="None">None</option><option value="Including Breakfast">Including Breakfast</option><option value="Including Breakfast and Dinner">Including Breakfast and Dinner</option></select></div>
         </div>
-        {calcTotal&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Room Rate x {calcTotal.nights} night(s) x {selectedRooms.length||editRoomNos.length} room(s)</span><span>{fmtCur(calcTotal.base)}</span></div><div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(calcTotal.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
+        {calcTotal&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Combined Rate x {calcTotal.nights} night(s)</span><span>{fmtCur(calcTotal.base)}</span></div><div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(calcTotal.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
         <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> {isEdit?'Updating...':'Booking...'}</>:<><i className={`fas ${isEdit?'fa-save':'fa-check'}`}></i> {isEdit?'Update Booking':'Book Room(s)'}</>}</button><button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button></div>
       </form></div></div></div>);
     }

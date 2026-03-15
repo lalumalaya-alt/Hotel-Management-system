@@ -44,8 +44,18 @@
         if(bk){
           setLinkedBooking(bk);
           const bkRooms=bk.roomNo?bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r):[];
-          setSelectedRooms(bkRooms);
-          setOrigRooms(bkRooms);
+
+          const isTypeBooking = bk.roomNo && bk.roomNo.includes('(');
+          if (isTypeBooking) {
+            // Do not pre-select physical rooms because none were assigned yet
+            setSelectedRooms([]);
+            setOrigRooms([]);
+          } else {
+            // Legacy booking with physical rooms already assigned
+            setSelectedRooms(bkRooms);
+            setOrigRooms(bkRooms);
+          }
+
           setFd(p=>({...p,guestName:bk.guestName||'',mobile:bk.phone||'',email:bk.email||'',checkInDate:bk.checkIn?bk.checkIn.split('T')[0]:p.checkInDate,checkInTime:bk.checkInTime||'14:00',checkOutDate:bk.checkOut?bk.checkOut.split('T')[0]:'',checkOutTime:bk.checkOutTime||'12:00',foodPlan:bk.foodPlan||'None',advancePaid:bk.advancePaid||0}));
         }
       };
@@ -80,7 +90,9 @@
           {mode==='advance'&&<div className="form-group" style={{maxWidth:'600px',marginBottom:'0'}}>
             <label><i className="fas fa-search"></i> Select Advance Booking</label>
             <SearchableSelect value={selBooking} onChange={pickBooking} options={[{value:'',label:'-- Select Booking --'},...pendingBookings.map(b=>({value:b.ticketId,label:b.guestName+' ('+b.ticketId+') - Rooms: '+b.roomNo}))]} placeholder="Search by guest name or ticket ID..." />
-            {linkedBooking&&<div style={{marginTop:'10px',padding:'10px',background:'#d4edda',borderRadius:'4px',color:'#155724',fontSize:'14px'}}><i className="fas fa-check-circle"></i> Linked to booking: <strong>{linkedBooking.ticketId}</strong> — {linkedBooking.guestName}</div>}
+            {linkedBooking&&<div style={{marginTop:'10px',padding:'10px',background:'#d4edda',borderRadius:'4px',color:'#155724',fontSize:'14px'}}><i className="fas fa-check-circle"></i> Linked to booking: <strong>{linkedBooking.ticketId}</strong> — {linkedBooking.guestName}
+  {linkedBooking.roomNo.includes('(') && <div style={{marginTop:'5px',fontWeight:'bold',color:'#001f3f'}}><i className="fas fa-bed"></i> Requested: {linkedBooking.roomNo}</div>}
+</div>}
           </div>}
         </div>
 
