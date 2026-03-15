@@ -1559,3 +1559,15 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
     return [];
   }
 }
+
+
+function getPendingBookings() {
+  try {
+    const bookings = getAllBookings();
+    if (bookings.error) return [];
+    return bookings.filter(b => b.status.toLowerCase() === 'booked');
+  } catch (e) {
+    Logger.log("Error in getPendingBookings: " + e.toString());
+    return [];
+  }
+}
