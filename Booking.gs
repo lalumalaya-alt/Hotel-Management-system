@@ -1507,75 +1507,78 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
   try {
     const ciReq = new Date(checkInStr);
     const coReq = new Date(checkOutStr);
-    if (isNaN(ciReq.getTime()) || isNaN(coReq.getTime())) return [];
+    if (isNaN(ciReq.getTime()) || isNaN(coReq.getTime())) return { rooms: [], capacities: {} };
 
     const ss = SpreadsheetApp.openById(SS_ID);
     const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
     const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
 
-    if (!roomsSheet || !bookingsSheet) return [];
+    if (!roomsSheet || !bookingsSheet) return { rooms: [], capacities: {} };
 
     const roomsData = roomsSheet.getDataRange().getValues();
     const bookingsData = bookingsSheet.getDataRange().getValues();
 
     let allRooms = [];
+    let typeInventory = {};
     for (let i = 1; i < roomsData.length; i++) {
+      const rNo = (roomsData[i][ROOM_NO_COL] || "").toString().trim();
+      const rType = (roomsData[i][ROOM_TYPE_COL] || "").toString();
+      const rRate = parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
+      const rStatus = (roomsData[i][ROOM_STATUS_COL] || "").toString().toLowerCase();
+
       allRooms.push({
-        roomNo: (roomsData[i][ROOM_NO_COL] || "").toString().trim(),
-        roomType: (roomsData[i][ROOM_TYPE_COL] || "").toString(),
-        roomRate: parseFloat(roomsData[i][ROOM_RATE_COL]) || 0,
-        baseStatus: (roomsData[i][ROOM_STATUS_COL] || "").toString().toLowerCase(),
-        isAvailable: true // Assume available until proven otherwise
+        roomNo: rNo,
+        roomType: rType,
+        roomRate: rRate,
+        baseStatus: rStatus,
+        isAvailable: rStatus !== 'maintenance'
       });
+
+      if (!typeInventory[rType]) {
+        typeInventory[rType] = { total: 0, booked: 0 };
+      }
+      if (rStatus !== 'maintenance') {
+        typeInventory[rType].total += 1;
+      }
     }
 
     for (let i = 1; i < bookingsData.length; i++) {
       const bStatus = (bookingsData[i][BOOKING_STATUS_COL] || "").toString().toLowerCase();
       const bTicket = (bookingsData[i][TICKET_ID_COL] || "").toString();
 
-      // Skip if this is the booking we are currently editing
       if (excludeTicketId && bTicket === excludeTicketId) continue;
 
       if (bStatus === 'booked' || bStatus === 'checked in') {
         const bCi = new Date(bookingsData[i][CHECK_IN_COL]);
         const bCo = new Date(bookingsData[i][CHECK_OUT_COL]);
 
-        // Check for overlap: requested CheckIn < booked CheckOut AND requested CheckOut > booked CheckIn
         if (ciReq < bCo && coReq > bCi) {
           const bRoomsStr = (bookingsData[i][BOOKING_ROOM_NO_COL] || "").toString().trim();
 
           if (bRoomsStr.includes('(')) {
-            // It is a type-based advance booking (e.g., "Cottage (2), Family (1)")
-            // We must deduct this quantity from available physical rooms to protect the inventory.
             const parts = bRoomsStr.split(',');
             parts.forEach(p => {
               const match = p.match(/(.+?)\s*\((\d+)\)/);
               if (match) {
                 const tName = match[1].trim();
                 let qty = parseInt(match[2]);
-
-                // Find 'qty' number of available physical rooms of this type and mark them false
-                for (let r = 0; r < allRooms.length && qty > 0; r++) {
-                  if (allRooms[r].roomType === tName && allRooms[r].isAvailable) {
-                    allRooms[r].isAvailable = false;
-                    qty--;
-                  }
-                }
+                if (typeInventory[tName]) typeInventory[tName].booked += qty;
               }
             });
           } else {
-            // It's a legacy physical room booking or a Checked In physical room
             const bRooms = bRoomsStr.split(',').map(r => r.trim());
             bRooms.forEach(br => {
               const rm = allRooms.find(r => r.roomNo === br);
-              if (rm) rm.isAvailable = false;
+              if (rm) {
+                rm.isAvailable = false;
+                if (typeInventory[rm.roomType]) typeInventory[rm.roomType].booked += 1;
+              }
             });
           }
         }
       }
     }
 
-    // Also check active Check-Ins directly (for Walk-ins which don't have a Booking record)
     const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
     if (checkInSheet && checkInSheet.getLastRow() > 1) {
       const ciData = checkInSheet.getDataRange().getValues();
@@ -1589,38 +1592,32 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
             const cRooms = (ciData[i][CI_ROOM_NUMBERS_COL] || "").toString().split(',').map(r => r.trim());
             cRooms.forEach(cr => {
               const rm = allRooms.find(r => r.roomNo === cr);
-              if (rm) rm.isAvailable = false;
+              if (rm) {
+                // If it wasn't already locked, lock it and increment booked count
+                if (rm.isAvailable) {
+                  rm.isAvailable = false;
+                  if (typeInventory[rm.roomType]) typeInventory[rm.roomType].booked += 1;
+                }
+              }
             });
           }
         }
       }
     }
 
-    // Also mark rooms as unavailable if their base status is Maintenance
-    allRooms.forEach(rm => {
-      if (rm.baseStatus === 'maintenance') rm.isAvailable = false;
+    let capacities = {};
+    Object.keys(typeInventory).forEach(t => {
+      let avail = typeInventory[t].total - typeInventory[t].booked;
+      capacities[t] = avail < 0 ? 0 : avail;
     });
 
-    return allRooms;
+    return { rooms: allRooms, capacities: capacities };
   } catch (err) {
     Logger.log("Error in getRoomAvailability: " + err.message);
-    return [];
+    return { rooms: [], capacities: {} };
   }
 }
-
-
-function getPendingBookings() {
-  try {
-    const bookings = getAllBookings();
-    if (bookings.error) return [];
-    return bookings.filter(b => b.status.toLowerCase() === 'booked');
-  } catch (e) {
-    Logger.log("Error in getPendingBookings: " + e.toString());
-    return [];
-  }
-}
-
-
+// END REPLACEMENT
 function getRoomTypeAvailability(checkInStr, checkOutStr, excludeTicketId) {
   try {
     const ciReq = new Date(checkInStr);

@@ -11,6 +11,7 @@
       const [ld,setLd]=useState(true);
       const [saving,setSaving]=useState(false);
       const [dynRooms,setDynRooms]=useState(null);
+      const [typeCaps,setTypeCaps]=useState({});
       const [chkLd,setChkLd]=useState(false);
       const tRef=useRef(null);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});
@@ -34,7 +35,33 @@
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
         ],order:[[0,'desc']]});tRef.current=t;}catch(e){console.error(e);}},150);};
 
-      const toggleRoom=(rn, isAvail)=>{if(!isAvail)return;setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
+      const toggleRoom=(rn, isAvail)=>{
+        if(!isAvail) return;
+        const rm = dynRooms.find(r => r.roomNo === rn);
+        if(!rm) return;
+
+        setSelectedRooms(prev => {
+          if (prev.includes(rn)) return prev.filter(r => r !== rn);
+
+          // Check capacity limits if adding
+          const rType = rm.roomType;
+          let currentCount = 0;
+          prev.forEach(pRn => {
+            const pRm = dynRooms.find(x => x.roomNo === pRn);
+            if (pRm && pRm.roomType === rType) currentCount++;
+          });
+
+          if (currentCount >= (typeCaps[rType] || 0)) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Capacity Reached',
+              text: `Only ${typeCaps[rType]} ${rType} room(s) available for these dates due to advance bookings.`
+            });
+            return prev;
+          }
+          return [...prev, rn];
+        });
+      };
 
       // Load pending bookings when mode becomes advance
       useEffect(()=>{if(mode==='advance'){google.script.run.withSuccessHandler(r=>{setPendingBookings(Array.isArray(r)?r:[]);}).getPendingBookings();}},[mode]);
@@ -46,11 +73,12 @@
           if(!isNaN(ci) && !isNaN(co) && ci < co) {
             setChkLd(true);
             google.script.run.withSuccessHandler(res => {
-              setDynRooms(res);
+              setDynRooms(res.rooms);
+              setTypeCaps(res.capacities);
               setChkLd(false);
-              // Deselect unavailable
+              // Deselect explicitly unavailable physical rooms
               setSelectedRooms(prev => prev.filter(rn => {
-                const r = res.find(x => x.roomNo === rn);
+                const r = res.rooms.find(x => x.roomNo === rn);
                 return r && r.isAvailable;
               }));
             }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkInDate, fd.checkOutDate, linkedBooking?.ticketId);
