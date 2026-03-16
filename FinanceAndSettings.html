@@ -10,6 +10,8 @@
       const [linkedBooking,setLinkedBooking]=useState(null);
       const [ld,setLd]=useState(true);
       const [saving,setSaving]=useState(false);
+      const [dynRooms,setDynRooms]=useState(null);
+      const [chkLd,setChkLd]=useState(false);
       const tRef=useRef(null);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});
 
@@ -32,10 +34,33 @@
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
         ],order:[[0,'desc']]});tRef.current=t;}catch(e){console.error(e);}},150);};
 
-      const toggleRoom=(rn)=>{setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
+      const toggleRoom=(rn, isAvail)=>{if(!isAvail)return;setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
 
       // Load pending bookings when mode becomes advance
       useEffect(()=>{if(mode==='advance'){google.script.run.withSuccessHandler(r=>{setPendingBookings(Array.isArray(r)?r:[]);}).getPendingBookings();}},[mode]);
+
+      useEffect(() => {
+        if(fd.checkInDate && fd.checkOutDate) {
+          const ci = new Date(fd.checkInDate);
+          const co = new Date(fd.checkOutDate);
+          if(!isNaN(ci) && !isNaN(co) && ci < co) {
+            setChkLd(true);
+            google.script.run.withSuccessHandler(res => {
+              setDynRooms(res);
+              setChkLd(false);
+              // Deselect unavailable
+              setSelectedRooms(prev => prev.filter(rn => {
+                const r = res.find(x => x.roomNo === rn);
+                return r && r.isAvailable;
+              }));
+            }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkInDate, fd.checkOutDate, linkedBooking?.ticketId);
+          } else {
+            setDynRooms(null);
+          }
+        } else {
+          setDynRooms(null);
+        }
+      }, [fd.checkInDate, fd.checkOutDate, linkedBooking]);
 
       const pickBooking=(val)=>{
         setSelBooking(val);
@@ -122,10 +147,18 @@
             {fd.fixRoomRent==='Yes'&&<div className="form-group"><label>Fixed Rent Amount ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={fd.fixRoomRentAmount} onChange={e=>setFd({...fd,fixRoomRentAmount:e.target.value})}/></div>}
           </div>
 
-          <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'8px',color:'#555',fontWeight:500,fontSize:'14px'}}>Select Rooms * ({selectedRooms.length} selected)</label>
-            <div className="room-tiles-grid">{rooms.filter(rm=>(rm.roomStatus||'').toLowerCase()==='available'||origRooms.includes(rm.roomNo.toString())).map(rm=><div key={rm.roomNo} className={'room-tile'+(selectedRooms.includes(rm.roomNo.toString())?' multi-selected':'')} onClick={()=>toggleRoom(rm.roomNo.toString())}>
-              <div className="room-number">#{rm.roomNo}</div><div className="room-type">{rm.roomType}</div><div className="room-rate">{fmtCur(rm.roomRate)}/night</div>
-            </div>)}</div>
+          <div className="form-group" style={{gridColumn:'1/-1'}}><label>Select Room(s) * <span style={{fontSize:'12px',color:'#666'}}>(dates required first)</span></label>
+            {!dynRooms ? (
+              <div style={{padding:'20px',background:'#f8f9fa',border:'1px dashed #ccc',borderRadius:'8px',textAlign:'center',color:'#666'}}>
+                {chkLd ? <><i className="fas fa-spinner fa-spin"></i> Checking availability...</> : <><i className="fas fa-calendar-alt"></i> Please select Check-in and Expected Check-out dates above to view available rooms.</>}
+              </div>
+            ) : (
+              <div className="room-tiles-grid">
+                {dynRooms.length===0&&<p style={{padding:'20px',color:'#666'}}>No rooms configured</p>}
+                {dynRooms.map(r=>(<div key={r.roomNo} className={`room-tile ${!r.isAvailable?'booked':''} ${selectedRooms.includes(r.roomNo.toString())?'selected multi-selected':''}`} onClick={()=>toggleRoom(r.roomNo.toString(), r.isAvailable)} style={!r.isAvailable?{background:'#e9ecef',borderColor:'#dee2e6',cursor:'not-allowed',opacity:0.7}:{}}><div className="room-check">{selectedRooms.includes(r.roomNo.toString())&&<i className="fas fa-check-circle"></i>}</div><div className="room-number" style={!r.isAvailable?{color:'#6c757d'}:{}}>#{r.roomNo}</div><div className="room-type">{r.roomType}</div><div className="room-rate">{!r.isAvailable?'Unavailable':fmtCur(r.roomRate)+'/night'}</div></div>))}
+              </div>
+            )}
+            {selectedRooms.length>0&&<p style={{marginTop:'8px',color:'var(--navy-primary)',fontWeight:'600'}}>Selected: {selectedRooms.map(r=>'#'+r).join(', ')}</p>}
           </div>
 
           <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>
