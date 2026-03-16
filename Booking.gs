@@ -1551,6 +1551,27 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
       }
     }
 
+    // Also check active Check-Ins directly (for Walk-ins which don't have a Booking record)
+    const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    if (checkInSheet && checkInSheet.getLastRow() > 1) {
+      const ciData = checkInSheet.getDataRange().getValues();
+      for (let i = 1; i < ciData.length; i++) {
+        const status = (ciData[i][CI_STATUS_COL] || "").toString().toLowerCase();
+        if (status === 'active') {
+          const cCi = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
+          const cCo = new Date(ciData[i][CI_CHECKOUT_DATE_COL]);
+
+          if (ciReq < cCo && coReq > cCi) {
+            const cRooms = (ciData[i][CI_ROOM_NUMBERS_COL] || "").toString().split(',').map(r => r.trim());
+            cRooms.forEach(cr => {
+              const rm = allRooms.find(r => r.roomNo === cr);
+              if (rm) rm.isAvailable = false;
+            });
+          }
+        }
+      }
+    }
+
     // Also mark rooms as unavailable if their base status is Maintenance
     allRooms.forEach(rm => {
       if (rm.baseStatus === 'maintenance') rm.isAvailable = false;
@@ -1642,6 +1663,32 @@ function getRoomTypeAvailability(checkInStr, checkOutStr, excludeTicketId) {
               // Find the type of this room
               for (let r = 1; r < roomsData.length; r++) {
                 if ((roomsData[r][ROOM_NO_COL] || "").toString().trim() === rn) {
+                  const tName = (roomsData[r][ROOM_TYPE_COL] || "").toString().trim();
+                  if (typeInventory[tName]) typeInventory[tName].booked += 1;
+                  break;
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // 2.5 Also check active Check-Ins directly (for Walk-ins which don't have a Booking record)
+    const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    if (checkInSheet && checkInSheet.getLastRow() > 1) {
+      const ciData = checkInSheet.getDataRange().getValues();
+      for (let i = 1; i < ciData.length; i++) {
+        const status = (ciData[i][CI_STATUS_COL] || "").toString().toLowerCase();
+        if (status === 'active') {
+          const cCi = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
+          const cCo = new Date(ciData[i][CI_CHECKOUT_DATE_COL]);
+
+          if (ciReq < cCo && coReq > cCi) {
+            const cRooms = (ciData[i][CI_ROOM_NUMBERS_COL] || "").toString().split(',').map(r => r.trim());
+            cRooms.forEach(cr => {
+              for (let r = 1; r < roomsData.length; r++) {
+                if ((roomsData[r][ROOM_NO_COL] || "").toString().trim() === cr) {
                   const tName = (roomsData[r][ROOM_TYPE_COL] || "").toString().trim();
                   if (typeInventory[tName]) typeInventory[tName].booked += 1;
                   break;
