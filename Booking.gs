@@ -1542,11 +1542,35 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
 
         // Check for overlap: requested CheckIn < booked CheckOut AND requested CheckOut > booked CheckIn
         if (ciReq < bCo && coReq > bCi) {
-          const bRooms = (bookingsData[i][BOOKING_ROOM_NO_COL] || "").toString().split(',').map(r => r.trim());
-          bRooms.forEach(br => {
-            const rm = allRooms.find(r => r.roomNo === br);
-            if (rm) rm.isAvailable = false;
-          });
+          const bRoomsStr = (bookingsData[i][BOOKING_ROOM_NO_COL] || "").toString().trim();
+
+          if (bRoomsStr.includes('(')) {
+            // It is a type-based advance booking (e.g., "Cottage (2), Family (1)")
+            // We must deduct this quantity from available physical rooms to protect the inventory.
+            const parts = bRoomsStr.split(',');
+            parts.forEach(p => {
+              const match = p.match(/(.+?)\s*\((\d+)\)/);
+              if (match) {
+                const tName = match[1].trim();
+                let qty = parseInt(match[2]);
+
+                // Find 'qty' number of available physical rooms of this type and mark them false
+                for (let r = 0; r < allRooms.length && qty > 0; r++) {
+                  if (allRooms[r].roomType === tName && allRooms[r].isAvailable) {
+                    allRooms[r].isAvailable = false;
+                    qty--;
+                  }
+                }
+              }
+            });
+          } else {
+            // It's a legacy physical room booking or a Checked In physical room
+            const bRooms = bRoomsStr.split(',').map(r => r.trim());
+            bRooms.forEach(br => {
+              const rm = allRooms.find(r => r.roomNo === br);
+              if (rm) rm.isAvailable = false;
+            });
+          }
         }
       }
     }
