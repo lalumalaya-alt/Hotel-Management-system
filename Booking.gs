@@ -1617,7 +1617,17 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
     return { rooms: [], capacities: {} };
   }
 }
-// END REPLACEMENT
+function getPendingBookings() {
+  try {
+    const bookings = getAllBookings();
+    if (bookings.error) return [];
+    return bookings.filter(b => b.status.toLowerCase() === 'booked');
+  } catch (e) {
+    Logger.log("Error in getPendingBookings: " + e.toString());
+    return [];
+  }
+}
+
 function getRoomTypeAvailability(checkInStr, checkOutStr, excludeTicketId) {
   try {
     const ciReq = new Date(checkInStr);

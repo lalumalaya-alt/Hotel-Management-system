@@ -51,11 +51,14 @@
             if (pRm && pRm.roomType === rType) currentCount++;
           });
 
-          if (currentCount >= (typeCaps[rType] || 0)) {
+          // Determine the maximum allowed selection strictly based on remaining hotel capacity
+          let maxAllowed = typeCaps[rType] || 0;
+
+          if (currentCount >= maxAllowed) {
             Swal.fire({
               icon: 'warning',
               title: 'Capacity Reached',
-              text: `Only ${typeCaps[rType]} ${rType} room(s) available for these dates due to advance bookings.`
+              text: `Only ${maxAllowed} ${rType} room(s) available for these dates due to other advance bookings.`
             });
             return prev;
           }
@@ -73,12 +76,13 @@
           if(!isNaN(ci) && !isNaN(co) && ci < co) {
             setChkLd(true);
             google.script.run.withSuccessHandler(res => {
-              setDynRooms(res.rooms);
-              setTypeCaps(res.capacities);
+              const safeRes = res || {rooms: [], capacities: {}};
+              setDynRooms(safeRes.rooms || []);
+              setTypeCaps(safeRes.capacities || {});
               setChkLd(false);
               // Deselect explicitly unavailable physical rooms
               setSelectedRooms(prev => prev.filter(rn => {
-                const r = res.rooms.find(x => x.roomNo === rn);
+                const r = (safeRes.rooms || []).find(x => x.roomNo === rn);
                 return r && r.isAvailable;
               }));
             }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkInDate, fd.checkOutDate, linkedBooking?.ticketId);
@@ -96,9 +100,10 @@
         const bk=pendingBookings.find(x=>x.ticketId===val);
         if(bk){
           setLinkedBooking(bk);
-          const bkRooms=bk.roomNo?bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r):[];
+          const rawRoomNo = bk.roomNo ? String(bk.roomNo) : '';
+          const bkRooms = rawRoomNo ? rawRoomNo.split(',').map(r=>r.trim()).filter(r=>r) : [];
 
-          const isTypeBooking = bk.roomNo && bk.roomNo.includes('(');
+          const isTypeBooking = rawRoomNo.includes('(');
           if (isTypeBooking) {
             // Do not pre-select physical rooms because none were assigned yet
             setSelectedRooms([]);
