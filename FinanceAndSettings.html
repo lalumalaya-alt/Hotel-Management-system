@@ -91,7 +91,7 @@
                 const r = (safeRes.rooms || []).find(x => x.roomNo === rn);
                 return r && r.isAvailable;
               }));
-            }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkInDate, fd.checkOutDate, linkedBooking?.ticketId);
+            }).withFailureHandler(() => setChkLd(false)).getRoomAvailability(fd.checkInDate, fd.checkOutDate, linkedBooking?.ticketId, (editRowIndex && fd.existingId) ? fd.existingId : null);
           } else {
             setDynRooms(null);
           }
@@ -135,6 +135,7 @@
         setSelectedRooms(rn);
         setOrigRooms(rn);
         setFd({
+          existingId:row.checkInId,
           guestName:row.guestName||'',companyName:row.companyName||'',gstNumber:row.gstNumber||'',identityProof:row.identityProof||'',mobile:row.mobile||'',email:row.email||'',address:row.address||'',purposeOfVisit:row.purposeOfVisit||'',
           checkInDate:row.checkInDate?row.checkInDate.split('T')[0]:'',checkInTime:row.checkInTime||'14:00',
           checkOutDate:row.checkOutDate?row.checkOutDate.split('T')[0]:'',checkOutTime:row.checkOutTime||'12:00',
@@ -224,6 +225,7 @@
             <div className="form-group"><label>Check-Out Time</label><input type="time" value={fd.checkOutTime} onChange={e=>setFd({...fd,checkOutTime:e.target.value})}/></div>
             <div className="form-group"><label>Pax</label><input type="number" min="1" value={fd.pax} onChange={e=>setFd({...fd,pax:e.target.value})}/></div>
             <div className="form-group"><label>Extra Person</label><input type="number" min="0" value={fd.extraPerson} onChange={e=>setFd({...fd,extraPerson:e.target.value})}/></div>
+            <div className="form-group"><label>Extra Person Date (Optional)</label><input type="date" value={fd.extraPersonDate||''} onChange={e=>setFd({...fd,extraPersonDate:e.target.value})} title="Date from which the extra person joins"/></div>
             <div className="form-group"><label>Advance Paid ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={fd.advancePaid} onChange={e=>setFd({...fd,advancePaid:e.target.value})}/></div>
             <div className="form-group"><label>Food Plan</label><select value={fd.foodPlan} onChange={e=>setFd({...fd,foodPlan:e.target.value})}><option value="None">None</option><option value="Including Breakfast">Including Breakfast</option><option value="Including Breakfast and Dinner">Including Breakfast and Dinner</option></select></div>
             <div className="form-group"><label>GST</label><select value={fd.gstType} onChange={e=>setFd({...fd,gstType:e.target.value})}><option value="Excluding">Excluding GST</option><option value="Including">Including GST</option></select></div>

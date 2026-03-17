@@ -1435,6 +1435,43 @@ function updateCheckIn(rowIndex, checkInData) {
 
     const existingId = sheet.getRange(rowIndex, CI_ID_COL + 1).getValue();
     const existingLinked = sheet.getRange(rowIndex, CI_LINKED_TICKET_COL + 1).getValue();
+
+    // Verify room availability for the updated dates and rooms
+    // excluding this exact check-in ID so we don't conflict with ourselves
+    if (checkInData.roomNumbers) {
+      let reqStart = new Date(checkInData.checkInDate + 'T14:00:00Z');
+      let reqEnd = new Date(checkInData.checkOutDate + 'T12:00:00Z');
+      const ciData = sheet.getDataRange().getValues();
+      const roomNosArr = checkInData.roomNumbers.split(',').map(r => r.trim()).filter(r => r);
+
+      for (let i = 1; i < ciData.length; i++) {
+        if (i + 1 === rowIndex || ciData[i][CI_ID_COL] === existingId) continue; // Skip current record
+        if (ciData[i][CI_STATUS_COL] === 'Checked Out' || ciData[i][CI_STATUS_COL] === 'Cancelled') continue;
+
+        let existingCi = new Date((ciData[i][CI_CHECKIN_DATE_COL] || '').toString() + 'T14:00:00Z');
+        let existingCo = new Date((ciData[i][CI_CHECKOUT_DATE_COL] || '').toString() + 'T12:00:00Z');
+        let existingRooms = (ciData[i][CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim());
+
+        if (reqStart < existingCo && reqEnd > existingCi) {
+          let overlap = existingRooms.filter(r => roomNosArr.includes(r));
+          if (overlap.length > 0) {
+            return { success: false, message: "Room(s) " + overlap.join(', ') + " are occupied during the requested dates by Check-In " + ciData[i][CI_ID_COL] };
+          }
+        }
+      }
+
+      // Also check against Advance Bookings using our dynamic scanner
+      const avail = getRoomAvailability(checkInData.checkInDate, checkInData.checkOutDate, existingLinked, existingId);
+
+      let unavailableRooms = roomNosArr.filter(rn => {
+         const r = avail.rooms.find(x => x.roomNo === rn);
+         return !r || !r.isAvailable;
+      });
+
+      if (unavailableRooms.length > 0) {
+        return { success: false, message: "Room(s) " + unavailableRooms.join(', ') + " are not available for the requested dates due to conflicting bookings." };
+      }
+    }
     const existingStatus = sheet.getRange(rowIndex, CI_STATUS_COL + 1).getValue();
     const existingCreatedAt = sheet.getRange(rowIndex, CI_CREATED_AT_COL + 1).getValue();
 
@@ -1466,6 +1503,25 @@ function updateCheckIn(rowIndex, checkInData) {
       parseFloat(checkInData.fixRoomRentAmount) || 0, checkInData.billTo || 'Individual',
       parseFloat(checkInData.discountPercent) || 0, existingStatus, existingCreatedAt
     ];
+
+    // Free up old rooms that are no longer in this check-in
+    const oldRooms = sheet.getRange(rowIndex, CI_ROOM_NUMBERS_COL + 1).getValue().toString().split(',').map(r => r.trim()).filter(r => r);
+    for (let i = 1; i < roomsData.length; i++) {
+       const rNo = (roomsData[i][ROOM_NO_COL] || '').toString();
+       if (oldRooms.includes(rNo) && !roomNosArr.includes(rNo)) {
+          roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue('Available');
+       }
+    }
+
+    // Mark new rooms as occupied
+    if (existingStatus === 'Checked In' || existingStatus === 'Active') {
+       for (let i = 1; i < roomsData.length; i++) {
+          const rNo = (roomsData[i][ROOM_NO_COL] || '').toString();
+          if (roomNosArr.includes(rNo)) {
+             roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue('Occupied');
+          }
+       }
+    }
 
     sheet.getRange(rowIndex, 1, 1, 28).setValues([row]);
     SpreadsheetApp.flush();

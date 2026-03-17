@@ -1503,7 +1503,7 @@ function getSettings() {
 }
 
 
-function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
+function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId, excludeCheckInId) {
   try {
     const ciReq = new Date(checkInStr);
     const coReq = new Date(checkOutStr);
@@ -1583,6 +1583,7 @@ function getRoomAvailability(checkInStr, checkOutStr, excludeTicketId) {
     if (checkInSheet && checkInSheet.getLastRow() > 1) {
       const ciData = checkInSheet.getDataRange().getValues();
       for (let i = 1; i < ciData.length; i++) {
+        if (excludeCheckInId && ciData[i][CI_ID_COL] === excludeCheckInId) continue;
         const status = (ciData[i][CI_STATUS_COL] || "").toString().toLowerCase();
         if (status === 'active') {
           const cCi = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
@@ -1710,6 +1711,7 @@ function getRoomTypeAvailability(checkInStr, checkOutStr, excludeTicketId) {
     if (checkInSheet && checkInSheet.getLastRow() > 1) {
       const ciData = checkInSheet.getDataRange().getValues();
       for (let i = 1; i < ciData.length; i++) {
+        if (excludeCheckInId && ciData[i][CI_ID_COL] === excludeCheckInId) continue;
         const status = (ciData[i][CI_STATUS_COL] || "").toString().toLowerCase();
         if (status === 'active') {
           const cCi = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
