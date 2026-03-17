@@ -1,8 +1,8 @@
 <script type="text/babel">
 
     const { useState, useEffect, useRef } = React;
-    const fmtDate = (s) => { if(!s) return '-'; return new Date(s).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'2-digit'}); };
-    const fmtDateTime = (s) => { if(!s) return '-'; return new Date(s).toLocaleString('en-US',{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:true}); };
+    const fmtDate = (s) => { if(!s) return '-'; return new Date(s).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',year:'numeric',month:'short',day:'2-digit'}); };
+    const fmtDateTime = (s) => { if(!s) return '-'; return new Date(s).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:true}); };
     let APP_CURRENCY = 'MVR';
     const fmtCur = (a, currency) => (currency || APP_CURRENCY || 'MVR') + ' ' + (parseFloat(a)||0).toFixed(2);
     const statusCls = (s) => { if(!s) return ''; const m = {available:'status-available',booked:'status-booked',checkedout:'status-checkedout',maintenance:'status-maintenance',draft:'status-draft',sent:'status-sent',accepted:'status-accepted',expired:'status-expired',income:'status-income',expense:'status-expense',paid:'status-paid',partial:'status-partial',unpaid:'status-unpaid',overdue:'status-overdue',cancelled:'status-cancelled',converted:'status-converted',reserved:'status-reserved'}; return m[s.toLowerCase().replace(/\s+/g,'')] || ''; };

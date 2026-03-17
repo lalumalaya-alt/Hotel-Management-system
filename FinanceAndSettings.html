@@ -14,6 +14,7 @@
       const [typeCaps,setTypeCaps]=useState({});
       const [chkLd,setChkLd]=useState(false);
       const tRef=useRef(null);
+      const [editRowIndex, setEditRowIndex] = useState(null);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});
 
       useEffect(()=>{
@@ -28,12 +29,17 @@
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
           {data:'checkInId',title:'ID'},{data:'guestName',title:'Guest'},{data:'roomNumbers',title:'Rooms'},{data:'mobile',title:'Phone'},
           {data:'checkInDate',title:'Check-In',render:d=>fmtDate(d)},{data:'checkOutDate',title:'Expected Out',render:d=>d?fmtDate(d):'-'},
-          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'}
+          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'},
+          {data:null,title:'Actions',orderable:false,className:'text-center',render:()=>'<button class="btn btn-sm btn-primary edit-ci-btn" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-danger co-ci-btn" title="Checkout"><i class="fas fa-sign-out-alt"></i></button>'}
         ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
           {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'desc']]});tRef.current=t;}catch(e){console.error(e);}},150);};
+        ],order:[[0,'desc']]});
+          t.on('click','.edit-ci-btn',function(){const row=t.row($(this).parents('tr')).data();handleEdit(row);});
+          t.on('click','.co-ci-btn',function(){const row=t.row($(this).parents('tr')).data();handleCheckout(row.checkInId);});
+          tRef.current=t;
+        }catch(e){console.error(e);}},150);};
 
       const toggleRoom=(rn, isAvail)=>{
         if(!isAvail) return;
@@ -119,20 +125,67 @@
         }
       };
 
-      const resetForm=(keepMode=false)=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});setSelectedRooms([]);setOrigRooms([]);setLinkedBooking(null);setSelBooking('');if(!keepMode)setMode('');};
+      const resetForm=(keepMode=false)=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});setSelectedRooms([]);setOrigRooms([]);setLinkedBooking(null);setSelBooking('');setEditRowIndex(null);if(!keepMode)setMode('');};
+
+      const handleEdit=(row)=>{
+        if(row.status === 'Checked Out'){Swal.fire({icon:'warning',text:'Cannot edit a checked-out record.'});return;}
+        setMode('walkin'); // Force walkin mode for edits so search box hides, but let's keep it simple.
+        setEditRowIndex(row.rowIndex);
+        const rn = row.roomNumbers?row.roomNumbers.split(',').map(r=>r.trim()).filter(r=>r):[];
+        setSelectedRooms(rn);
+        setOrigRooms(rn);
+        setFd({
+          guestName:row.guestName||'',companyName:row.companyName||'',gstNumber:row.gstNumber||'',identityProof:row.identityProof||'',mobile:row.mobile||'',email:row.email||'',address:row.address||'',purposeOfVisit:row.purposeOfVisit||'',
+          checkInDate:row.checkInDate?row.checkInDate.split('T')[0]:'',checkInTime:row.checkInTime||'14:00',
+          checkOutDate:row.checkOutDate?row.checkOutDate.split('T')[0]:'',checkOutTime:row.checkOutTime||'12:00',
+          pax:row.pax||1,extraPerson:row.extraPerson||0,advancePaid:row.advancePaid||0,foodPlan:row.foodPlan||'None',
+          gstType:row.gstType||'Excluding',fixRoomRent:row.fixRoomRent||'No',fixRoomRentAmount:row.fixRoomRentAmount||0,
+          billTo:row.billTo||'Individual',discountPercent:row.discountPercent||0
+        });
+        window.scrollTo({top:0,behavior:'smooth'});
+      };
+
+      const handleCheckout=(ciId)=>{
+        Swal.fire({
+          title: 'Checkout Guest?',
+          text: `Are you sure you want to checkout check-in ID ${ciId}?`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, Checkout',
+          confirmButtonColor: '#ea4335'
+        }).then(res => {
+          if (res.isConfirmed) {
+            Swal.fire({title:'Processing...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            google.script.run.withSuccessHandler(r=>{
+              if(r.success) { Swal.fire('Checked Out!', r.message, 'success'); loadCheckIns(); }
+              else { Swal.fire('Error', r.message, 'error'); }
+            }).withFailureHandler(e=>Swal.fire('Error',e.message,'error')).processFullCheckout(ciId, {});
+          }
+        });
+      };
 
       const submit=(e)=>{e.preventDefault();
         if(!fd.guestName.trim()){Swal.fire({icon:'warning',text:'Guest Name is required.'});return;}
         if(selectedRooms.length===0){Swal.fire({icon:'warning',text:'Select at least one room.'});return;}
         if(!fd.checkInDate){Swal.fire({icon:'warning',text:'Check-in date is required.'});return;}
         setSaving(true);Swal.fire({title:'Processing Check-In...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        google.script.run.withSuccessHandler(res=>{Swal.close();setSaving(false);
-          if(res.success){Swal.fire({icon:'success',title:'Check-In Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();loadCheckIns();
-            google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();
-          }else Swal.fire({icon:'error',text:res.message});
-        }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).addCheckIn({
+        const payload = {
           linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,advancePaid:fd.advancePaid,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRent,fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent
-        });
+        };
+
+        if (editRowIndex) {
+          google.script.run.withSuccessHandler(res=>{Swal.close();setSaving(false);
+            if(res.success){Swal.fire({icon:'success',title:'Updated Successfully!',text:res.message,timer:2500,showConfirmButton:false});resetForm();loadCheckIns();
+              google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();
+            }else Swal.fire({icon:'error',text:res.message});
+          }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).updateCheckIn(editRowIndex, payload);
+        } else {
+          google.script.run.withSuccessHandler(res=>{Swal.close();setSaving(false);
+            if(res.success){Swal.fire({icon:'success',title:'Check-In Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();loadCheckIns();
+              google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();
+            }else Swal.fire({icon:'error',text:res.message});
+          }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).addCheckIn(payload);
+        }
       };
 
       return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-door-open"></i> Check-In</h2><div style={{display:'flex',gap:'10px'}}><button className="btn btn-secondary" onClick={()=>resetForm(false)}><i className="fas fa-eraser"></i> Clear</button><button className="btn btn-primary" onClick={()=>{loadCheckIns();google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();}}><i className="fas fa-sync"></i> Refresh</button></div></div>
@@ -194,7 +247,7 @@
             {selectedRooms.length>0&&<p style={{marginTop:'8px',color:'var(--navy-primary)',fontWeight:'600'}}>Selected: {selectedRooms.map(r=>'#'+r).join(', ')}</p>}
           </div>
 
-          <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>
+          <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-save"></i> {editRowIndex ? 'Update Check-In' : 'Complete Check-In'}</>}</button><button type="button" className="btn btn-secondary" onClick={()=>resetForm(false)}><i className="fas fa-undo"></i> Reset</button></div>
         </form>}
 
         <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
