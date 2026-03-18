@@ -23,20 +23,22 @@
         return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
 
-      const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);initT(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
+      const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);const checkIns = Array.isArray(r)?r:[]; const activeCheckIns = checkIns.filter(c => c.status === 'Active'); initT(activeCheckIns);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
           {data:'checkInId',title:'ID'},{data:'guestName',title:'Guest'},{data:'roomNumbers',title:'Rooms'},{data:'mobile',title:'Phone'},
           {data:'checkInDate',title:'Check-In',render:d=>fmtDate(d)},{data:'checkOutDate',title:'Expected Out',render:d=>d?fmtDate(d):'-'},
-          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'},
-          {data:null,title:'Actions',orderable:false,className:'text-center',render:()=>'<button class="btn btn-sm btn-primary edit-ci-btn" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-danger co-ci-btn" title="Checkout"><i class="fas fa-sign-out-alt"></i></button>'}
+          {data:'pax',title:'Pax'},
+          {data:null,title:'Actions',orderable:false,className:'text-center',render:()=>'<button class="btn btn-sm btn-primary edit-ci-btn" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-info add-pax-btn" title="Add Extra Person"><i class="fas fa-user-plus"></i></button> <button class="btn btn-sm btn-warning shift-rm-btn" title="Change Rooms"><i class="fas fa-exchange-alt"></i></button> <button class="btn btn-sm btn-danger co-ci-btn" title="Checkout"><i class="fas fa-sign-out-alt"></i></button>'}
         ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
           {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
         ],order:[[0,'desc']]});
           t.on('click','.edit-ci-btn',function(){const row=t.row($(this).parents('tr')).data();handleEdit(row);});
+          t.on('click','.add-pax-btn',function(){const row=t.row($(this).parents('tr')).data();handleEdit(row);});
+          t.on('click','.shift-rm-btn',function(){const row=t.row($(this).parents('tr')).data();handleEdit(row);});
           t.on('click','.co-ci-btn',function(){const row=t.row($(this).parents('tr')).data();handleCheckout(row.checkInId);});
           tRef.current=t;
         }catch(e){console.error(e);}},150);};
@@ -253,7 +255,7 @@
         </form>}
 
         <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
-          {ld&&<TableSkeleton rows={5} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="ciT" className="display" style={{width:'100%'}}></table></div>
+          {ld&&<TableSkeleton rows={5} columns={7}/>}<div style={{display:ld?'none':'block'}}><table id="ciT" className="display" style={{width:'100%'}}></table></div>
         </div>
       </div>);
     }
