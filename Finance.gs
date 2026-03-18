@@ -1368,7 +1368,7 @@ function setupDemoData() {
 
   // CHECKIN (28 columns)
   const checkinSheet = ss.insertSheet(CHECKIN_SHEET_NAME);
-  checkinSheet.appendRow(["CheckInID", "LinkedTicketID", "GuestName", "CompanyName", "GSTNumber", "IdentityProof", "Mobile", "Email", "Address", "PurposeOfVisit", "CheckInDate", "CheckInTime", "CheckOutDate", "CheckOutTime", "RoomNumbers", "RoomTypes", "NumberOfRooms", "Pax", "AdvancePaid", "ExtraPerson", "FoodPlan", "GSTType", "FixRoomRent", "FixRoomRentAmount", "BillTo", "DiscountPercent", "Status", "CreatedAt"]);
+  checkinSheet.appendRow(["CheckInID", "LinkedTicketID", "GuestName", "CompanyName", "GSTNumber", "IdentityProof", "Mobile", "Email", "Address", "PurposeOfVisit", "CheckInDate", "CheckInTime", "CheckOutDate", "CheckOutTime", "RoomNumbers", "RoomTypes", "NumberOfRooms", "Pax", "AdvancePaid", "ExtraPerson", "FoodPlan", "GSTType", "FixRoomRent", "FixRoomRentAmount", "BillTo", "DiscountPercent", "Status", "CreatedAt", "RoomHistory"]);
 
   // RESTAURANT (9 columns)
   const restaurantSheet = ss.insertSheet(RESTAURANT_SHEET_NAME);
