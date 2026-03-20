@@ -17,6 +17,16 @@ const INVOICES_SHEET_NAME   = "Invoices";
 const SETTINGS_SHEET_NAME   = "Settings";
 const BUDGETS_SHEET_NAME    = "Budgets";
 const CATEGORIES_SHEET_NAME = "Categories";
+const STAY_SEGMENTS_SHEET_NAME = "StaySegments";
+
+// STAY_SEGMENTS sheet columns (0-based)
+const SEG_ID_COL         = 0;
+const SEG_CHECKIN_ID_COL = 1;
+const SEG_ROOM_NOS_COL   = 2;
+const SEG_RATE_COL       = 3;
+const SEG_PAX_COL        = 4;
+const SEG_START_DATE_COL = 5;
+const SEG_END_DATE_COL   = 6;
 
 // ROOMS sheet columns (0-based)
 const ROOM_NO_COL          = 0;
@@ -506,8 +516,11 @@ function generateFinanceId() {
 }
 
 function daysBetween(d1, d2) {
-  let diff = d2.getTime() - d1.getTime();
-  let days = Math.ceil(diff / (1000 * 3600 * 24));
+  // Strip out the time component to compare strict calendar days
+  let date1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  let date2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  let diff = date2.getTime() - date1.getTime();
+  let days = Math.round(diff / (1000 * 3600 * 24));
   return days;
 }
 
@@ -1157,6 +1170,36 @@ function addCheckIn(checkInData) {
       }
     }
 
+    // Calculate initial daily rate for StaySegments
+    let initialDailyRate = 0;
+    if (checkInData.fixRoomRent === 'Yes') {
+      initialDailyRate = parseFloat(checkInData.fixRoomRentAmount) || 0;
+    } else {
+      for (let r = 0; r < roomNosArr.length; r++) {
+        for (let i = 1; i < roomsData.length; i++) {
+          if ((roomsData[i][ROOM_NO_COL] || '').toString() === roomNosArr[r]) {
+            initialDailyRate += parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
+            break;
+          }
+        }
+      }
+    }
+
+    // Append a new row to the StaySegments sheet
+    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+    if (staySegmentsSheet) {
+      const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+      staySegmentsSheet.appendRow([
+        newSegmentId,
+        checkInId,
+        roomNumbers,
+        initialDailyRate,
+        parseInt(checkInData.pax) || 1,
+        now,
+        ""
+      ]);
+    }
+
     SpreadsheetApp.flush();
     return { success: true, message: `Check-in successful. ID: ${checkInId}`, checkInId };
   } catch (e) {
@@ -1604,9 +1647,9 @@ function processFullCheckout(checkInId, checkoutData) {
     let nights = daysBetween(checkInDate, actualCheckOutDate);
     if (nights < 1) nights = 1;
 
-    // Calculate room rent
+    // Calculate room rent using StaySegments if available
     let roomNosArr = roomNumbers.split(',').map(r => r.trim()).filter(r => r);
-    let dailyRoomRate = 0;
+    let dailyRoomRate = 0; // Legacy fallback calculation
     if (fixRoomRent === 'Yes' && fixRoomRentAmount > 0) {
       dailyRoomRate = fixRoomRentAmount;
     } else {
@@ -1620,7 +1663,66 @@ function processFullCheckout(checkInId, checkoutData) {
         }
       }
     }
-    let totalRoomRent = dailyRoomRate * nights;
+    let totalRoomRent = 0;
+    let staySegments = [];
+
+    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+    if (staySegmentsSheet) {
+      const segmentsData = staySegmentsSheet.getDataRange().getValues();
+      for (let i = 1; i < segmentsData.length; i++) {
+        if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === checkInId.toString()) {
+          let segStartDateStr = (segmentsData[i][SEG_START_DATE_COL] || '').toString();
+          let segEndDateStr = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
+
+          if (!segEndDateStr) {
+             // Close the active segment
+             segEndDateStr = actualCheckOutDate.toISOString();
+             staySegmentsSheet.getRange(i + 1, SEG_END_DATE_COL + 1).setValue(segEndDateStr);
+          }
+
+          if (segStartDateStr && segEndDateStr) {
+            let segStartDate = new Date(segStartDateStr);
+            let segEndDate = new Date(segEndDateStr);
+            // Ensure minimum of 1 night for the overall stay, but 0-night segments are possible if swapped same day
+            let segNights = daysBetween(segStartDate, segEndDate);
+            if (segNights < 0) segNights = 0;
+
+            let segRate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
+
+            staySegments.push({
+              startDate: segStartDate,
+              endDate: segEndDate,
+              nights: segNights,
+              rate: segRate,
+              roomNos: (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString(),
+              pax: parseInt(segmentsData[i][SEG_PAX_COL]) || 1
+            });
+          }
+        }
+      }
+
+      // Calculate total rent based on actual segments
+      if (staySegments.length === 1 && staySegments[0].nights === 0 && nights === 1) {
+        staySegments[0].nights = 1;
+      }
+
+      for (let s of staySegments) {
+        totalRoomRent += s.rate * s.nights;
+      }
+    }
+
+    // Fallback to legacy calculation if no segments found
+    if (staySegments.length === 0) {
+      totalRoomRent = dailyRoomRate * nights;
+      staySegments.push({
+        startDate: checkInDate,
+        endDate: actualCheckOutDate,
+        nights: nights,
+        rate: dailyRoomRate,
+        roomNos: roomNumbers,
+        pax: pax
+      });
+    }
 
     // Get food/service orders by category for day-by-day breakdown
     let foodOrders = [];
@@ -1683,7 +1785,23 @@ function processFullCheckout(checkInId, checkoutData) {
       dayDate.setDate(dayDate.getDate() + d);
       let dateStr = dayDate.toISOString().split('T')[0];
 
-      let dayRoom = dailyRoomRate;
+      // Find applicable segment rate for this specific day
+      let dayRoom = dailyRoomRate; // fallback
+      if (staySegments.length > 0) {
+        // Find segment active on this day. If multiple, take the last one started that day.
+        for (let s = staySegments.length - 1; s >= 0; s--) {
+          let seg = staySegments[s];
+          let segStartStr = seg.startDate.toISOString().split('T')[0];
+          let segEndStr = seg.endDate.toISOString().split('T')[0];
+          if (dateStr >= segStartStr && dateStr < segEndStr) {
+            dayRoom = seg.rate;
+            break;
+          } else if (dateStr === segStartStr && seg.nights === 0) {
+            // For a 0-night segment, it doesn't span a whole day, ignore for day room rate unless it's the only one
+          }
+        }
+      }
+
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
 
       foodOrders.forEach(o => {
@@ -4313,7 +4431,7 @@ function askAIAssistant(question, username, role, chatHistory) {
  ***************************************************/
 function setupDemoData() {
   const ss = SpreadsheetApp.openById(SS_ID);
-  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, QUOTES_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME];
+  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, QUOTES_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME];
 
   // --- 1. Delete all existing sheets ---
   let tempSheet = ss.insertSheet("_TEMP_SETUP_");
@@ -4374,6 +4492,10 @@ function setupDemoData() {
   // RESTAURANT (9 columns)
   const restaurantSheet = ss.insertSheet(RESTAURANT_SHEET_NAME);
   restaurantSheet.appendRow(["OrderID", "RoomNo", "CheckInID", "OrderDate", "Category", "Description", "Amount", "Status", "CreatedAt"]);
+
+  // STAY SEGMENTS
+  const staySegmentsSheet = ss.insertSheet(STAY_SEGMENTS_SHEET_NAME);
+  staySegmentsSheet.appendRow(["SegmentID", "CheckInID", "RoomNos", "Rate", "Pax", "StartDate", "EndDate"]);
 
   // Delete temp sheet
   ss.deleteSheet(tempSheet);
@@ -4561,7 +4683,7 @@ function setupDemoData() {
   restaurantSheet.getRange(2, 1, restaurantData.length, 9).setValues(restaurantData);
 
   // --- 4. Format header rows ---
-  [loginSheet, roomsSheet, bookingsSheet, quotesSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet].forEach(function(sheet) {
+  [loginSheet, roomsSheet, bookingsSheet, quotesSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet, staySegmentsSheet].forEach(function(sheet) {
     const lastCol = sheet.getLastColumn();
     if (lastCol > 0) {
       const headerRange = sheet.getRange(1, 1, 1, lastCol);
@@ -4573,4 +4695,101 @@ function setupDemoData() {
   });
 
   SpreadsheetApp.getUi().alert("Demo data setup complete!\n\nLogin credentials:\n• admin@demo.com / admin123 (Admin)\n• user1@demo.com / user123 (User)\n• user2@demo.com / user123 (User)\n• client1@demo.com / client123 (Client)\n• client2@demo.com / client123 (Client)\n\nSheets created: " + sheetNames.join(", ") + "\n\nNew sheets added: CheckIn, Restaurant");
+}
+
+function updateStaySegment(checkInId, newRoomNos, newRate, newPax) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+    const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+
+    if (!staySegmentsSheet || !checkInSheet || !roomsSheet) {
+      return { success: false, message: "Required sheets not found." };
+    }
+
+    const now = new Date().toISOString();
+    let oldRoomNosStr = "";
+
+    // 1. Find the active segment for this checkInId and end it
+    const segmentsData = staySegmentsSheet.getDataRange().getValues();
+    let activeSegmentRow = -1;
+    for (let i = 1; i < segmentsData.length; i++) {
+      if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === checkInId.toString()) {
+        const endDate = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
+        if (!endDate) {
+          activeSegmentRow = i + 1; // 1-based index
+          oldRoomNosStr = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
+          staySegmentsSheet.getRange(activeSegmentRow, SEG_END_DATE_COL + 1).setValue(now);
+          break;
+        }
+      }
+    }
+
+    if (activeSegmentRow === -1) {
+       return { success: false, message: "No active stay segment found to update." };
+    }
+
+    // 2. Append a brand new row to the StaySegments sheet for the new segment
+    const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+    staySegmentsSheet.appendRow([
+      newSegmentId,
+      checkInId,
+      newRoomNos,
+      parseFloat(newRate) || 0,
+      parseInt(newPax) || 1,
+      now,
+      ""
+    ]);
+
+    // 3. Open the CheckIn sheet, find the main check-in row, and overwrite RoomNumbers and Pax
+    const checkInData = checkInSheet.getDataRange().getValues();
+    let ciRowIndex = -1;
+    for (let i = 1; i < checkInData.length; i++) {
+      if ((checkInData[i][CI_ID_COL] || '').toString() === checkInId.toString()) {
+        ciRowIndex = i + 1;
+        checkInSheet.getRange(ciRowIndex, CI_ROOM_NUMBERS_COL + 1).setValue(newRoomNos);
+        checkInSheet.getRange(ciRowIndex, CI_PAX_COL + 1).setValue(newPax);
+        // Also update number of rooms to reflect the new state
+        const newRoomsArr = newRoomNos.split(',').map(r => r.trim()).filter(r => r);
+        checkInSheet.getRange(ciRowIndex, CI_NUM_ROOMS_COL + 1).setValue(newRoomsArr.length);
+        break;
+      }
+    }
+
+    // 4. Update the Rooms sheet: Compare old room numbers with new room numbers
+    const oldRoomsArr = oldRoomNosStr.split(',').map(r => r.trim()).filter(r => r);
+    const newRoomsArr = newRoomNos.split(',').map(r => r.trim()).filter(r => r);
+    const roomsData = roomsSheet.getDataRange().getValues();
+
+    // Change any old rooms that are no longer occupied to "Available"
+    for (let o = 0; o < oldRoomsArr.length; o++) {
+      if (newRoomsArr.indexOf(oldRoomsArr[o]) === -1) {
+        for (let j = 1; j < roomsData.length; j++) {
+          if ((roomsData[j][ROOM_NO_COL] || '').toString() === oldRoomsArr[o]) {
+             roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+             break;
+          }
+        }
+      }
+    }
+
+    // Change any newly added rooms to "Booked"
+    for (let n = 0; n < newRoomsArr.length; n++) {
+      if (oldRoomsArr.indexOf(newRoomsArr[n]) === -1) {
+        for (let j = 1; j < roomsData.length; j++) {
+          if ((roomsData[j][ROOM_NO_COL] || '').toString() === newRoomsArr[n]) {
+             roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Booked");
+             break;
+          }
+        }
+      }
+    }
+
+    SpreadsheetApp.flush();
+    return { success: true, message: "Stay segment updated successfully." };
+  } catch (e) {
+    Logger.log("Error in updateStaySegment: " + e.toString());
+    return { success: false, message: e.message };
+  }
 }

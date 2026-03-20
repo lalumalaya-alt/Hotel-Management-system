@@ -608,8 +608,14 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const LOGO = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGXxCe0WNNedmFqSWeF761f7Kshhc-NP5ChRQKz9fr97cO8VaarvD0KlCwqHojJVBWv-RAxfOqMI5rD4H78KnARyOc6QgwL1nRRFWf5xNQ1d9F9HfAoLPPGlTyP0GwNl4n-INMEsWLQ4Y7zJtz5bOdAnc2ePH9-uCRgshlo6BsS6gJEz6fhrxL-5U5O3sX/s160/channels4_profile.jpg';
-    const fmtDate = (s) => { if(!s) return '-'; return new Date(s).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',year:'numeric',month:'short',day:'2-digit'}); };
-    const fmtDateTime = (s) => { if(!s) return '-'; return new Date(s).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:true}); };
+    const fmtDate = (s) => {
+      if(!s) return '-';
+      return new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit' });
+    };
+    const fmtDateTime = (s) => {
+      if(!s) return '-';
+      return new Date(s).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true });
+    };
     let APP_CURRENCY = 'MVR';
     const fmtCur = (a, currency) => (currency || APP_CURRENCY || 'MVR') + ' ' + (parseFloat(a)||0).toFixed(2);
     const statusCls = (s) => { if(!s) return ''; const m = {available:'status-available',booked:'status-booked',checkedout:'status-checkedout',maintenance:'status-maintenance',draft:'status-draft',sent:'status-sent',accepted:'status-accepted',expired:'status-expired',income:'status-income',expense:'status-expense',paid:'status-paid',partial:'status-partial',unpaid:'status-unpaid',overdue:'status-overdue',cancelled:'status-cancelled',converted:'status-converted',reserved:'status-reserved'}; return m[s.toLowerCase().replace(/\s+/g,'')] || ''; };
@@ -1215,6 +1221,7 @@
       const [ld,setLd]=useState(true);
       const [saving,setSaving]=useState(false);
       const tRef=useRef(null);
+      const [updateRec,setUpdateRec]=useState(null);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRent:'No',fixRoomRentAmount:0,billTo:'Individual',discountPercent:0});
 
       useEffect(()=>{
@@ -1229,12 +1236,13 @@
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
           {data:'checkInId',title:'ID'},{data:'guestName',title:'Guest'},{data:'roomNumbers',title:'Rooms'},{data:'mobile',title:'Phone'},
           {data:'checkInDate',title:'Check-In',render:d=>fmtDate(d)},{data:'checkOutDate',title:'Expected Out',render:d=>d?fmtDate(d):'-'},
-          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'}
+          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'},
+          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:(d,tp,row)=>{if(row.status==='Active')return '<button class="action-icon edit-icon" data-action="switch" title="Switch Room / Update Pax"><i class="fas fa-exchange-alt"></i></button>';return '-';}}
         ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
           {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'desc']]});tRef.current=t;}catch(e){console.error(e);}},150);};
+        ],order:[[0,'desc']]});$('#ciT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='switch'){setUpdateRec(rd);}});tRef.current=t;}catch(e){console.error(e);}},150);};
 
       const toggleRoom=(rn)=>{setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
 
@@ -1314,7 +1322,100 @@
         <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
           {ld&&<TableSkeleton rows={5} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="ciT" className="display" style={{width:'100%'}}></table></div>
         </div>
+        {updateRec && <UpdateStayModal rec={updateRec} onClose={() => setUpdateRec(null)} onRefresh={loadCheckIns} allRooms={rooms} />}
       </div>);
+    }
+
+    function UpdateStayModal({rec, onClose, onRefresh, allRooms}){
+      const [roomIds, setRoomIds]=useState([]);
+      const [pax, setPax]=useState(1);
+      const [newRate, setNewRate]=useState(0);
+      const [sv, setSv]=useState(false);
+
+      useEffect(()=>{
+        if(rec){
+          setRoomIds((rec.roomNumbers||'').split(',').map(s=>s.trim()).filter(s=>s));
+          setPax(parseInt(rec.pax)||1);
+          // Set an initial estimated rate based on the first mapped room or default to 0
+          const initialRooms = (rec.roomNumbers||'').split(',').map(s=>s.trim()).filter(s=>s);
+          if(initialRooms.length > 0 && allRooms){
+              let totalEst = 0;
+              initialRooms.forEach(rn => {
+                 const rm = allRooms.find(r=>r.roomNo.toString()===rn);
+                 if(rm) totalEst += parseFloat(rm.roomRate) || 0;
+              });
+              setNewRate(totalEst);
+          }
+        }
+      }, [rec, allRooms]);
+
+      const submit=(e)=>{
+        e.preventDefault();
+        if(roomIds.length===0){ Swal.fire({icon:'warning',text:'Select at least one room.'}); return; }
+        setSv(true);
+        google.script.run.withSuccessHandler(r=>{
+          setSv(false);
+          if(r.success){
+            Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});
+            onRefresh();
+            onClose();
+          } else { Swal.fire({icon:'error',text:r.message}); }
+        }).withFailureHandler(err=>{
+          setSv(false); Swal.fire({icon:'error',text:err.message});
+        }).updateStaySegment(rec.checkInId, roomIds.join(','), newRate, pax);
+      };
+
+      return(
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-exchange-alt"></i> Update Stay (Mid-Stay)</h3>
+              <button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body">
+              <p style={{fontSize:'13px',color:'#666',marginBottom:'15px'}}>Update rooms and pax for the rest of the stay.</p>
+              <form onSubmit={submit}>
+                <div className="form-group">
+                  <label>Current/New Rooms *</label>
+                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'5px'}}>
+                    {allRooms.map(rm=>(
+                      <button key={rm.roomNo} type="button" onClick={()=>{ setRoomIds(p=>p.includes(rm.roomNo.toString())?p.filter(x=>x!==rm.roomNo.toString()):[...p,rm.roomNo.toString()]) }}
+                        className={`btn ${roomIds.includes(rm.roomNo.toString())?'btn-primary':'btn-secondary'}`} style={{padding:'6px 12px',fontSize:'13px',borderRadius:'4px'}}>
+                        #{rm.roomNo} ({rm.roomType})
+                      </button>
+                    ))}
+                    {(rec.roomNumbers||'').split(',').map(s=>s.trim()).filter(s=>s).map(rn=>{
+                      if(!allRooms.find(x=>x.roomNo.toString()===rn)){
+                        return(
+                          <button key={rn} type="button" onClick={()=>{ setRoomIds(p=>p.includes(rn)?p.filter(x=>x!==rn):[...p,rn]) }}
+                            className={`btn ${roomIds.includes(rn)?'btn-primary':'btn-secondary'}`} style={{padding:'6px 12px',fontSize:'13px',borderRadius:'4px'}}>
+                            #{rn}
+                          </button>
+                        )
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+                <div className="form-grid" style={{marginTop:'15px'}}>
+                  <div className="form-group">
+                    <label>Pax *</label>
+                    <input type="number" min="1" value={pax} onChange={e=>setPax(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>New Daily Rate ({APP_CURRENCY}) *</label>
+                    <input type="number" step="0.01" min="0" value={newRate} onChange={e=>setNewRate(e.target.value)} required />
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save</>}</button>
+                  <button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     function RestaurantView({user}){
@@ -1392,8 +1493,8 @@
 
     function HotelInvoiceModal({data,onClose}){
       const d=data;
-      const fmtD=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'2-digit',year:'numeric'});};
-      const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short'});};
+      const fmtD=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});};
+      const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
       const n2=(v)=>(parseFloat(v)||0).toFixed(2);
       const cats=['extraBed','foodBev','miniBar','earlyClean','xerox','laundry','fax','spbuc','travels','misc'];
 const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fax','SP/BUC','Travels','Misc'];
@@ -2252,7 +2353,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
 
       const suggestions=isAdmin?['Monthly revenue breakdown','Total income vs expenses','Show all bookings','Show overdue invoices']:['What are my bookings?','My checkout details','My booking status','My payment summary'];
 
-      const fmtTime=(d)=>{if(!d)return '';return new Date(d).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true});};
+      const fmtTime=(d)=>{if(!d)return '';return new Date(d).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});};
 
       return(<div className="chat-container">
         <div className="chat-header">
