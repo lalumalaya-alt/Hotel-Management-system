@@ -1225,16 +1225,36 @@
 
       const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);initT(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
 
+
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
           {data:'checkInId',title:'ID'},{data:'guestName',title:'Guest'},{data:'roomNumbers',title:'Rooms'},{data:'mobile',title:'Phone'},
           {data:'checkInDate',title:'Check-In',render:d=>fmtDate(d)},{data:'checkOutDate',title:'Expected Out',render:d=>d?fmtDate(d):'-'},
-          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'}
+          {data:'pax',title:'Pax'},{data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'},
+          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:(d,tp,row)=>{
+              if((row.status||'').toLowerCase()==='active'){
+                  return '<button class="action-icon edit-icon" data-action="edit" title="Edit Options"><i class="fas fa-edit"></i></button>';
+              }
+              return '-';
+          }}
         ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
           {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'desc']]});tRef.current=t;}catch(e){console.error(e);}},150);};
+        ],order:[[0,'desc']]});
+
+        $('#ciT').off('click','.action-icon').on('click','.action-icon',function(){
+            const a=$(this).data('action');
+            const tr=$(this).closest('tr');
+            const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();
+            if(a==='edit'){
+                setEditCheckIn(rd);
+                setShowEditModal(true);
+            }
+        });
+
+        tRef.current=t;}catch(e){console.error(e);}},150);};
+
 
       const toggleRoom=(rn)=>{setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
 
@@ -1311,7 +1331,125 @@
           <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>
         </form>
 
-        <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
+
+      {showEditModal && editCheckIn && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+            <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3><i className="fas fa-edit"></i> Edit Check-In: {editCheckIn.checkInId}</h3>
+                    <button className="close-btn" onClick={() => setShowEditModal(false)}><i className="fas fa-times"></i></button>
+                </div>
+                <div className="modal-body" style={{display:'flex', gap:'20px', flexWrap:'wrap'}}>
+                    {/* Extend Checkout Date */}
+                    <div className="form-section" style={{flex:'1 1 300px', padding:'15px', border:'1px solid #ddd', borderRadius:'8px'}}>
+                        <h4><i className="fas fa-calendar-plus"></i> Extend Checkout Date</h4>
+                        <div className="form-group" style={{marginTop:'10px'}}>
+                            <label>New Expected Out Date</label>
+                            <input type="date" id="newCheckOutDate" defaultValue={editCheckIn.checkOutDate ? editCheckIn.checkOutDate.split('T')[0] : ''} />
+                        </div>
+                        <button className="btn btn-primary" onClick={() => {
+                            const newDate = document.getElementById('newCheckOutDate').value;
+                            if(!newDate) return Swal.fire({icon:'warning', text:'Select a date.'});
+                            setSaving(true);
+                            google.script.run.withSuccessHandler(r => {
+                                setSaving(false);
+                                if(r.success) {
+                                    Swal.fire({icon:'success', text:r.message, timer:2000, showConfirmButton:false});
+                                    setShowEditModal(false);
+                                    loadCheckIns();
+                                } else Swal.fire({icon:'error', text:r.message});
+                            }).withFailureHandler(e => {setSaving(false);Swal.fire({icon:'error', text:e.message})}).extendCheckoutDate(editCheckIn.rowIndex, newDate);
+                        }} disabled={saving}>Extend</button>
+                    </div>
+
+                    {/* Add Extra Person */}
+                    <div className="form-section" style={{flex:'1 1 300px', padding:'15px', border:'1px solid #ddd', borderRadius:'8px'}}>
+                        <h4><i className="fas fa-user-plus"></i> Add Extra Person</h4>
+                        <div className="form-group" style={{marginTop:'10px'}}>
+                            <label>Date</label>
+                            <input type="date" id="paxDate" defaultValue={new Date().toISOString().split('T')[0]} />
+                        </div>
+                        <div className="form-group">
+                            <label>Count</label>
+                            <input type="number" min="1" id="paxCount" defaultValue="1" />
+                        </div>
+                        <button className="btn btn-primary" onClick={() => {
+                            const date = document.getElementById('paxDate').value;
+                            const count = parseInt(document.getElementById('paxCount').value) || 1;
+                            const room = (editCheckIn.roomNumbers || '').split(',')[0];
+                            if(!date) return Swal.fire({icon:'warning', text:'Select a date.'});
+                            setSaving(true);
+                            google.script.run.withSuccessHandler(r => {
+                                setSaving(false);
+                                if(r.success) {
+                                    Swal.fire({icon:'success', text:r.message, timer:2000, showConfirmButton:false});
+                                    setShowEditModal(false);
+                                } else Swal.fire({icon:'error', text:r.message});
+                            }).withFailureHandler(e => {setSaving(false);Swal.fire({icon:'error', text:e.message})}).addExtraPersonToRestaurant(editCheckIn.checkInId, room, date, count);
+                        }} disabled={saving}>Add Person</button>
+                    </div>
+
+                    {/* Shift Room */}
+                    <div className="form-section" style={{flex:'1 1 300px', padding:'15px', border:'1px solid #ddd', borderRadius:'8px'}}>
+                        <h4><i className="fas fa-exchange-alt"></i> Shift Room</h4>
+                        <div className="form-group" style={{marginTop:'10px'}}>
+                            <label>Select New Room(s)</label>
+                            <select id="shiftRoomSelect" multiple style={{height:'100px'}}>
+                                {rooms.filter(r => r.roomStatus.toLowerCase() === 'available').map(r => (
+                                    <option key={r.roomNo} value={r.roomNo}>{r.roomNo} ({r.roomType})</option>
+                                ))}
+                            </select>
+                            <small>Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                        <button className="btn btn-primary" onClick={() => {
+                            const sel = Array.from(document.getElementById('shiftRoomSelect').selectedOptions).map(o => o.value);
+                            if(sel.length === 0) return Swal.fire({icon:'warning', text:'Select a room.'});
+                            setSaving(true);
+                            google.script.run.withSuccessHandler(r => {
+                                setSaving(false);
+                                if(r.success) {
+                                    Swal.fire({icon:'success', text:r.message, timer:2000, showConfirmButton:false});
+                                    setShowEditModal(false);
+                                    loadCheckIns();
+                                    google.script.run.withSuccessHandler(res => setRooms((Array.isArray(res) ? res : []).filter(rm => (rm.roomStatus || '').toLowerCase() === 'available'))).getAllRooms();
+                                } else Swal.fire({icon:'error', text:r.message});
+                            }).withFailureHandler(e => {setSaving(false);Swal.fire({icon:'error', text:e.message})}).shiftRooms(editCheckIn.rowIndex, editCheckIn.checkInId, sel.join(','));
+                        }} disabled={saving}>Shift Room</button>
+                    </div>
+
+                    {/* Add Extra Room */}
+                    <div className="form-section" style={{flex:'1 1 300px', padding:'15px', border:'1px solid #ddd', borderRadius:'8px'}}>
+                        <h4><i className="fas fa-plus-square"></i> Add Extra Room</h4>
+                        <div className="form-group" style={{marginTop:'10px'}}>
+                            <label>Select Additional Room(s)</label>
+                            <select id="addRoomSelect" multiple style={{height:'100px'}}>
+                                {rooms.filter(r => r.roomStatus.toLowerCase() === 'available').map(r => (
+                                    <option key={r.roomNo} value={r.roomNo}>{r.roomNo} ({r.roomType})</option>
+                                ))}
+                            </select>
+                            <small>Hold Ctrl/Cmd to select multiple</small>
+                        </div>
+                        <button className="btn btn-primary" onClick={() => {
+                            const sel = Array.from(document.getElementById('addRoomSelect').selectedOptions).map(o => o.value);
+                            if(sel.length === 0) return Swal.fire({icon:'warning', text:'Select a room.'});
+                            setSaving(true);
+                            google.script.run.withSuccessHandler(r => {
+                                setSaving(false);
+                                if(r.success) {
+                                    Swal.fire({icon:'success', text:r.message, timer:2000, showConfirmButton:false});
+                                    setShowEditModal(false);
+                                    loadCheckIns();
+                                    google.script.run.withSuccessHandler(res => setRooms((Array.isArray(res) ? res : []).filter(rm => (rm.roomStatus || '').toLowerCase() === 'available'))).getAllRooms();
+                                } else Swal.fire({icon:'error', text:r.message});
+                            }).withFailureHandler(e => {setSaving(false);Swal.fire({icon:'error', text:e.message})}).addExtraRoom(editCheckIn.rowIndex, editCheckIn.checkInId, sel.join(','));
+                        }} disabled={saving}>Add Room</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+      )}
+<div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
           {ld&&<TableSkeleton rows={5} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="ciT" className="display" style={{width:'100%'}}></table></div>
         </div>
       </div>);

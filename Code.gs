@@ -4576,78 +4576,120 @@ function setupDemoData() {
 }
 
 
-/**
- * Adds an extra person charge directly to the Restaurant/Additional Charges sheet.
- */
+
+function extendCheckoutDate(rowIndex, newDateStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('Check-In');
+    if (!sheet) return { success: false, message: "Check-In sheet not found." };
+    sheet.getRange(rowIndex, 7).setValue(newDateStr); // Column G (ExpectedOut)
+    return { success: true, message: "Checkout date extended successfully." };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function addExtraRoom(rowIndex, checkInId, newRoomsStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('Check-In');
+    const roomsSheet = ss.getSheetByName('Rooms');
+
+    // Get existing rooms
+    const existingRoomsStr = sheet.getRange(rowIndex, 8).getValue() || ""; // Column H (RoomNos)
+    const existingRooms = existingRoomsStr.toString().split(',').map(r=>r.trim()).filter(r=>r);
+    const newRooms = newRoomsStr.split(',').map(r=>r.trim()).filter(r=>r);
+
+    // Combine and mark new rooms as Booked
+    const combinedRooms = Array.from(new Set([...existingRooms, ...newRooms]));
+    sheet.getRange(rowIndex, 8).setValue(combinedRooms.join(', '));
+    sheet.getRange(rowIndex, 10).setValue(combinedRooms.length); // Update room count column J
+
+    // Mark new rooms as Booked in Rooms sheet
+    const rData = roomsSheet.getDataRange().getValues();
+    for (let r = 0; r < newRooms.length; r++) {
+      for (let i = 1; i < rData.length; i++) {
+        if ((rData[i][0] || '').toString() === newRooms[r]) {
+          roomsSheet.getRange(i + 1, 4).setValue("Booked"); // Column D (Status)
+          break;
+        }
+      }
+    }
+
+    return { success: true, message: "Added " + newRooms.join(', ') + " to check-in." };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function shiftRooms(rowIndex, checkInId, newRoomsStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('Check-In');
+    const roomsSheet = ss.getSheetByName('Rooms');
+
+    // Get existing rooms
+    const existingRoomsStr = sheet.getRange(rowIndex, 8).getValue() || ""; // Column H (RoomNos)
+    const existingRooms = existingRoomsStr.toString().split(',').map(r=>r.trim()).filter(r=>r);
+    const newRooms = newRoomsStr.split(',').map(r=>r.trim()).filter(r=>r);
+
+    // Free old rooms
+    const rData = roomsSheet.getDataRange().getValues();
+    for (let r = 0; r < existingRooms.length; r++) {
+      for (let i = 1; i < rData.length; i++) {
+        if ((rData[i][0] || '').toString() === existingRooms[r]) {
+          roomsSheet.getRange(i + 1, 4).setValue("Available"); // Column D (Status)
+          break;
+        }
+      }
+    }
+
+    // Update check-in record
+    sheet.getRange(rowIndex, 8).setValue(newRooms.join(', '));
+    sheet.getRange(rowIndex, 10).setValue(newRooms.length); // Update room count column J
+
+    // Book new rooms
+    for (let r = 0; r < newRooms.length; r++) {
+      for (let i = 1; i < rData.length; i++) {
+        if ((rData[i][0] || '').toString() === newRooms[r]) {
+          roomsSheet.getRange(i + 1, 4).setValue("Booked"); // Column D (Status)
+          break;
+        }
+      }
+    }
+
+    return { success: true, message: "Shifted to room(s) " + newRooms.join(', ') + "." };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
 function addExtraPersonToRestaurant(checkInId, roomNo, dateStr, count) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName('Restaurant');
-    if (!sheet) {
-      sheet = ss.getSheetByName('AdditionalCharges');
-      if (!sheet) throw new Error("Charges sheet not found.");
-    }
+    let sheet = ss.getSheetByName('Restaurant') || ss.getSheetByName('AdditionalCharges');
+    if (!sheet) return { success: false, message: "Restaurant/Charges sheet not found." };
 
-    // Default Extra Person cost
-    const costPerPerson = 500; // Using a flat rate here to avoid missing getSettings fields
-
+    const costPerPerson = 500; // Default flat rate
     const totalAmount = count * costPerPerson;
 
     const chargeId = 'RC-' + new Date().getTime();
     const itemName = 'Extra Person Charge (' + count + ' pax)';
 
+    // Format: [ID, Date, CheckIn ID, Room No, Category, Description, Amount, Status]
     sheet.appendRow([
       chargeId,
-      dateStr, // Date
-      checkInId,
       roomNo,
-      itemName,
-      count,
-      costPerPerson,
+      checkInId,
+      dateStr,
+      'Extra Person', // Category
+      itemName, // Description
       totalAmount,
-      'Added via Extra Person Button',
-      'Unpaid'
+      'Active' // Status
     ]);
 
     return { success: true, message: "Added " + count + " extra person(s) for " + totalAmount };
   } catch (err) {
-    Logger.log("addExtraPersonToRestaurant Error: " + err.message);
-    return { success: false, message: err.message };
-  }
-}
-
-/**
- * Shifts a guest from one set of rooms to another.
- */
-function shiftRooms(rowIndex, checkInId, newRoomsStr, newCheckoutDate) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('Check-In');
-    if (!sheet) throw new Error("Check-In sheet not found.");
-
-    const data = sheet.getDataRange().getValues();
-    let targetRow = -1;
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == checkInId) {
-        targetRow = i + 1; // 1-based index
-        break;
-      }
-    }
-
-    if (targetRow === -1) throw new Error("Check-in ID not found.");
-
-    // Update Expected Checkout Date (Col G / index 6, Col H / index 7, Col I / index 8)
-    // Check-In sheet columns:
-    // 0: ID, 1: GuestName, 2: Phone, 3: Email, 4: Address, 5: CheckInDate, 6: ExpectedOut,
-    // 7: RoomNos, 8: Pax, 9: Advance, 10: Status
-
-    // Using checkInId to find the row is safer than rowIndex, so we'll use that.
-    sheet.getRange(targetRow, 7).setValue(newCheckoutDate);
-    sheet.getRange(targetRow, 8).setValue(newRoomsStr);
-
-    return { success: true, message: "Rooms shifted successfully to " + newRoomsStr };
-  } catch (err) {
-    Logger.log("shiftRooms Error: " + err.message);
     return { success: false, message: err.message };
   }
 }
