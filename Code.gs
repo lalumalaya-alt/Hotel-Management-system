@@ -386,11 +386,11 @@ function sendForgotPasswordOTP(email) {
     loginSheet.getRange(userRowIndex, LOGIN_OTP_EXPIRY_COL + 1).setValue(expiry);
     SpreadsheetApp.flush();
 
-    var hotelName = 'MRI Hotel';
+    var hotelName = 'Hill View Eco Retreat';
     try {
       var setSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
-        hotelName = (setSheet.getRange(2, SET_HOTEL_NAME_COL + 1).getValue() || 'MRI Hotel').toString();
+        hotelName = (setSheet.getRange(2, SET_HOTEL_NAME_COL + 1).getValue() || 'Hill View Eco Retreat').toString();
       }
     } catch (se) { Logger.log("Could not load hotel name: " + se); }
 
@@ -657,7 +657,7 @@ function bookRoom(bookingDetails) {
     try {
       if (bookingDetails.email) {
         let subject = `Room Booking Confirmation - Ticket ${ticketId}`;
-        let body = `Hello ${bookingDetails.guestName},\n\nThank you for booking Room(s) #${roomNosStr}.\nCheck-in: ${checkInDate.toISOString()} at ${checkInTime}\nCheck-out: ${checkOutDate.toISOString()} at ${checkOutTime}\nFood Plan: ${foodPlan}\nAdvance Paid: ${advancePaid}\n\nTicket ID: ${ticketId}\n\nWe look forward to your stay!\n- MRI Hotel`;
+        let body = `Hello ${bookingDetails.guestName},\n\nThank you for booking Room(s) #${roomNosStr}.\nCheck-in: ${checkInDate.toISOString()} at ${checkInTime}\nCheck-out: ${checkOutDate.toISOString()} at ${checkOutTime}\nFood Plan: ${foodPlan}\nAdvance Paid: ${advancePaid}\n\nTicket ID: ${ticketId}\n\nWe look forward to your stay!\n- Hill View Eco Retreat`;
         MailApp.sendEmail({ to: bookingDetails.email, subject, body });
       }
     } catch (emailErr) {
@@ -1036,7 +1036,7 @@ function generateInvoiceHtml(invoiceData) {
       </head>
       <body>
         <div class="invoice-container">
-          <h2>MRI Hotel - Invoice</h2>
+          <h2>Hill View Eco Retreat - Invoice</h2>
           <p><strong>Ticket ID:</strong> ${ticketId}</p>
           <p><strong>Guest Name:</strong> ${occupantName}</p>
           <p><strong>Email:</strong> ${email}</p>
@@ -1562,12 +1562,12 @@ function processFullCheckout(checkInId, checkoutData) {
 
     // Read settings for GST
     let gstPercent = 5;
-    let hotelName = 'MRI Hotel', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
+    let hotelName = 'Hill View Eco Retreat', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
     try {
       const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
         const setRow = setSheet.getRange(2, 1, 1, setSheet.getLastColumn()).getValues()[0];
-        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'MRI Hotel').toString();
+        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString();
         hotelAddress = (setRow[SET_HOTEL_ADDRESS_COL] || '').toString();
         hotelPhone = (setRow[SET_HOTEL_PHONE_COL] || '').toString();
         hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
@@ -2976,14 +2976,14 @@ function getSettings() {
     const sheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
     if (!sheet || sheet.getLastRow() < 2) {
       return { success: true, data: {
-        hotelName: 'MRI Hotel', hotelAddress: '', hotelPhone: '', hotelEmail: '', hotelTIN: '',
+        hotelName: 'Hill View Eco Retreat', hotelAddress: '', hotelPhone: '', hotelEmail: '', hotelTIN: '',
         logoFileId: '', logoUrl: '', defaultCurrency: 'MVR', gstDefaultPercent: 16,
         greenTaxDefaultRate: 6, nextInvoiceNum: 1, nextQuoteNum: 1, pdfFolderId: '', logoFolderId: ''
       }};
     }
     const row = sheet.getRange(2, 1, 1, 14).getValues()[0];
     return { success: true, data: {
-      hotelName: (row[SET_HOTEL_NAME_COL] || 'MRI Hotel').toString(),
+      hotelName: (row[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString(),
       hotelAddress: (row[SET_HOTEL_ADDRESS_COL] || '').toString(),
       hotelPhone: (row[SET_HOTEL_PHONE_COL] || '').toString(),
       hotelEmail: (row[SET_HOTEL_EMAIL_COL] || '').toString(),
@@ -3023,7 +3023,7 @@ function updateSettings(settingsData) {
     }
 
     const row = [
-      settingsData.hotelName || 'MRI Hotel',
+      settingsData.hotelName || 'Hill View Eco Retreat',
       settingsData.hotelAddress || '',
       settingsData.hotelPhone || '',
       settingsData.hotelEmail || '',
@@ -3364,7 +3364,7 @@ function checkOverdueInvoices() {
  * EMAIL INVOICE / QUOTE
  ***************************************************/
 function generateDocumentEmailHtml(type, data, settings) {
-  const hotelName = settings.hotelName || 'MRI Hotel';
+  const hotelName = settings.hotelName || 'Hill View Eco Retreat';
   const hotelAddress = settings.hotelAddress || '';
   const hotelPhone = settings.hotelPhone || '';
   const hotelEmail = settings.hotelEmail || '';
@@ -3446,7 +3446,7 @@ function emailInvoice(invoiceId) {
     if (!inv.email) return { success: false, message: "No email address on this invoice." };
 
     const settingsResult = getSettings();
-    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'MRI Hotel' };
+    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'Hill View Eco Retreat' };
 
     const htmlBody = generateDocumentEmailHtml('invoice', inv, settings);
     const subject = settings.hotelName + ' - Invoice ' + inv.invoiceId;
@@ -3473,7 +3473,7 @@ function emailQuote(quoteId) {
     if (!q.email) return { success: false, message: "No email address on this quote." };
 
     const settingsResult = getSettings();
-    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'MRI Hotel' };
+    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'Hill View Eco Retreat' };
 
     const htmlBody = generateDocumentEmailHtml('quote', q, settings);
     const subject = settings.hotelName + ' - Quotation ' + q.quoteId;
@@ -4237,7 +4237,7 @@ function askAIAssistant(question, username, role, chatHistory) {
 
     // Build Gemini API request
     const systemInstruction = role === "admin"
-      ? "You are an AI assistant for MRI Hotel Management System. You have access to the hotel's database including rooms, bookings, finance, invoices, quotes, users, budgets, AND pre-calculated REVENUE ANALYTICS. The REVENUE ANALYTICS section contains auto-calculated monthly revenue breakdowns from bookings, finance income/expenses by month with expense categories, and invoice totals. Use these pre-calculated figures when answering revenue, profit, income, expense, or financial performance questions — do NOT try to recalculate from raw data. Answer questions ONLY based on the provided data. When the answer involves multiple records or rows of data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the data doesn't contain the answer, say so politely. Do NOT reveal any passwords. Format currency values with 2 decimal places."
+      ? "You are an AI assistant for Hill View Eco Retreat Management System. You have access to the hotel's database including rooms, bookings, finance, invoices, quotes, users, budgets, AND pre-calculated REVENUE ANALYTICS. The REVENUE ANALYTICS section contains auto-calculated monthly revenue breakdowns from bookings, finance income/expenses by month with expense categories, and invoice totals. Use these pre-calculated figures when answering revenue, profit, income, expense, or financial performance questions — do NOT try to recalculate from raw data. Answer questions ONLY based on the provided data. When the answer involves multiple records or rows of data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the data doesn't contain the answer, say so politely. Do NOT reveal any passwords. Format currency values with 2 decimal places."
       : "You are an AI assistant for a hotel guest. You can ONLY answer questions about this guest's own bookings and checkout information. You do NOT have access to any other data like finance, other guests, room management, invoices, settings, or users. When the answer involves booking data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the guest asks about anything other than their bookings, politely explain you can only help with their booking information.";
 
     // Build multi-turn contents from chat history
