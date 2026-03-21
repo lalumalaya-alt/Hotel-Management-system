@@ -4484,7 +4484,7 @@ function manageSheetsDataStructure(configArray) {
           sheet.getRange(1, actualStartCol, 1, colsToAdd.length).setValues([colsToAdd]);
         }
       }
-      sheet.getRange("A1:" + String.fromCharCode(64 + config.headers.length) + "1").setFontWeight("bold");
+      sheet.getRange(1, 1, 1, sheet.getLastColumn()).setFontWeight("bold");
     }
   }
 }
@@ -4503,7 +4503,7 @@ function initDataStructure() {
     { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date"] },
     { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Address", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Pax", "Advance Paid", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Actual Check-Out Date", "Total Room Rent", "Total Restaurant", "Total Services", "Net Payable", "Total Paid", "Balance", "Payment Mode", "Checkout Remarks"] },
     { sheetName: RESTAURANT_SHEET_NAME, headers: ["Order ID", "CheckIn ID", "Room No", "Date", "Category", "Description", "Amount", "Status", "Billed CheckIn ID", "Added By"] },
-    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Pax", "Start Date", "End Date", "Rate", "Created By", "Timestamp"] }
+    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] }
   ];
   manageSheetsDataStructure(config);
 }
@@ -4524,58 +4524,22 @@ function setupDemoData() {
   // --- 2. Create all sheets with headers via new manager function ---
   initDataStructure();
 
-  // LOGIN
-  const loginSheet = ss.insertSheet(LOGIN_SHEET_NAME);
-  loginSheet.appendRow(["Username", "Password", "Role", "OTP", "OTPExpiry"]);
+  const loginSheet = ss.getSheetByName(LOGIN_SHEET_NAME);
+  const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+  const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
+  const quotesSheet = ss.getSheetByName(QUOTES_SHEET_NAME);
+  const financeSheet = ss.getSheetByName(FINANCE_SHEET_NAME);
+  const invoicesSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
+  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
+  const budgetsSheet = ss.getSheetByName(BUDGETS_SHEET_NAME);
+  const categoriesSheet = ss.getSheetByName(CATEGORIES_SHEET_NAME);
+  const customersSheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
+  const checkinSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+  const restaurantSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
+  const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
 
-  // ROOMS
-  const roomsSheet = ss.insertSheet(ROOMS_SHEET_NAME);
-  roomsSheet.appendRow(["RoomNo", "RoomType", "RoomRate", "RoomStatus"]);
-
-  // BOOKINGS
-  const bookingsSheet = ss.insertSheet(BOOKINGS_SHEET_NAME);
-  bookingsSheet.appendRow(["TicketID", "RoomNo", "GuestName", "Phone", "Email", "City", "MaritalStatus", "OccupancyType", "FamilyDetails", "CheckIn", "CheckOut", "Status", "RoomRate", "Discount", "Tax", "PaymentMethod", "TotalAmount", "PaymentStatus", "AmountPaid", "CheckInTime", "CheckOutTime", "FoodPlan", "AdvancePaid", "NumberOfRooms", "LinkedCheckInID"]);
-
-  // QUOTES (26 columns)
-  const quotesSheet = ss.insertSheet(QUOTES_SHEET_NAME);
-  quotesSheet.appendRow(["QuoteID", "GuestName", "Phone", "Email", "CreatedDate", "ValidUntil", "Status", "Items", "SubTotal", "Tax", "Discount", "TotalAmount", "Notes", "CreatedBy", "Currency", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "CustomerTIN", "ConvertedToInvoice", "PDFDriveLink"]);
-
-  // FINANCE (12 columns)
-  const financeSheet = ss.insertSheet(FINANCE_SHEET_NAME);
-  financeSheet.appendRow(["ID", "Date", "Type", "Description", "ShopSource", "Amount", "Balance", "EnteredBy", "CreatedAt", "Category", "Currency", "LinkedInvoiceID"]);
-
-  // INVOICES (26 columns)
-  const invoicesSheet = ss.insertSheet(INVOICES_SHEET_NAME);
-  invoicesSheet.appendRow(["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "SourceQuoteID", "PDFDriveLink", "CreatedBy", "UpdatedAt"]);
-
-  // SETTINGS (14 columns, 1 data row)
-  const settingsSheet = ss.insertSheet(SETTINGS_SHEET_NAME);
-  settingsSheet.appendRow(["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "NextQuoteNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"]);
+  // SETTINGS (1 data row after headers)
   settingsSheet.appendRow(["MRI Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, 6, "", "", 4, 1]);
-
-  // BUDGETS
-  const budgetsSheet = ss.insertSheet(BUDGETS_SHEET_NAME);
-  budgetsSheet.appendRow(["BudgetID", "Month", "Year", "BudgetAmount", "TotalSpent", "Remaining", "SetBy", "CreatedAt", "UpdatedAt"]);
-
-  // CATEGORIES
-  const categoriesSheet = ss.insertSheet(CATEGORIES_SHEET_NAME);
-  categoriesSheet.appendRow(["CategoryID", "Name", "Type", "IsDefault", "CreatedBy", "CreatedAt"]);
-
-  // CUSTOMERS
-  const customersSheet = ss.insertSheet(CUSTOMERS_SHEET_NAME);
-  customersSheet.appendRow(["CustomerID", "Name", "Phone", "Email", "City", "MaritalStatus", "Notes", "CreatedAt", "LinkedUsername"]);
-
-  // CHECKIN (28 columns)
-  const checkinSheet = ss.insertSheet(CHECKIN_SHEET_NAME);
-  checkinSheet.appendRow(["CheckInID", "LinkedTicketID", "GuestName", "CompanyName", "GSTNumber", "IdentityProof", "Mobile", "Email", "Address", "PurposeOfVisit", "CheckInDate", "CheckInTime", "CheckOutDate", "CheckOutTime", "RoomNumbers", "RoomTypes", "NumberOfRooms", "Pax", "AdvancePaid", "ExtraPerson", "FoodPlan", "GSTType", "FixRoomRent", "FixRoomRentAmount", "BillTo", "DiscountPercent", "Status", "CreatedAt"]);
-
-  // RESTAURANT (9 columns)
-  const restaurantSheet = ss.insertSheet(RESTAURANT_SHEET_NAME);
-  restaurantSheet.appendRow(["OrderID", "RoomNo", "CheckInID", "OrderDate", "Category", "Description", "Amount", "Status", "CreatedAt"]);
-
-  // STAY SEGMENTS
-  const staySegmentsSheet = ss.insertSheet(STAY_SEGMENTS_SHEET_NAME);
-  staySegmentsSheet.appendRow(["SegmentID", "CheckInID", "RoomNos", "Rate", "Pax", "StartDate", "EndDate"]);
 
   // Delete temp sheet
   ss.deleteSheet(tempSheet);
