@@ -180,14 +180,6 @@ const CUSTOMERS_SHEET_NAME = "Customers";
 const CHECKIN_SHEET_NAME   = "CheckIn";
 const RESTAURANT_SHEET_NAME = "Restaurant";
 
-// BOOKINGS sheet NEW columns (appended at 19-24)
-const CHECKIN_TIME_COL     = 19;
-const CHECKOUT_TIME_COL    = 20;
-const FOOD_PLAN_COL        = 21;
-const ADVANCE_PAID_COL     = 22;
-const NUM_ROOMS_COL        = 23;
-const LINKED_CHECKIN_COL   = 24;
-
 // CHECKIN sheet columns (0-based)
 const CI_ID_COL             = 0;
 const CI_LINKED_TICKET_COL  = 1;
