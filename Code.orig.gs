@@ -17,16 +17,6 @@ const INVOICES_SHEET_NAME   = "Invoices";
 const SETTINGS_SHEET_NAME   = "Settings";
 const BUDGETS_SHEET_NAME    = "Budgets";
 const CATEGORIES_SHEET_NAME = "Categories";
-const STAY_SEGMENTS_SHEET_NAME = "StaySegments";
-
-// STAY_SEGMENTS sheet columns (0-based)
-const SEG_ID_COL         = 0;
-const SEG_CHECKIN_ID_COL = 1;
-const SEG_ROOM_NOS_COL   = 2;
-const SEG_RATE_COL       = 3;
-const SEG_PAX_COL        = 4;
-const SEG_START_DATE_COL = 5;
-const SEG_END_DATE_COL   = 6;
 
 // ROOMS sheet columns (0-based)
 const ROOM_NO_COL          = 0;
@@ -54,15 +44,6 @@ const PAYMENT_METHOD_COL   = 15;
 const TOTAL_AMOUNT_COL     = 16;
 const PAYMENT_STATUS_COL   = 17;  // "Unpaid", "Partial", "Paid"
 const AMOUNT_PAID_COL      = 18;  // Numeric amount paid so far
-const CHECKIN_TIME_COL     = 19;
-const CHECKOUT_TIME_COL    = 20;
-const FOOD_PLAN_COL        = 21;
-const ADVANCE_PAID_COL     = 22;
-const NUM_ROOMS_COL        = 23;
-const LINKED_CHECKIN_COL   = 24;
-const BOOKING_GST_TYPE_COL = 25;
-const BOOKING_FIX_RENT_COL = 26;
-const BOOKING_FIX_RENT_AMT_COL = 27;
 
 // LOGIN sheet columns (0-based)
 const LOGIN_USERNAME_COL   = 0;
@@ -405,11 +386,11 @@ function sendForgotPasswordOTP(email) {
     loginSheet.getRange(userRowIndex, LOGIN_OTP_EXPIRY_COL + 1).setValue(expiry);
     SpreadsheetApp.flush();
 
-    var hotelName = 'Hill View Eco Retreat';
+    var hotelName = 'MRI Hotel';
     try {
       var setSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
-        hotelName = (setSheet.getRange(2, SET_HOTEL_NAME_COL + 1).getValue() || 'Hill View Eco Retreat').toString();
+        hotelName = (setSheet.getRange(2, SET_HOTEL_NAME_COL + 1).getValue() || 'MRI Hotel').toString();
       }
     } catch (se) { Logger.log("Could not load hotel name: " + se); }
 
@@ -525,11 +506,8 @@ function generateFinanceId() {
 }
 
 function daysBetween(d1, d2) {
-  // Strip out the time component to compare strict calendar days
-  let date1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
-  let date2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
-  let diff = date2.getTime() - date1.getTime();
-  let days = Math.round(diff / (1000 * 3600 * 24));
+  let diff = d2.getTime() - d1.getTime();
+  let days = Math.ceil(diff / (1000 * 3600 * 24));
   return days;
 }
 
@@ -593,27 +571,26 @@ function bookRoom(bookingDetails) {
       return { success: false, message: "No rooms selected." };
     }
 
-    // Calculate total rooms being booked and determine if it's a type booking
-    let totalRoomsCount = 0;
-    let isTypeBooking = false;
-    roomNosArr.forEach(r => {
-      const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
-      if (match && match[2]) {
-        totalRoomsCount += parseInt(match[2], 10);
-        isTypeBooking = true;
-      } else {
-        totalRoomsCount += 1;
-      }
-    });
-
-    // Validate physical rooms if it's not a type booking
+    // Validate all rooms are available and calculate combined rate
+    let totalRoomRate = 0;
     let roomRowIndices = [];
-    if (!isTypeBooking) {
+    for (let r = 0; r < roomNosArr.length; r++) {
+      let found = false;
       for (let i = 1; i < roomsData.length; i++) {
-        const rowRoomNo = (roomsData[i][ROOM_NO_COL] || "").toString().trim();
-        if (roomNosArr.includes(rowRoomNo)) {
+        let rowRoomNo = (roomsData[i][ROOM_NO_COL] || "").toString();
+        if (rowRoomNo === roomNosArr[r]) {
+          let status = (roomsData[i][ROOM_STATUS_COL] || "").toString().toLowerCase();
+          if (status !== 'available' && status !== 'reserved') {
+            return { success: false, message: `Room ${roomNosArr[r]} is not available.` };
+          }
+          totalRoomRate += parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
           roomRowIndices.push(i);
+          found = true;
+          break;
         }
+      }
+      if (!found) {
+        return { success: false, message: `Room ${roomNosArr[r]} not found.` };
       }
     }
 
@@ -625,16 +602,16 @@ function bookRoom(bookingDetails) {
     const foodPlan = bookingDetails.foodPlan || "None";
     const advancePaid = parseFloat(bookingDetails.advancePaid || "0") || 0;
 
-    let totalRoomRate = parseFloat(bookingDetails.roomRate || "0") || 0;
-    let finalAmount = parseFloat(bookingDetails.totalAmount || "0") || 0;
+    let discount = parseFloat(bookingDetails.discount || "0") || 0;
     let tax = parseFloat(bookingDetails.tax || "0") || 0;
-    let discount = parseFloat(bookingDetails.discountPercent || "0") || 0;
     let paymentMethod = bookingDetails.paymentMethod || "Cash";
 
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
+    let baseAmount = totalRoomRate * nights;
+    let finalAmount = baseAmount - discount + tax;
 
-    let roomNosStr = roomNosArr.join(', ');
+    let roomNosStr = roomNosArr.join(',');
     let paymentStatus = advancePaid >= finalAmount ? "Paid" : advancePaid > 0 ? "Partial" : "Unpaid";
 
     bookingsSheet.appendRow([
@@ -650,7 +627,7 @@ function bookRoom(bookingDetails) {
       checkInDate.toISOString(),
       checkOutDate.toISOString(),
       "Booked",
-      totalRoomRate, // Store the single room rate or average rate
+      totalRoomRate,
       discount,
       tax,
       paymentMethod,
@@ -662,17 +639,12 @@ function bookRoom(bookingDetails) {
       foodPlan,
       advancePaid,
       roomNosArr.length,
-      "",
-      bookingDetails.gstType || 'Excluding',
-      bookingDetails.fixRoomRent || 'No',
-      parseFloat(bookingDetails.fixRoomRentAmount) || 0
+      ""
     ]);
 
-    // Mark all selected physical rooms as Booked
-    if (!isTypeBooking) {
-      for (let ri = 0; ri < roomRowIndices.length; ri++) {
-        roomsSheet.getRange(roomRowIndices[ri] + 1, ROOM_STATUS_COL + 1).setValue("Booked");
-      }
+    // Mark all selected rooms as Booked
+    for (let ri = 0; ri < roomRowIndices.length; ri++) {
+      roomsSheet.getRange(roomRowIndices[ri] + 1, ROOM_STATUS_COL + 1).setValue("Booked");
     }
 
     let autoGeneratedPass = "guest" + new Date().getTime().toString().slice(-3);
@@ -685,7 +657,7 @@ function bookRoom(bookingDetails) {
     try {
       if (bookingDetails.email) {
         let subject = `Room Booking Confirmation - Ticket ${ticketId}`;
-        let body = `Hello ${bookingDetails.guestName},\n\nThank you for booking Room(s) #${roomNosStr}.\nCheck-in: ${checkInDate.toISOString()} at ${checkInTime}\nCheck-out: ${checkOutDate.toISOString()} at ${checkOutTime}\nFood Plan: ${foodPlan}\nAdvance Paid: ${advancePaid}\n\nTicket ID: ${ticketId}\n\nWe look forward to your stay!\n- Hill View Eco Retreat`;
+        let body = `Hello ${bookingDetails.guestName},\n\nThank you for booking Room(s) #${roomNosStr}.\nCheck-in: ${checkInDate.toISOString()} at ${checkInTime}\nCheck-out: ${checkOutDate.toISOString()} at ${checkOutTime}\nFood Plan: ${foodPlan}\nAdvance Paid: ${advancePaid}\n\nTicket ID: ${ticketId}\n\nWe look forward to your stay!\n- MRI Hotel`;
         MailApp.sendEmail({ to: bookingDetails.email, subject, body });
       }
     } catch (emailErr) {
@@ -938,37 +910,25 @@ function updateBooking(rowIndex, bookingData) {
       return { success: false, message: "Check-out must be after check-in." };
     }
 
-    let totalRoomsCount = 0;
-    let roomNosStr = bookingData.roomNos || existingRoomNo;
-    let isTypeBooking = false;
-    roomNosStr.split(',').forEach(r => {
-      const match = r.trim().match(/(.+?)(?:\s*\((\d+)\))?$/);
-      if (match && match[2]) {
-        totalRoomsCount += parseInt(match[2], 10);
-        isTypeBooking = true;
-      } else if (r.trim() !== "") {
-        totalRoomsCount += 1;
-      }
-    });
-
+    // Recalculate financials
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
-    const totalRoomRate = parseFloat(bookingData.roomRate) || existingRate;
-    const finalAmount = parseFloat(bookingData.totalAmount) || 0;
-    const tax = parseFloat(bookingData.tax) || 0;
-    const discount = parseFloat(bookingData.discountPercent) || 0;
-    const advancePaidInput = bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) || 0 : existingAmountPaid;
-    let paymentStatus = advancePaidInput >= finalAmount ? "Paid" : advancePaidInput > 0 ? "Partial" : "Unpaid";
+    const discount = parseFloat(bookingData.discount || 0) || 0;
+    const tax = parseFloat(bookingData.tax || 0) || 0;
+    const baseAmount = existingRate * nights;
+    const finalAmount = baseAmount - discount + tax;
 
-    // Build complete row (28 columns)
+    // Build complete row (25 columns)
     const existingCheckInTime = (sheet.getRange(rowIndex, CHECKIN_TIME_COL + 1).getValue() || '14:00').toString();
     const existingCheckOutTime = (sheet.getRange(rowIndex, CHECKOUT_TIME_COL + 1).getValue() || '12:00').toString();
     const existingFoodPlan = (sheet.getRange(rowIndex, FOOD_PLAN_COL + 1).getValue() || 'None').toString();
+    const existingAdvancePaid = parseFloat(sheet.getRange(rowIndex, ADVANCE_PAID_COL + 1).getValue()) || 0;
+    const existingNumRooms = parseFloat(sheet.getRange(rowIndex, NUM_ROOMS_COL + 1).getValue()) || 1;
     const existingLinkedCheckIn = (sheet.getRange(rowIndex, LINKED_CHECKIN_COL + 1).getValue() || '').toString();
 
     const row = [
       existingTicket,
-      roomNosStr,
+      existingRoomNo,
       (bookingData.guestName || '').trim(),
       (bookingData.phone || '').trim(),
       (bookingData.email || '').trim(),
@@ -979,55 +939,22 @@ function updateBooking(rowIndex, bookingData) {
       checkInDate.toISOString(),
       checkOutDate.toISOString(),
       existingStatus,
-      totalRoomRate,
+      existingRate,
       discount,
       tax,
       bookingData.paymentMethod || 'Cash',
       finalAmount,
-      paymentStatus,
-      advancePaidInput,
+      existingPaymentStatus,
+      existingAmountPaid,
       bookingData.checkInTime || existingCheckInTime,
       bookingData.checkOutTime || existingCheckOutTime,
       bookingData.foodPlan || existingFoodPlan,
-      advancePaidInput,
-      totalRoomsCount,
-      existingLinkedCheckIn,
-      bookingData.gstType || 'Excluding',
-      bookingData.fixRoomRent || 'No',
-      parseFloat(bookingData.fixRoomRentAmount) || 0
+      bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) || 0 : existingAdvancePaid,
+      existingNumRooms,
+      existingLinkedCheckIn
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 28).setValues([row]);
-
-    // Update room statuses for the new set of rooms if it's not a generic type booking
-    if (!isTypeBooking && existingStatus !== 'Cancelled' && existingStatus !== 'Checked Out') {
-      const ss = SpreadsheetApp.openById(SS_ID);
-      const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
-      const roomsData = roomsSheet.getDataRange().getValues();
-
-      // Free up old rooms first
-      let oldRooms = existingRoomNo.split(',').map(r => r.trim()).filter(r => r);
-      oldRooms.forEach(rn => {
-        for (let i = 1; i < roomsData.length; i++) {
-          if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
-            roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Available");
-            break;
-          }
-        }
-      });
-
-      // Book new rooms
-      let newRooms = roomNosStr.split(',').map(r => r.trim()).filter(r => r);
-      newRooms.forEach(rn => {
-        for (let i = 1; i < roomsData.length; i++) {
-          if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
-            roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Booked");
-            break;
-          }
-        }
-      });
-    }
-
+    sheet.getRange(rowIndex, 1, 1, 25).setValues([row]);
     SpreadsheetApp.flush();
 
     return { success: true, message: "Booking updated successfully." };
@@ -1109,7 +1036,7 @@ function generateInvoiceHtml(invoiceData) {
       </head>
       <body>
         <div class="invoice-container">
-          <h2>Hill View Eco Retreat - Invoice</h2>
+          <h2>MRI Hotel - Invoice</h2>
           <p><strong>Ticket ID:</strong> ${ticketId}</p>
           <p><strong>Guest Name:</strong> ${occupantName}</p>
           <p><strong>Email:</strong> ${email}</p>
@@ -1228,36 +1155,6 @@ function addCheckIn(checkInData) {
           break;
         }
       }
-    }
-
-    // Calculate initial daily rate for StaySegments
-    let initialDailyRate = 0;
-    if (checkInData.fixRoomRent === 'Yes') {
-      initialDailyRate = parseFloat(checkInData.fixRoomRentAmount) || 0;
-    } else {
-      for (let r = 0; r < roomNosArr.length; r++) {
-        for (let i = 1; i < roomsData.length; i++) {
-          if ((roomsData[i][ROOM_NO_COL] || '').toString() === roomNosArr[r]) {
-            initialDailyRate += parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
-            break;
-          }
-        }
-      }
-    }
-
-    // Append a new row to the StaySegments sheet
-    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-    if (staySegmentsSheet) {
-      const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
-      staySegmentsSheet.appendRow([
-        newSegmentId,
-        checkInId,
-        roomNumbers,
-        initialDailyRate,
-        parseInt(checkInData.pax) || 1,
-        now,
-        ""
-      ]);
     }
 
     SpreadsheetApp.flush();
@@ -1665,12 +1562,12 @@ function processFullCheckout(checkInId, checkoutData) {
 
     // Read settings for GST
     let gstPercent = 5;
-    let hotelName = 'Hill View Eco Retreat', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
+    let hotelName = 'MRI Hotel', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
     try {
       const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
         const setRow = setSheet.getRange(2, 1, 1, setSheet.getLastColumn()).getValues()[0];
-        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString();
+        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'MRI Hotel').toString();
         hotelAddress = (setRow[SET_HOTEL_ADDRESS_COL] || '').toString();
         hotelPhone = (setRow[SET_HOTEL_PHONE_COL] || '').toString();
         hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
@@ -1707,9 +1604,9 @@ function processFullCheckout(checkInId, checkoutData) {
     let nights = daysBetween(checkInDate, actualCheckOutDate);
     if (nights < 1) nights = 1;
 
-    // Calculate room rent using StaySegments if available
+    // Calculate room rent
     let roomNosArr = roomNumbers.split(',').map(r => r.trim()).filter(r => r);
-    let dailyRoomRate = 0; // Legacy fallback calculation
+    let dailyRoomRate = 0;
     if (fixRoomRent === 'Yes' && fixRoomRentAmount > 0) {
       dailyRoomRate = fixRoomRentAmount;
     } else {
@@ -1723,66 +1620,7 @@ function processFullCheckout(checkInId, checkoutData) {
         }
       }
     }
-    let totalRoomRent = 0;
-    let staySegments = [];
-
-    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-    if (staySegmentsSheet) {
-      const segmentsData = staySegmentsSheet.getDataRange().getValues();
-      for (let i = 1; i < segmentsData.length; i++) {
-        if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === checkInId.toString()) {
-          let segStartDateStr = (segmentsData[i][SEG_START_DATE_COL] || '').toString();
-          let segEndDateStr = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
-
-          if (!segEndDateStr) {
-             // Close the active segment
-             segEndDateStr = actualCheckOutDate.toISOString();
-             staySegmentsSheet.getRange(i + 1, SEG_END_DATE_COL + 1).setValue(segEndDateStr);
-          }
-
-          if (segStartDateStr && segEndDateStr) {
-            let segStartDate = new Date(segStartDateStr);
-            let segEndDate = new Date(segEndDateStr);
-            // Ensure minimum of 1 night for the overall stay, but 0-night segments are possible if swapped same day
-            let segNights = daysBetween(segStartDate, segEndDate);
-            if (segNights < 0) segNights = 0;
-
-            let segRate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
-
-            staySegments.push({
-              startDate: segStartDate,
-              endDate: segEndDate,
-              nights: segNights,
-              rate: segRate,
-              roomNos: (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString(),
-              pax: parseInt(segmentsData[i][SEG_PAX_COL]) || 1
-            });
-          }
-        }
-      }
-
-      // Calculate total rent based on actual segments
-      if (staySegments.length === 1 && staySegments[0].nights === 0 && nights === 1) {
-        staySegments[0].nights = 1;
-      }
-
-      for (let s of staySegments) {
-        totalRoomRent += s.rate * s.nights;
-      }
-    }
-
-    // Fallback to legacy calculation if no segments found
-    if (staySegments.length === 0) {
-      totalRoomRent = dailyRoomRate * nights;
-      staySegments.push({
-        startDate: checkInDate,
-        endDate: actualCheckOutDate,
-        nights: nights,
-        rate: dailyRoomRate,
-        roomNos: roomNumbers,
-        pax: pax
-      });
-    }
+    let totalRoomRent = dailyRoomRate * nights;
 
     // Get food/service orders by category for day-by-day breakdown
     let foodOrders = [];
@@ -1845,23 +1683,7 @@ function processFullCheckout(checkInId, checkoutData) {
       dayDate.setDate(dayDate.getDate() + d);
       let dateStr = dayDate.toISOString().split('T')[0];
 
-      // Find applicable segment rate for this specific day
-      let dayRoom = dailyRoomRate; // fallback
-      if (staySegments.length > 0) {
-        // Find segment active on this day. If multiple, take the last one started that day.
-        for (let s = staySegments.length - 1; s >= 0; s--) {
-          let seg = staySegments[s];
-          let segStartStr = seg.startDate.toISOString().split('T')[0];
-          let segEndStr = seg.endDate.toISOString().split('T')[0];
-          if (dateStr >= segStartStr && dateStr < segEndStr) {
-            dayRoom = seg.rate;
-            break;
-          } else if (dateStr === segStartStr && seg.nights === 0) {
-            // For a 0-night segment, it doesn't span a whole day, ignore for day room rate unless it's the only one
-          }
-        }
-      }
-
+      let dayRoom = dailyRoomRate;
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
 
       foodOrders.forEach(o => {
@@ -3154,14 +2976,14 @@ function getSettings() {
     const sheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
     if (!sheet || sheet.getLastRow() < 2) {
       return { success: true, data: {
-        hotelName: 'Hill View Eco Retreat', hotelAddress: '', hotelPhone: '', hotelEmail: '', hotelTIN: '',
+        hotelName: 'MRI Hotel', hotelAddress: '', hotelPhone: '', hotelEmail: '', hotelTIN: '',
         logoFileId: '', logoUrl: '', defaultCurrency: 'MVR', gstDefaultPercent: 16,
         greenTaxDefaultRate: 6, nextInvoiceNum: 1, nextQuoteNum: 1, pdfFolderId: '', logoFolderId: ''
       }};
     }
     const row = sheet.getRange(2, 1, 1, 14).getValues()[0];
     return { success: true, data: {
-      hotelName: (row[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString(),
+      hotelName: (row[SET_HOTEL_NAME_COL] || 'MRI Hotel').toString(),
       hotelAddress: (row[SET_HOTEL_ADDRESS_COL] || '').toString(),
       hotelPhone: (row[SET_HOTEL_PHONE_COL] || '').toString(),
       hotelEmail: (row[SET_HOTEL_EMAIL_COL] || '').toString(),
@@ -3201,7 +3023,7 @@ function updateSettings(settingsData) {
     }
 
     const row = [
-      settingsData.hotelName || 'Hill View Eco Retreat',
+      settingsData.hotelName || 'MRI Hotel',
       settingsData.hotelAddress || '',
       settingsData.hotelPhone || '',
       settingsData.hotelEmail || '',
@@ -3542,7 +3364,7 @@ function checkOverdueInvoices() {
  * EMAIL INVOICE / QUOTE
  ***************************************************/
 function generateDocumentEmailHtml(type, data, settings) {
-  const hotelName = settings.hotelName || 'Hill View Eco Retreat';
+  const hotelName = settings.hotelName || 'MRI Hotel';
   const hotelAddress = settings.hotelAddress || '';
   const hotelPhone = settings.hotelPhone || '';
   const hotelEmail = settings.hotelEmail || '';
@@ -3624,7 +3446,7 @@ function emailInvoice(invoiceId) {
     if (!inv.email) return { success: false, message: "No email address on this invoice." };
 
     const settingsResult = getSettings();
-    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'Hill View Eco Retreat' };
+    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'MRI Hotel' };
 
     const htmlBody = generateDocumentEmailHtml('invoice', inv, settings);
     const subject = settings.hotelName + ' - Invoice ' + inv.invoiceId;
@@ -3651,7 +3473,7 @@ function emailQuote(quoteId) {
     if (!q.email) return { success: false, message: "No email address on this quote." };
 
     const settingsResult = getSettings();
-    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'Hill View Eco Retreat' };
+    const settings = settingsResult.success ? settingsResult.data : { hotelName: 'MRI Hotel' };
 
     const htmlBody = generateDocumentEmailHtml('quote', q, settings);
     const subject = settings.hotelName + ' - Quotation ' + q.quoteId;
@@ -4415,7 +4237,7 @@ function askAIAssistant(question, username, role, chatHistory) {
 
     // Build Gemini API request
     const systemInstruction = role === "admin"
-      ? "You are an AI assistant for Hill View Eco Retreat Management System. You have access to the hotel's database including rooms, bookings, finance, invoices, quotes, users, budgets, AND pre-calculated REVENUE ANALYTICS. The REVENUE ANALYTICS section contains auto-calculated monthly revenue breakdowns from bookings, finance income/expenses by month with expense categories, and invoice totals. Use these pre-calculated figures when answering revenue, profit, income, expense, or financial performance questions — do NOT try to recalculate from raw data. Answer questions ONLY based on the provided data. When the answer involves multiple records or rows of data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the data doesn't contain the answer, say so politely. Do NOT reveal any passwords. Format currency values with 2 decimal places."
+      ? "You are an AI assistant for MRI Hotel Management System. You have access to the hotel's database including rooms, bookings, finance, invoices, quotes, users, budgets, AND pre-calculated REVENUE ANALYTICS. The REVENUE ANALYTICS section contains auto-calculated monthly revenue breakdowns from bookings, finance income/expenses by month with expense categories, and invoice totals. Use these pre-calculated figures when answering revenue, profit, income, expense, or financial performance questions — do NOT try to recalculate from raw data. Answer questions ONLY based on the provided data. When the answer involves multiple records or rows of data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the data doesn't contain the answer, say so politely. Do NOT reveal any passwords. Format currency values with 2 decimal places."
       : "You are an AI assistant for a hotel guest. You can ONLY answer questions about this guest's own bookings and checkout information. You do NOT have access to any other data like finance, other guests, room management, invoices, settings, or users. When the answer involves booking data, format it as an HTML table with inline styles (use style='border-collapse:collapse;width:100%' on the table, style='background:#001f3f;color:white;padding:10px 14px;text-align:left;font-size:13px' on th elements, style='padding:10px 14px;border-bottom:1px solid #eee;font-size:13px' on td elements, and style='background:#f8fafc' on every even tr in tbody). Keep responses concise and helpful. If the guest asks about anything other than their bookings, politely explain you can only help with their booking information.";
 
     // Build multi-turn contents from chat history
@@ -4489,85 +4311,9 @@ function askAIAssistant(question, username, role, chatHistory) {
  * with headers, and populates with generic demo data.
  * Run this once from the Script Editor to set up.
  ***************************************************/
-/**
- * Automatically adds, modifies, or deletes sheets and their headers according to logic.
- * @param {Array<Object>} configArray - Array of sheet configurations: {sheetName: "Name", headers: ["Col1", "Col2"], deleteSheet: false}
- */
-function manageSheetsDataStructure(configArray) {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const currentSheets = ss.getSheets().reduce((acc, sheet) => {
-    acc[sheet.getName()] = sheet;
-    return acc;
-  }, {});
-
-  for (let config of configArray) {
-    if (config.deleteSheet) {
-      if (currentSheets[config.sheetName] && ss.getSheets().length > 1) {
-        ss.deleteSheet(currentSheets[config.sheetName]);
-        delete currentSheets[config.sheetName];
-      }
-      continue;
-    }
-
-    let sheet = currentSheets[config.sheetName];
-    if (!sheet) {
-      sheet = ss.insertSheet(config.sheetName);
-      currentSheets[config.sheetName] = sheet;
-    }
-
-    // Set/Update headers
-    if (config.headers && config.headers.length > 0) {
-      const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 1).getValues()[0];
-      const newHeaders = [...config.headers];
-
-      // If the sheet is empty, just append the headers
-      if (sheet.getLastRow() === 0) {
-        sheet.appendRow(newHeaders);
-      } else {
-        // Find missing headers and append them to the right
-        let colsToAdd = [];
-        for (let i = 0; i < newHeaders.length; i++) {
-          if (currentHeaders.indexOf(newHeaders[i]) === -1) {
-            colsToAdd.push(newHeaders[i]);
-          }
-        }
-        if (colsToAdd.length > 0) {
-          const startCol = currentHeaders.length + 1;
-          // Clean up empty strings from currentHeaders length if they exist
-          let actualStartCol = 1;
-          for(let k=currentHeaders.length-1; k>=0; k--) {
-            if(currentHeaders[k] !== "") {
-              actualStartCol = k + 2;
-              break;
-            }
-          }
-          sheet.getRange(1, actualStartCol, 1, colsToAdd.length).setValues([colsToAdd]);
-        }
-      }
-      sheet.getRange(1, 1, 1, sheet.getLastColumn()).setFontWeight("bold");
-    }
-  }
-}
-
-function initDataStructure() {
-  const config = [
-    { sheetName: LOGIN_SHEET_NAME, headers: ["Username", "Password", "Role", "OTP", "OTPExpiry"] },
-    { sheetName: ROOMS_SHEET_NAME, headers: ["Room No", "Room Type", "Room Rate", "Room Status"] },
-    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "City", "Marital Status", "Occupancy Type", "Family Details", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount"] },
-    { sheetName: QUOTES_SHEET_NAME, headers: ["QuoteID", "GuestName", "Phone", "Email", "CreatedDate", "ValidUntil", "Status", "Items", "SubTotal", "Tax", "Discount", "TotalAmount", "Notes", "CreatedBy", "Currency", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "CustomerTIN", "ConvertedToInvoice", "PDFDriveLink"] },
-    { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "SourceQuoteID", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
-    { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "NextQuoteNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
-    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date"] },
-    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Address", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Advance Paid", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
-    { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "Category", "Description", "Amount", "Status", "BilledCheckInID", "AddedBy"] },
-    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] }
-  ];
-  manageSheetsDataStructure(config);
-}
-
 function setupDemoData() {
   const ss = SpreadsheetApp.openById(SS_ID);
-  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, QUOTES_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME];
+  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, QUOTES_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME];
 
   // --- 1. Delete all existing sheets ---
   let tempSheet = ss.insertSheet("_TEMP_SETUP_");
@@ -4578,25 +4324,56 @@ function setupDemoData() {
     }
   }
 
-  // --- 2. Create all sheets with headers via new manager function ---
-  initDataStructure();
+  // --- 2. Create all sheets with headers ---
 
-  const loginSheet = ss.getSheetByName(LOGIN_SHEET_NAME);
-  const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
-  const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
-  const quotesSheet = ss.getSheetByName(QUOTES_SHEET_NAME);
-  const financeSheet = ss.getSheetByName(FINANCE_SHEET_NAME);
-  const invoicesSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
-  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
-  const budgetsSheet = ss.getSheetByName(BUDGETS_SHEET_NAME);
-  const categoriesSheet = ss.getSheetByName(CATEGORIES_SHEET_NAME);
-  const customersSheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
-  const checkinSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
-  const restaurantSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
-  const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+  // LOGIN
+  const loginSheet = ss.insertSheet(LOGIN_SHEET_NAME);
+  loginSheet.appendRow(["Username", "Password", "Role", "OTP", "OTPExpiry"]);
 
-  // SETTINGS (1 data row after headers)
+  // ROOMS
+  const roomsSheet = ss.insertSheet(ROOMS_SHEET_NAME);
+  roomsSheet.appendRow(["RoomNo", "RoomType", "RoomRate", "RoomStatus"]);
+
+  // BOOKINGS
+  const bookingsSheet = ss.insertSheet(BOOKINGS_SHEET_NAME);
+  bookingsSheet.appendRow(["TicketID", "RoomNo", "GuestName", "Phone", "Email", "City", "MaritalStatus", "OccupancyType", "FamilyDetails", "CheckIn", "CheckOut", "Status", "RoomRate", "Discount", "Tax", "PaymentMethod", "TotalAmount", "PaymentStatus", "AmountPaid", "CheckInTime", "CheckOutTime", "FoodPlan", "AdvancePaid", "NumberOfRooms", "LinkedCheckInID"]);
+
+  // QUOTES (26 columns)
+  const quotesSheet = ss.insertSheet(QUOTES_SHEET_NAME);
+  quotesSheet.appendRow(["QuoteID", "GuestName", "Phone", "Email", "CreatedDate", "ValidUntil", "Status", "Items", "SubTotal", "Tax", "Discount", "TotalAmount", "Notes", "CreatedBy", "Currency", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "CustomerTIN", "ConvertedToInvoice", "PDFDriveLink"]);
+
+  // FINANCE (12 columns)
+  const financeSheet = ss.insertSheet(FINANCE_SHEET_NAME);
+  financeSheet.appendRow(["ID", "Date", "Type", "Description", "ShopSource", "Amount", "Balance", "EnteredBy", "CreatedAt", "Category", "Currency", "LinkedInvoiceID"]);
+
+  // INVOICES (26 columns)
+  const invoicesSheet = ss.insertSheet(INVOICES_SHEET_NAME);
+  invoicesSheet.appendRow(["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "SourceQuoteID", "PDFDriveLink", "CreatedBy", "UpdatedAt"]);
+
+  // SETTINGS (14 columns, 1 data row)
+  const settingsSheet = ss.insertSheet(SETTINGS_SHEET_NAME);
+  settingsSheet.appendRow(["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "NextQuoteNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"]);
   settingsSheet.appendRow(["MRI Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, 6, "", "", 4, 1]);
+
+  // BUDGETS
+  const budgetsSheet = ss.insertSheet(BUDGETS_SHEET_NAME);
+  budgetsSheet.appendRow(["BudgetID", "Month", "Year", "BudgetAmount", "TotalSpent", "Remaining", "SetBy", "CreatedAt", "UpdatedAt"]);
+
+  // CATEGORIES
+  const categoriesSheet = ss.insertSheet(CATEGORIES_SHEET_NAME);
+  categoriesSheet.appendRow(["CategoryID", "Name", "Type", "IsDefault", "CreatedBy", "CreatedAt"]);
+
+  // CUSTOMERS
+  const customersSheet = ss.insertSheet(CUSTOMERS_SHEET_NAME);
+  customersSheet.appendRow(["CustomerID", "Name", "Phone", "Email", "City", "MaritalStatus", "Notes", "CreatedAt", "LinkedUsername"]);
+
+  // CHECKIN (28 columns)
+  const checkinSheet = ss.insertSheet(CHECKIN_SHEET_NAME);
+  checkinSheet.appendRow(["CheckInID", "LinkedTicketID", "GuestName", "CompanyName", "GSTNumber", "IdentityProof", "Mobile", "Email", "Address", "PurposeOfVisit", "CheckInDate", "CheckInTime", "CheckOutDate", "CheckOutTime", "RoomNumbers", "RoomTypes", "NumberOfRooms", "Pax", "AdvancePaid", "ExtraPerson", "FoodPlan", "GSTType", "FixRoomRent", "FixRoomRentAmount", "BillTo", "DiscountPercent", "Status", "CreatedAt"]);
+
+  // RESTAURANT (9 columns)
+  const restaurantSheet = ss.insertSheet(RESTAURANT_SHEET_NAME);
+  restaurantSheet.appendRow(["OrderID", "RoomNo", "CheckInID", "OrderDate", "Category", "Description", "Amount", "Status", "CreatedAt"]);
 
   // Delete temp sheet
   ss.deleteSheet(tempSheet);
@@ -4784,7 +4561,7 @@ function setupDemoData() {
   restaurantSheet.getRange(2, 1, restaurantData.length, 9).setValues(restaurantData);
 
   // --- 4. Format header rows ---
-  [loginSheet, roomsSheet, bookingsSheet, quotesSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet, staySegmentsSheet].forEach(function(sheet) {
+  [loginSheet, roomsSheet, bookingsSheet, quotesSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet].forEach(function(sheet) {
     const lastCol = sheet.getLastColumn();
     if (lastCol > 0) {
       const headerRange = sheet.getRange(1, 1, 1, lastCol);
@@ -4796,101 +4573,4 @@ function setupDemoData() {
   });
 
   SpreadsheetApp.getUi().alert("Demo data setup complete!\n\nLogin credentials:\n• admin@demo.com / admin123 (Admin)\n• user1@demo.com / user123 (User)\n• user2@demo.com / user123 (User)\n• client1@demo.com / client123 (Client)\n• client2@demo.com / client123 (Client)\n\nSheets created: " + sheetNames.join(", ") + "\n\nNew sheets added: CheckIn, Restaurant");
-}
-
-function updateStaySegment(checkInId, newRoomNos, newRate, newPax) {
-  try {
-    const ss = SpreadsheetApp.openById(SS_ID);
-    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-    const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
-    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
-
-    if (!staySegmentsSheet || !checkInSheet || !roomsSheet) {
-      return { success: false, message: "Required sheets not found." };
-    }
-
-    const now = new Date().toISOString();
-    let oldRoomNosStr = "";
-
-    // 1. Find the active segment for this checkInId and end it
-    const segmentsData = staySegmentsSheet.getDataRange().getValues();
-    let activeSegmentRow = -1;
-    for (let i = 1; i < segmentsData.length; i++) {
-      if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === checkInId.toString()) {
-        const endDate = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
-        if (!endDate) {
-          activeSegmentRow = i + 1; // 1-based index
-          oldRoomNosStr = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
-          staySegmentsSheet.getRange(activeSegmentRow, SEG_END_DATE_COL + 1).setValue(now);
-          break;
-        }
-      }
-    }
-
-    if (activeSegmentRow === -1) {
-       return { success: false, message: "No active stay segment found to update." };
-    }
-
-    // 2. Append a brand new row to the StaySegments sheet for the new segment
-    const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
-    staySegmentsSheet.appendRow([
-      newSegmentId,
-      checkInId,
-      newRoomNos,
-      parseFloat(newRate) || 0,
-      parseInt(newPax) || 1,
-      now,
-      ""
-    ]);
-
-    // 3. Open the CheckIn sheet, find the main check-in row, and overwrite RoomNumbers and Pax
-    const checkInData = checkInSheet.getDataRange().getValues();
-    let ciRowIndex = -1;
-    for (let i = 1; i < checkInData.length; i++) {
-      if ((checkInData[i][CI_ID_COL] || '').toString() === checkInId.toString()) {
-        ciRowIndex = i + 1;
-        checkInSheet.getRange(ciRowIndex, CI_ROOM_NUMBERS_COL + 1).setValue(newRoomNos);
-        checkInSheet.getRange(ciRowIndex, CI_PAX_COL + 1).setValue(newPax);
-        // Also update number of rooms to reflect the new state
-        const newRoomsArr = newRoomNos.split(',').map(r => r.trim()).filter(r => r);
-        checkInSheet.getRange(ciRowIndex, CI_NUM_ROOMS_COL + 1).setValue(newRoomsArr.length);
-        break;
-      }
-    }
-
-    // 4. Update the Rooms sheet: Compare old room numbers with new room numbers
-    const oldRoomsArr = oldRoomNosStr.split(',').map(r => r.trim()).filter(r => r);
-    const newRoomsArr = newRoomNos.split(',').map(r => r.trim()).filter(r => r);
-    const roomsData = roomsSheet.getDataRange().getValues();
-
-    // Change any old rooms that are no longer occupied to "Available"
-    for (let o = 0; o < oldRoomsArr.length; o++) {
-      if (newRoomsArr.indexOf(oldRoomsArr[o]) === -1) {
-        for (let j = 1; j < roomsData.length; j++) {
-          if ((roomsData[j][ROOM_NO_COL] || '').toString() === oldRoomsArr[o]) {
-             roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
-             break;
-          }
-        }
-      }
-    }
-
-    // Change any newly added rooms to "Booked"
-    for (let n = 0; n < newRoomsArr.length; n++) {
-      if (oldRoomsArr.indexOf(newRoomsArr[n]) === -1) {
-        for (let j = 1; j < roomsData.length; j++) {
-          if ((roomsData[j][ROOM_NO_COL] || '').toString() === newRoomsArr[n]) {
-             roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Booked");
-             break;
-          }
-        }
-      }
-    }
-
-    SpreadsheetApp.flush();
-    return { success: true, message: "Stay segment updated successfully." };
-  } catch (e) {
-    Logger.log("Error in updateStaySegment: " + e.toString());
-    return { success: false, message: e.message };
-  }
 }

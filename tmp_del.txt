@@ -1,0 +1,70 @@
+          <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> From</label><input type="date" className="filter-input" value={filters.dateFrom} onChange={e=>setFilters({...filters,dateFrom:e.target.value})}/></div>
+          <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> To</label><input type="date" className="filter-input" value={filters.dateTo} onChange={e=>setFilters({...filters,dateTo:e.target.value})}/></div>
+          <div className="filter-group"><label><i className="fas fa-check-circle"></i> Status</label><select className="filter-input" value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All</option><option>Booked</option><option>Checked Out</option></select></div>
+          <div className="filter-group"><label><i className="fas fa-money-bill-wave"></i> Pay Status</label><select className="filter-input" value={filters.paymentStatus} onChange={e=>setFilters({...filters,paymentStatus:e.target.value})}><option value="">All</option><option>Paid</option><option>Partial</option><option>Unpaid</option></select></div>
+          <div className="filter-group"><label><i className="fas fa-credit-card"></i> Method</label><select className="filter-input" value={filters.payment} onChange={e=>setFilters({...filters,payment:e.target.value})}><option value="">All</option><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Online</option></select></div>
+        </div></div>}
+        {ld&&<TableSkeleton rows={6} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="bkT" className="display" style={{width:'100%'}}></table></div>
+        {show&&<BookingModal rooms={rooms} allBookings={bks} allCheckIns={cis} booking={editBooking} onClose={()=>{setShow(false);setEditBooking(null);}} onBooked={load} role={role}/>}
+      </div>);
+    }
+
+    function SearchableSelect({ value, onChange, options, placeholder, loading }) {
+      const [isOpen, setIsOpen] = useState(false);
+      const [search, setSearch] = useState('');
+      const wrapperRef = useRef(null);
+
+      useEffect(() => {
+        function handleClickOutside(event) {
+          if (wrapperRef.current && !wrapperRef.current.contains(event.target)) setIsOpen(false);
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+      }, []);
+
+      const filtered = options.filter(opt => opt.label.toLowerCase().includes(search.toLowerCase()));
+      const selectedLabel = options.find(o => o.value === value)?.label || '';
+
+      return (
+        <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+          <div
+            onClick={() => setIsOpen(!isOpen)}
+            style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', background: '#fff', minHeight:'38px', display:'flex', alignItems:'center', justifyContent:'space-between' }}
+          >
+            <span style={{color: selectedLabel ? '#333' : '#999', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+              {loading ? 'Loading...' : (selectedLabel || placeholder)}
+            </span>
+            <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'}`} style={{color:'#666', fontSize:'12px'}}></i>
+          </div>
+          {isOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', marginTop: '4px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              <div style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search..."
+                  style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  autoFocus
+                />
+              </div>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: '200px', overflowY: 'auto' }}>
+                {filtered.length > 0 ? filtered.map(opt => (
+                  <li
+                    key={opt.value}
+                    onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f5f5f5', background: value === opt.value ? '#f0f7ff' : '#fff' }}
+                    onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                    onMouseLeave={(e) => e.target.style.background = value === opt.value ? '#f0f7ff' : '#fff'}
+                  >
+                    {opt.label}
+                  </li>
+                )) : (
+                  <li style={{ padding: '8px 12px', color: '#999', textAlign: 'center' }}>No results found</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
