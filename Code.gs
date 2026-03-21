@@ -4429,6 +4429,85 @@ function askAIAssistant(question, username, role, chatHistory) {
  * with headers, and populates with generic demo data.
  * Run this once from the Script Editor to set up.
  ***************************************************/
+/**
+ * Automatically adds, modifies, or deletes sheets and their headers according to logic.
+ * @param {Array<Object>} configArray - Array of sheet configurations: {sheetName: "Name", headers: ["Col1", "Col2"], deleteSheet: false}
+ */
+function manageSheetsDataStructure(configArray) {
+  const ss = SpreadsheetApp.openById(SS_ID);
+  const currentSheets = ss.getSheets().reduce((acc, sheet) => {
+    acc[sheet.getName()] = sheet;
+    return acc;
+  }, {});
+
+  for (let config of configArray) {
+    if (config.deleteSheet) {
+      if (currentSheets[config.sheetName] && ss.getSheets().length > 1) {
+        ss.deleteSheet(currentSheets[config.sheetName]);
+        delete currentSheets[config.sheetName];
+      }
+      continue;
+    }
+
+    let sheet = currentSheets[config.sheetName];
+    if (!sheet) {
+      sheet = ss.insertSheet(config.sheetName);
+      currentSheets[config.sheetName] = sheet;
+    }
+
+    // Set/Update headers
+    if (config.headers && config.headers.length > 0) {
+      const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 1).getValues()[0];
+      const newHeaders = [...config.headers];
+
+      // If the sheet is empty, just append the headers
+      if (sheet.getLastRow() === 0) {
+        sheet.appendRow(newHeaders);
+      } else {
+        // Find missing headers and append them to the right
+        let colsToAdd = [];
+        for (let i = 0; i < newHeaders.length; i++) {
+          if (currentHeaders.indexOf(newHeaders[i]) === -1) {
+            colsToAdd.push(newHeaders[i]);
+          }
+        }
+        if (colsToAdd.length > 0) {
+          const startCol = currentHeaders.length + 1;
+          // Clean up empty strings from currentHeaders length if they exist
+          let actualStartCol = 1;
+          for(let k=currentHeaders.length-1; k>=0; k--) {
+            if(currentHeaders[k] !== "") {
+              actualStartCol = k + 2;
+              break;
+            }
+          }
+          sheet.getRange(1, actualStartCol, 1, colsToAdd.length).setValues([colsToAdd]);
+        }
+      }
+      sheet.getRange("A1:" + String.fromCharCode(64 + config.headers.length) + "1").setFontWeight("bold");
+    }
+  }
+}
+
+function initDataStructure() {
+  const config = [
+    { sheetName: LOGIN_SHEET_NAME, headers: ["Username", "Password", "Role", "OTP", "OTPExpiry"] },
+    { sheetName: ROOMS_SHEET_NAME, headers: ["Room ID", "Room No", "Room Type", "Room Rate", "Room Status"] },
+    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Timestamp", "Ticket ID", "Room No", "Guest Name", "Phone", "Email", "Check-In", "Check-In Time", "Check-Out", "Check-Out Time", "Status", "Advance Paid", "Food Plan"] },
+    { sheetName: QUOTES_SHEET_NAME, headers: ["Quote ID", "Date", "Customer Name", "Customer Email", "Customer Phone", "Valid Until", "Items JSON", "Subtotal", "Discount Type", "Discount Value", "Discount Amount", "Tax Type", "Tax Value", "Tax Amount", "Total", "Status", "Notes", "Converted to Invoice"] },
+    { sheetName: FINANCE_SHEET_NAME, headers: ["Record ID", "Date", "Type", "Category", "Amount", "Description", "Reference ID", "Payment Method", "Added By"] },
+    { sheetName: INVOICES_SHEET_NAME, headers: ["Invoice ID", "Date", "Due Date", "Customer Name", "Customer Email", "Customer Phone", "Customer Address", "Items JSON", "Subtotal", "Discount Type", "Discount Value", "Discount Amount", "Tax Type", "Tax Value", "Tax Amount", "Total", "Amount Paid", "Status", "Notes", "Linked CheckIn / Quote"] },
+    { sheetName: SETTINGS_SHEET_NAME, headers: ["Setting Key", "Setting Value"] },
+    { sheetName: BUDGETS_SHEET_NAME, headers: ["Month", "Year", "Amount", "Set By", "Set Date"] },
+    { sheetName: CATEGORIES_SHEET_NAME, headers: ["Category ID", "Type", "Name", "Is Default"] },
+    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date"] },
+    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Address", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Pax", "Advance Paid", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Actual Check-Out Date", "Total Room Rent", "Total Restaurant", "Total Services", "Net Payable", "Total Paid", "Balance", "Payment Mode", "Checkout Remarks"] },
+    { sheetName: RESTAURANT_SHEET_NAME, headers: ["Order ID", "CheckIn ID", "Room No", "Date", "Category", "Description", "Amount", "Status", "Billed CheckIn ID", "Added By"] },
+    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Pax", "Start Date", "End Date", "Rate", "Created By", "Timestamp"] }
+  ];
+  manageSheetsDataStructure(config);
+}
+
 function setupDemoData() {
   const ss = SpreadsheetApp.openById(SS_ID);
   const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, QUOTES_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME];
@@ -4442,7 +4521,8 @@ function setupDemoData() {
     }
   }
 
-  // --- 2. Create all sheets with headers ---
+  // --- 2. Create all sheets with headers via new manager function ---
+  initDataStructure();
 
   // LOGIN
   const loginSheet = ss.insertSheet(LOGIN_SHEET_NAME);

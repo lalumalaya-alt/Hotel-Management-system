@@ -975,30 +975,18 @@
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);setTimeout(()=>charts(r),200);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();return()=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});};},[]);
       const charts=(d)=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});cr.current={};
         const palette=['#001f3f','#0074D9','#34a853','#fbbc04','#ea4335','#6f42c1','#20c997','#e67e22','#3498db','#9b59b6'];
-        // 1. Room Occupancy Doughnut
-        const c1=document.getElementById('roomChart');
-        if(c1)cr.current.r=new Chart(c1,{type:'doughnut',data:{labels:['Booked','Available','Maintenance'],datasets:[{data:[d.bookedRooms||0,d.availableRooms||0,d.maintenanceRooms||0],backgroundColor:['#0074D9','#34a853','#fbbc04'],borderColor:'#fff',borderWidth:2,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#333',padding:12,usePointStyle:true}},title:{display:true,text:'Room Occupancy',color:'#001f3f',font:{size:16,weight:'bold'}}}}});
-        // 2. Room Types Bar
+        // 1. Room Types Bar
         const c2=document.getElementById('roomTypeChart');
         if(c2){const rt=d.roomTypeBreakdown||{};const rtLabels=Object.keys(rt);const rtData=Object.values(rt);const rtColors=rtLabels.map((_,i)=>palette[i%palette.length]);
         cr.current.rt=new Chart(c2,{type:'bar',data:{labels:rtLabels,datasets:[{label:'Rooms',data:rtData,backgroundColor:rtColors.map(c=>c+'B3'),borderColor:rtColors,borderWidth:2,borderRadius:Number.MAX_VALUE,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:'Rooms by Type',color:'#001f3f',font:{size:16,weight:'bold'}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#666'},grid:{color:'rgba(0,0,0,0.06)'}},x:{grid:{display:false},ticks:{color:'#666'}}}}});}
-        // 3. Monthly Bookings & Revenue Combo
-        const c3=document.getElementById('monthlyChart');
-        if(c3){const mb=d.monthlyBookings||{};const mr=d.monthlyRevenue||{};const mLabels=Object.keys(mb);const mData=mLabels.map(k=>mb[k]);const rData=mLabels.map(k=>mr[k]);
-        cr.current.mb=new Chart(c3,{type:'bar',data:{labels:mLabels,datasets:[{label:'Bookings',data:mData,backgroundColor:'rgba(0,109,111,0.7)',borderColor:'#006d6f',borderWidth:2,borderRadius:4,order:1,yAxisID:'y'},{label:'Revenue ('+APP_CURRENCY+')',data:rData,type:'line',borderColor:'#f39c12',backgroundColor:'transparent',borderWidth:3,pointBackgroundColor:'#f39c12',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:0.4,order:0,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#333'}},title:{display:true,text:'Monthly Bookings & Revenue',color:'#001f3f',font:{size:16,weight:'bold'}}},scales:{y:{beginAtZero:true,position:'left',ticks:{stepSize:1,color:'#666'},grid:{color:'rgba(0,0,0,0.06)'}},y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{color:'#e67e22'}},x:{grid:{display:false},ticks:{color:'#666'}}}}});}
-        // 4. Income vs Expense Area
-        const c4=document.getElementById('incExpChart');
-        if(c4){const mi=d.monthlyIncome||{};const me=d.monthlyExpense||{};const fLabels=Object.keys(mi);const iData=fLabels.map(k=>mi[k]);const eData=fLabels.map(k=>me[k]);
-        const ctx4=c4.getContext('2d');const g1=ctx4.createLinearGradient(0,0,0,280);g1.addColorStop(0,'rgba(0,109,111,0.4)');g1.addColorStop(1,'rgba(0,109,111,0)');const g2=ctx4.createLinearGradient(0,0,0,280);g2.addColorStop(0,'rgba(243,156,18,0.4)');g2.addColorStop(1,'rgba(243,156,18,0)');
-        cr.current.ie=new Chart(c4,{type:'line',data:{labels:fLabels,datasets:[{label:'Income',data:iData,borderColor:'#006d6f',backgroundColor:g1,fill:true,tension:0.4,pointBackgroundColor:'#fff',pointBorderColor:'#006d6f',pointBorderWidth:2,pointRadius:5},{label:'Expenses',data:eData,borderColor:'#f39c12',backgroundColor:g2,fill:true,tension:0.4,pointBackgroundColor:'#fff',pointBorderColor:'#f39c12',pointBorderWidth:2,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#333'}},title:{display:true,text:'Income vs Expenses (6 Months)',color:'#001f3f',font:{size:16,weight:'bold'}}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#666'}},x:{grid:{display:false},ticks:{color:'#666'}}},interaction:{intersect:false,mode:'index'}}});}
-        // 5. Invoice Status Doughnut
+
+        // 2. Invoice Status Doughnut
         const c5=document.getElementById('invStatusChart');
         if(c5){const iv=d.invoiceStats||{};cr.current.is=new Chart(c5,{type:'doughnut',data:{labels:['Draft','Sent','Paid','Overdue','Cancelled'],datasets:[{data:[iv.draftInvoices||0,iv.sentInvoices||0,iv.paidInvoices||0,iv.overdueInvoices||0,iv.cancelledInvoices||0],backgroundColor:['#6c757d','#006d6f','#00a89d','#f39c12','#d35400'],borderColor:'#fff',borderWidth:2,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#333',padding:12,usePointStyle:true}},title:{display:true,text:'Invoice Status',color:'#001f3f',font:{size:16,weight:'bold'}}}}});}
       };
       if(ld)return(<div><div className="kpi-cards">{[...Array(4)].map((_,i)=><div key={i} className="skeleton" style={{height:'130px',borderRadius:'8px'}}></div>)}</div><div className="dashboard-grid-9">{[...Array(9)].map((_,i)=><DashboardCardSkeleton key={i}/>)}</div><div className="dashboard-split"><ChartSkeleton/><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div></div><div className="dashboard-grid-2"><ChartSkeleton/><ChartSkeleton/><ChartSkeleton/><ChartSkeleton/></div></div>);
       const f=st?.financeSummary||{};const b=st?.bookingRevenue||{};const q=st?.quoteStats||{};const inv=st?.invoiceStats||{};const bdg=st?.currentBudget||null;const rb=st?.recentBookings||[];
       const occRate=st?.totalRooms>0?Math.round((st?.bookedRooms/st?.totalRooms)*100):0;
-      const setBudget=()=>{Swal.fire({title:'Set Monthly Budget',input:'number',inputLabel:'Budget amount ('+APP_CURRENCY+')',inputPlaceholder:'Enter budget amount',showCancelButton:true,confirmButtonColor:'#001f3f',inputAttributes:{min:0,step:'0.01'},inputValidator:(v)=>{if(!v||parseFloat(v)<=0)return 'Enter a valid amount';}}).then(r=>{if(r.isConfirmed){const now=new Date();google.script.run.withSuccessHandler(res=>{if(res.success)Swal.fire({icon:'success',text:'Budget set!',timer:2000,showConfirmButton:false});else Swal.fire({icon:'error',text:res.message});}).setBudget(now.getMonth()+1,now.getFullYear(),parseFloat(r.value),user);}});};
       return(<div>
         {/* Row 1: 4 Colorful KPI Cards */}
         <div className="kpi-cards">
@@ -1007,6 +995,7 @@
           <div className="kpi-card c-green"><i className="fas fa-wallet kpi-card-icon"></i><div className="kpi-card-title">Net Balance</div><div className="kpi-card-value">{fmtCur(f.netBalance)}</div><div className="kpi-card-sub"><i className="fas fa-arrow-up"></i> {fmtCur(f.totalIncome)} income</div></div>
           <div className="kpi-card c-orange"><i className="fas fa-chart-pie kpi-card-icon"></i><div className="kpi-card-title">Occupancy Rate</div><div className="kpi-card-value">{occRate}%</div><div className="kpi-card-sub"><i className="fas fa-door-open"></i> {st?.bookedRooms||0} of {st?.totalRooms||0} rooms</div></div>
         </div>
+
         {/* Row 2: 8 White Stat Cards in single row */}
         <div className="dashboard-grid-9">
           <div className="stat-card"><div className="stat-card-icon"><i className="fas fa-door-open"></i></div><div className="stat-card-value">{st?.totalRooms||0}</div><div className="stat-card-label">Total Rooms</div></div>
@@ -1019,28 +1008,45 @@
           <div className="stat-card red"><div className="stat-card-icon"><i className="fas fa-exclamation-triangle"></i></div><div className="stat-card-value">{inv.overdueInvoices||0}</div><div className="stat-card-label">Overdue</div></div>
           <div className="stat-card purple"><div className="stat-card-icon"><i className="fas fa-file-alt"></i></div><div className="stat-card-value">{q.totalQuotes||0}</div><div className="stat-card-label">Quotes</div></div>
         </div>
-        {/* Split Row: Monthly Chart (wide) + Recent Bookings Table (narrow) */}
-        <div className="dashboard-split">
-          <div className="chart-card"><div className="chart-container" style={{height:'360px'}}><canvas id="monthlyChart"></canvas></div></div>
+
+        {/* Room Block View & Recent Bookings */}
+        <div className="dashboard-split" style={{gridTemplateColumns:'2fr 1fr'}}>
+          <div className="chart-card">
+            <h3 style={{margin:'0 0 15px 0',color:'#001f3f'}}><i className="fas fa-th-large"></i> Room Occupancy Map</h3>
+            <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+              {(st?.roomsList||[]).map(rm => {
+                let bg = '#34a853'; // Available
+                if(rm.roomStatus==='Booked') bg = '#0074D9';
+                if(rm.roomStatus==='Maintenance') bg = '#fbbc04';
+                if(rm.roomStatus==='Reserved') bg = '#6f42c1';
+                return (
+                  <div key={rm.roomNo} style={{background:bg,color:'#fff',padding:'15px',borderRadius:'8px',width:'80px',textAlign:'center',boxShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>
+                    <div style={{fontSize:'16px',fontWeight:'bold'}}>{rm.roomNo}</div>
+                    <div style={{fontSize:'11px',opacity:0.9}}>{rm.roomStatus}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{marginTop:'20px',display:'flex',gap:'15px',fontSize:'12px',color:'#666'}}>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#34a853',borderRadius:'2px'}}></span> Available</span>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#0074D9',borderRadius:'2px'}}></span> Booked</span>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#6f42c1',borderRadius:'2px'}}></span> Reserved</span>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#fbbc04',borderRadius:'2px'}}></span> Maintenance</span>
+            </div>
+          </div>
           <div className="dash-table-card"><h3><i className="fas fa-clock"></i> Recent Bookings</h3>
-            <div style={{overflowX:'auto',flex:1}}><table className="dash-table"><thead><tr><th>Guest</th><th>Room</th><th>Check-in</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-              {rb.length>0?rb.map((r,i)=>{const avatarColors=['#0074D9','#34a853','#6f42c1','#e67e22','#ea4335','#006d6f','#d35400','#3498db','#9b59b6','#20c997'];const initials=(r.guestName||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();return(<tr key={i}><td style={{fontWeight:600,color:'#333'}}><div style={{display:'flex',alignItems:'center'}}><span className="guest-avatar" style={{background:avatarColors[i%avatarColors.length]}}>{initials}</span>{r.guestName}</div></td><td><span className="room-badge">#{r.roomNo}</span></td><td style={{color:'#555',fontSize:'12px'}}><i className="fas fa-calendar-alt" style={{color:'var(--navy-accent)',marginRight:'4px'}}></i>{fmtDate(r.checkIn)}</td><td style={{fontWeight:600,color:'var(--navy-primary)'}}>{fmtCur(r.totalAmount)}</td><td><span className={`status-badge ${statusCls(r.status)}`}>{r.status}</span></td></tr>);}):<tr><td colSpan="5" style={{textAlign:'center',color:'#999',padding:'30px'}}><i className="fas fa-inbox" style={{fontSize:'24px',display:'block',marginBottom:'8px',color:'#ccc'}}></i>No bookings yet</td></tr>}
+            <div style={{overflowX:'auto',flex:1}}><table className="dash-table"><thead><tr><th>Guest</th><th>Room</th><th>Amount</th></tr></thead><tbody>
+              {rb.length>0?rb.map((r,i)=>{const avatarColors=['#0074D9','#34a853','#6f42c1','#e67e22','#ea4335','#006d6f','#d35400','#3498db','#9b59b6','#20c997'];const initials=(r.guestName||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();return(<tr key={i}><td style={{fontWeight:600,color:'#333'}}><div style={{display:'flex',alignItems:'center'}}><span className="guest-avatar" style={{background:avatarColors[i%avatarColors.length]}}>{initials}</span>{r.guestName}</div></td><td><span className="room-badge">#{r.roomNo}</span></td><td style={{fontWeight:600,color:'var(--navy-primary)'}}>{fmtCur(r.totalAmount)}</td></tr>);}):<tr><td colSpan="3" style={{textAlign:'center',color:'#999',padding:'30px'}}><i className="fas fa-inbox" style={{fontSize:'24px',display:'block',marginBottom:'8px',color:'#ccc'}}></i>No bookings yet</td></tr>}
             </tbody></table></div>
           </div>
         </div>
-        {/* Charts: 2x2 Grid — Room Occupancy, Room Types, Income vs Expenses, Invoice Status */}
+
+        {/* Charts: Bottom Grid */}
         <div className="dashboard-grid-2">
-          <div className="chart-card"><div className="chart-container"><canvas id="roomChart"></canvas></div></div>
           <div className="chart-card"><div className="chart-container"><canvas id="roomTypeChart"></canvas></div></div>
-          <div className="chart-card"><div className="chart-container"><canvas id="incExpChart"></canvas></div></div>
           <div className="chart-card"><div className="chart-container"><canvas id="invStatusChart"></canvas></div></div>
         </div>
-        {/* Budget Section */}
-        {bdg&&<div><div className="stat-card"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}><h3 style={{color:'var(--navy-primary)',margin:0}}><i className="fas fa-piggy-bank"></i> Monthly Budget</h3><button className="btn btn-sm btn-primary" onClick={setBudget}><i className="fas fa-edit"></i> Set</button></div>
-          <div className="budget-bar-container"><div className="budget-bar" style={{width:Math.min(100,(bdg.budgetAmount>0?bdg.totalSpent/bdg.budgetAmount*100:0))+'%',background:(bdg.budgetAmount>0?bdg.totalSpent/bdg.budgetAmount:0)>0.9?'#ea4335':(bdg.budgetAmount>0?bdg.totalSpent/bdg.budgetAmount:0)>0.7?'#fbbc04':'#34a853'}}></div></div>
-          <div style={{display:'flex',justifyContent:'space-between',marginTop:'8px',fontSize:'14px',color:'#666'}}><span>Spent: {fmtCur(bdg.totalSpent)}</span><span>Budget: {fmtCur(bdg.budgetAmount)}</span><span>Remaining: {fmtCur(bdg.remaining)}</span></div>
-        </div></div>}
-        {!bdg&&<div><div className="stat-card" style={{textAlign:'center'}}><p style={{color:'#888',marginBottom:'10px'}}>No budget set for this month</p><button className="btn btn-primary" onClick={setBudget}><i className="fas fa-plus"></i> Set Monthly Budget</button></div></div>}
+
       </div>);
     }
 
