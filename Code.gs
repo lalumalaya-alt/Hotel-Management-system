@@ -63,6 +63,7 @@ const LINKED_CHECKIN_COL   = 24;
 const BOOKING_GST_TYPE_COL = 25;
 const BOOKING_FIX_RENT_COL = 26;
 const BOOKING_FIX_RENT_AMT_COL = 27;
+const BOOKING_DISC_PCT_COL = 28; // Added back to prevent ReferenceError in Booking.gs
 
 // LOGIN sheet columns (0-based)
 const LOGIN_USERNAME_COL   = 0;
@@ -620,11 +621,13 @@ function bookRoom(bookingDetails) {
     let totalRoomRate = parseFloat(bookingDetails.roomRate || "0") || 0;
     let finalAmount = parseFloat(bookingDetails.totalAmount || "0") || 0;
     let tax = parseFloat(bookingDetails.tax || "0") || 0;
-    let discount = parseFloat(bookingDetails.discountPercent || "0") || 0;
     let paymentMethod = bookingDetails.paymentMethod || "Cash";
 
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
+
+    let discountPercent = parseFloat(bookingDetails.discountPercent || "0") || 0;
+    let discount = (totalRoomRate * totalRoomsCount * nights * discountPercent) / 100;
 
     let roomNosStr = roomNosArr.join(', ');
     let paymentStatus = advancePaid >= finalAmount ? "Paid" : advancePaid > 0 ? "Partial" : "Unpaid";
@@ -657,7 +660,8 @@ function bookRoom(bookingDetails) {
       "",
       bookingDetails.gstType || 'Excluding',
       bookingDetails.fixRoomRent || 'No',
-      parseFloat(bookingDetails.fixRoomRentAmount) || 0
+      parseFloat(bookingDetails.fixRoomRentAmount) || 0,
+      discountPercent
     ]);
 
     // Mark all selected physical rooms as Booked
@@ -945,11 +949,14 @@ function updateBooking(rowIndex, bookingData) {
 
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
-    const totalRoomRate = parseFloat(bookingData.roomRate) || existingRate;
-    const finalAmount = parseFloat(bookingData.totalAmount) || 0;
-    const tax = parseFloat(bookingData.tax) || 0;
-    const discount = parseFloat(bookingData.discountPercent) || 0;
-    const advancePaidInput = bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) || 0 : existingAmountPaid;
+    const totalRoomRate = bookingData.roomRate !== undefined ? parseFloat(bookingData.roomRate) : existingRate;
+    const finalAmount = bookingData.totalAmount !== undefined ? parseFloat(bookingData.totalAmount) : 0;
+    const tax = bookingData.tax !== undefined ? parseFloat(bookingData.tax) : 0;
+
+    // In updateBooking, discount is an absolute amount in DISCOUNT_COL, so we convert discountPercent to absolute
+    const discountPercent = bookingData.discountPercent !== undefined ? parseFloat(bookingData.discountPercent) : 0;
+    const discount = (totalRoomRate * totalRoomsCount * nights * discountPercent) / 100;
+    const advancePaidInput = bookingData.advancePaid !== undefined ? parseFloat(bookingData.advancePaid) : existingAmountPaid;
     let paymentStatus = advancePaidInput >= finalAmount ? "Paid" : advancePaidInput > 0 ? "Partial" : "Unpaid";
 
     // Build complete row (28 columns)
@@ -986,38 +993,44 @@ function updateBooking(rowIndex, bookingData) {
       existingLinkedCheckIn,
       bookingData.gstType || 'Excluding',
       bookingData.fixRoomRent || 'No',
-      parseFloat(bookingData.fixRoomRentAmount) || 0
+      parseFloat(bookingData.fixRoomRentAmount) || 0,
+      discountPercent
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 28).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 29).setValues([row]);
 
-    // Update room statuses for the new set of rooms if it's not a generic type booking
-    if (!isTypeBooking && existingStatus !== 'Cancelled' && existingStatus !== 'Checked Out') {
+    // Update room statuses for the new set of rooms
+    if (existingStatus !== 'Cancelled' && existingStatus !== 'Checked Out') {
       const ss = SpreadsheetApp.openById(SS_ID);
       const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
       const roomsData = roomsSheet.getDataRange().getValues();
 
-      // Free up old rooms first
+      // Free up old physical rooms first
       let oldRooms = existingRoomNo.split(',').map(r => r.trim()).filter(r => r);
       oldRooms.forEach(rn => {
-        for (let i = 1; i < roomsData.length; i++) {
-          if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
-            roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Available");
-            break;
+        const isType = rn.match(/(.+?)(?:\s*\(\d+\))?$/) && rn.match(/(.+?)(?:\s*\(\d+\))?$/)[2];
+        if (!isType) {
+          for (let i = 1; i < roomsData.length; i++) {
+            if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
+              roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Available");
+              break;
+            }
           }
         }
       });
 
-      // Book new rooms
-      let newRooms = roomNosStr.split(',').map(r => r.trim()).filter(r => r);
-      newRooms.forEach(rn => {
-        for (let i = 1; i < roomsData.length; i++) {
-          if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
-            roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Booked");
-            break;
+      // Book new physical rooms
+      if (!isTypeBooking) {
+        let newRooms = roomNosStr.split(',').map(r => r.trim()).filter(r => r);
+        newRooms.forEach(rn => {
+          for (let i = 1; i < roomsData.length; i++) {
+            if ((roomsData[i][ROOM_NO_COL] || '').toString() === rn) {
+              roomsSheet.getRange(i + 1, ROOM_STATUS_COL + 1).setValue("Booked");
+              break;
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     SpreadsheetApp.flush();
@@ -2266,7 +2279,11 @@ function getAllBookings() {
         foodPlan: (row[FOOD_PLAN_COL] || "None").toString(),
         advancePaid: parseFloat(row[ADVANCE_PAID_COL]) || 0,
         numberOfRooms: parseInt(row[NUM_ROOMS_COL]) || 1,
-        linkedCheckInId: (row[LINKED_CHECKIN_COL] || "").toString()
+        linkedCheckInId: (row[LINKED_CHECKIN_COL] || "").toString(),
+        gstType: (row[BOOKING_GST_TYPE_COL] || "Excluding").toString(),
+        fixRoomRent: (row[BOOKING_FIX_RENT_COL] || "No").toString(),
+        fixRoomRentAmount: parseFloat(row[BOOKING_FIX_RENT_AMT_COL]) || 0,
+        discountPercent: parseFloat(row[BOOKING_DISC_PCT_COL]) || 0
       });
     }
     return bookings;
@@ -2577,6 +2594,7 @@ function getAllRooms() {
         roomStatus: row[ROOM_STATUS_COL]
       });
     }
+
     return rooms;
   } catch (err) {
     return { error: err.message };
@@ -4533,6 +4551,11 @@ function manageSheetsDataStructure(configArray) {
               break;
             }
           }
+          // Ensure the sheet has enough columns
+          const requiredColumns = actualStartCol + colsToAdd.length - 1;
+          if (sheet.getMaxColumns() < requiredColumns) {
+            sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredColumns - sheet.getMaxColumns());
+          }
           sheet.getRange(1, actualStartCol, 1, colsToAdd.length).setValues([colsToAdd]);
         }
       }
@@ -4545,7 +4568,7 @@ function initDataStructure() {
   const config = [
     { sheetName: LOGIN_SHEET_NAME, headers: ["Username", "Password", "Role", "OTP", "OTPExpiry"] },
     { sheetName: ROOMS_SHEET_NAME, headers: ["Room No", "Room Type", "Room Rate", "Room Status"] },
-    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "City", "Marital Status", "Occupancy Type", "Family Details", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount"] },
+    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "City", "Marital Status", "Occupancy Type", "Family Details", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount", "Discount Percent"] },
     { sheetName: QUOTES_SHEET_NAME, headers: ["QuoteID", "GuestName", "Phone", "Email", "CreatedDate", "ValidUntil", "Status", "Items", "SubTotal", "Tax", "Discount", "TotalAmount", "Notes", "CreatedBy", "Currency", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "CustomerTIN", "ConvertedToInvoice", "PDFDriveLink"] },
     { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "SourceQuoteID", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
     { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "NextQuoteNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
