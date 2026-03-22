@@ -1356,7 +1356,43 @@
           {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
         ],order:[[0,'desc']]});$('#ciT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='switch'){setUpdateRec(rd);}else if(a==='edit'){handleEdit(rd);}else if(a==='checkout'){handleCheckout(rd);}});tRef.current=t;}catch(e){console.error(e);}},150);};
 
-      const toggleRoom=(rn)=>{setSelectedRooms(prev=>prev.includes(rn)?prev.filter(r=>r!==rn):[...prev,rn]);};
+      const toggleRoom=(rn)=>{
+        setSelectedRooms(prev => {
+          if (prev.includes(rn)) return prev.filter(r => r !== rn);
+
+          // Before adding, check if there are enough free rooms of this type remaining
+          // to satisfy other pending advance bookings.
+          const rState = roomStatesMap[rn];
+          if (rState && roomStatesMap._typeBookings) {
+             const type = rState.room.roomType;
+             const reqQty = roomStatesMap._typeBookings[type] || 0;
+             if (reqQty > 0) {
+               // Count how many rooms of this type are currently fully available (not occupied/maintenance)
+               let totalAvailOfType = 0;
+               for (const key in roomStatesMap) {
+                 if (key === '_typeBookings') continue;
+                 if (roomStatesMap[key].room.roomType === type && roomStatesMap[key].status === 'available') {
+                   totalAvailOfType++;
+                 }
+               }
+               // Count how many we have currently selected of this type (excluding the one we want to add)
+               let currentlySelectedOfType = 0;
+               prev.forEach(srn => {
+                 if (roomStatesMap[srn] && roomStatesMap[srn].room.roomType === type) {
+                    currentlySelectedOfType++;
+                 }
+               });
+
+               // If (total - selected - 1) < reqQty, then adding this room would prevent fulfilling the advance bookings
+               if ((totalAvailOfType - currentlySelectedOfType - 1) < reqQty) {
+                 Swal.fire({icon: 'warning', text: `Cannot select this room. There are ${reqQty} advance booking(s) pending for ${type} rooms that need to be fulfilled from the remaining availability.`});
+                 return prev;
+               }
+             }
+          }
+          return [...prev, rn];
+        });
+      };
 
       const doSearch=()=>{if(!searchQ.trim())return;setSearching(true);
         google.script.run.withSuccessHandler(r=>{setSearching(false);setSearchResults(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setSearching(false);Swal.fire({icon:'error',text:e.message});}).searchBookingsByGuestName(searchQ);};
@@ -1425,18 +1461,11 @@
               }
             });
 
-            // Greedily reserve matching available rooms for other overlapping pending type bookings
-            for (const [type, qty] of Object.entries(typeBookings)) {
-              let remainingToDeduct = qty;
-              for (const rn in states) {
-                if (remainingToDeduct <= 0) break;
-                if (states[rn].room.roomType === type && states[rn].status === 'available') {
-                  states[rn].status = 'reserved';
-                  states[rn].label = 'Reserved';
-                  remainingToDeduct--;
-                }
-              }
-            }
+            // Instead of greedily reserving rooms and hiding them from selection,
+            // we simply keep track of how many of each type are required by other bookings.
+            // The validation step below will ensure the user doesn't pick so many
+            // that these required types cannot be fulfilled.
+            states._typeBookings = typeBookings;
           }
         } else {
            // If no dates selected, fallback to simple filtering for UI initial load
