@@ -1951,8 +1951,11 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
     function CheckoutView({user}){
       const [roomNo,setRoomNo]=useState('');
       const [fetching,setFetching]=useState(false);
-      const [ciData,setCiData]=useState(null);
-      const [foodOrders,setFoodOrders]=useState([]);
+
+      const [queuedCis, setQueuedCis] = useState([]);
+      const [primaryCiId, setPrimaryCiId] = useState(null);
+      const [foodOrdersMap, setFoodOrdersMap] = useState({}); // { checkInId: [orders] }
+
       const [inv,setInv]=useState(null);
       const [saving,setSaving]=useState(false);
       const [payMode,setPayMode]=useState('Cash');
@@ -1962,26 +1965,34 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
       const [discountPercent,setDiscountPercent]=useState(0);
       const [applyAdvance,setApplyAdvance]=useState(true);
 
-      const [selectedRooms,setSelectedRooms]=useState([]);
-      const [selectedOrders,setSelectedOrders]=useState([]);
-
       const fetchRoom=()=>{
         if(!roomNo.trim()){Swal.fire({icon:'warning',text:'Enter a room number.'});return;}
-        setFetching(true);setCiData(null);setFoodOrders([]);
+        setFetching(true);
 
         google.script.run.withSuccessHandler(res=>{
           if(res){
-            setCiData(res);
-            setDiscountPercent(res.discountPercent || 0);
-            const roomsArr = (res.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
-            setSelectedRooms(roomsArr);
+            // Check if already in queue
+            if (queuedCis.find(ci => ci.checkInId === res.checkInId)) {
+              setFetching(false);
+              Swal.fire({icon:'info', title:'Already Queued', text:'This check-in is already in the checkout queue.'});
+              setRoomNo('');
+              return;
+            }
 
-            // Also fetch food orders for this check-in
+            // Set primary if first
+            if (queuedCis.length === 0) {
+               setPrimaryCiId(res.checkInId);
+               setDiscountPercent(res.discountPercent || 0); // take discount from first
+            }
+
+            setQueuedCis(prev => [...prev, res]);
+
+            // Fetch food orders for this check-in
             google.script.run.withSuccessHandler(orders=>{
               setFetching(false);
               const activeOrders = Array.isArray(orders) ? orders.filter(o => o.checkInId === res.checkInId && o.status === 'Active') : [];
-              setFoodOrders(activeOrders);
-              setSelectedOrders(activeOrders.map(o => o.orderId));
+              setFoodOrdersMap(prev => ({...prev, [res.checkInId]: activeOrders}));
+              setRoomNo('');
             }).withFailureHandler(e=>{setFetching(false);Swal.fire('Error',e.message,'error')}).getAllFoodOrders();
 
           } else {
@@ -1991,108 +2002,129 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
         }).withFailureHandler(e=>{setFetching(false);Swal.fire({icon:'error',text:e.message});}).getCheckInByRoomNo(roomNo);
       };
 
-      const ci=ciData;
-      const nights=ci?(()=>{const cin=new Date(ci.checkInDate);const cout=new Date(checkOutDate||new Date());const ms=cout.getTime()-cin.getTime();const n=Math.ceil(ms/(1000*60*60*24));return n<1?1:n;})():0;
-
-      const toggleRoom = (rn) => setSelectedRooms(p => p.includes(rn) ? p.filter(x=>x!==rn) : [...p, rn]);
-      const toggleOrder = (oid) => setSelectedOrders(p => p.includes(oid) ? p.filter(x=>x!==oid) : [...p, oid]);
-
-      const doCheckout=()=>{
-        if(!ci){Swal.fire({icon:'warning',text:'Fetch a room first.'});return;}
-        if(selectedRooms.length === 0 && selectedOrders.length === 0) {
-          Swal.fire({icon:'warning',text:'Please select at least one room or order to checkout.'});return;
-        }
-
-        const allRoomsStr = (ci.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
-        const isFullCheckout = selectedRooms.length === allRoomsStr.length && selectedOrders.length === foodOrders.length;
-
-        setSaving(true);Swal.fire({title:'Processing Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-
-        const payload = {checkOutDate,checkOutTime,paymentMode:payMode,amountPaid:parseFloat(amtPaid)||0, discountPercent, applyAdvance};
-
-        if (isFullCheckout) {
-          google.script.run.withSuccessHandler(res=>{
-            Swal.close();setSaving(false);
-            if(res.success){
-              Swal.fire({icon:'success',title:'Full Checkout Complete!',text:res.message,timer:2500,showConfirmButton:false});
-              if(res.invoiceData){setInv(res.invoiceData);}
-              setCiData(null);setRoomNo('');
-            }else Swal.fire({icon:'error',text:res.message});
-          }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).processFullCheckout(ci.checkInId, payload);
-        } else {
-          google.script.run.withSuccessHandler(res=>{
-            Swal.close();setSaving(false);
-            if(res.success){
-              Swal.fire({icon:'success',title:'Partial Checkout Complete!',text:res.message,timer:2500,showConfirmButton:false});
-              if(res.invoiceData){setInv(res.invoiceData);}
-              setCiData(null);setRoomNo('');
-            }else Swal.fire({icon:'error',text:res.message});
-          }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).processPartialCheckout(ci.checkInId, selectedRooms, selectedOrders, payload);
+      const removeQueued = (ciId) => {
+        setQueuedCis(prev => prev.filter(c => c.checkInId !== ciId));
+        setFoodOrdersMap(prev => {
+           const newMap = {...prev};
+           delete newMap[ciId];
+           return newMap;
+        });
+        if (primaryCiId === ciId) {
+           setPrimaryCiId(null);
         }
       };
 
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-sign-out-alt"></i> Checkout</h2></div>
+      const doGroupCheckout=()=>{
+        if(queuedCis.length === 0){Swal.fire({icon:'warning',text:'Add at least one check-in to the queue.'});return;}
+        if(!primaryCiId){Swal.fire({icon:'warning',text:'Please select a primary billing guest from the queue.'});return;}
+
+        setSaving(true);Swal.fire({title:'Processing Group Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+
+        const payload = {checkOutDate,checkOutTime,paymentMode:payMode,amountPaid:parseFloat(amtPaid)||0, discountPercent, applyAdvance};
+        const checkInIdsArray = queuedCis.map(ci => ci.checkInId);
+
+        // Build primary guest data
+        const primaryCi = queuedCis.find(ci => ci.checkInId === primaryCiId);
+        const primaryGuestData = {
+          guestName: primaryCi.guestName,
+          companyName: primaryCi.companyName,
+          gstNumber: primaryCi.gstNumber,
+          mobile: primaryCi.mobile,
+          email: primaryCi.email,
+          address: primaryCi.address,
+          billTo: primaryCi.billTo,
+          gstType: primaryCi.gstType
+        };
+
+        google.script.run.withSuccessHandler(res=>{
+          Swal.close();setSaving(false);
+          if(res.success){
+            Swal.fire({icon:'success',title:'Group Checkout Complete!',text:res.message,timer:2500,showConfirmButton:false});
+            if(res.invoiceData){setInv(res.invoiceData);}
+            setQueuedCis([]); setFoodOrdersMap({}); setPrimaryCiId(null);
+          }else Swal.fire({icon:'error',text:res.message});
+        }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).processMergedCheckout(checkInIdsArray, primaryGuestData, payload);
+      };
+
+      // Aggregations
+      const totalAdvance = queuedCis.reduce((sum, ci) => sum + (parseFloat(ci.advancePaid) || 0), 0);
+      const totalRooms = queuedCis.reduce((sum, ci) => sum + (parseInt(ci.numberOfRooms) || 0), 0);
+
+      // Calculate nights for each to show rough preview
+      const coutDate = new Date(checkOutDate || new Date());
+      let combinedNights = 0;
+      queuedCis.forEach(ci => {
+         const cin = new Date(ci.checkInDate);
+         const ms = coutDate.getTime() - cin.getTime();
+         const n = Math.ceil(ms/(1000*60*60*24));
+         combinedNights += (n < 1 ? 1 : n);
+      });
+
+      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-object-group"></i> Group Checkout (Bill Merging)</h2></div>
         <div className="checkout-fetch-section">
-          <div className="form-group"><label><i className="fas fa-bed"></i> Room Number</label><input value={roomNo} onChange={e=>setRoomNo(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')fetchRoom();}} placeholder="Enter room number..."/></div>
-          <button className="btn btn-primary" onClick={fetchRoom} disabled={fetching} style={{height:'50px',marginBottom:'0'}}>{fetching?<i className="fas fa-spinner fa-spin"/>:<><i className="fas fa-search"></i> Fetch</>}</button>
+          <div className="form-group"><label><i className="fas fa-bed"></i> Add Room to Group</label><input value={roomNo} onChange={e=>setRoomNo(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')fetchRoom();}} placeholder="Enter room number..."/></div>
+          <button className="btn btn-primary" onClick={fetchRoom} disabled={fetching} style={{height:'50px',marginBottom:'0'}}>{fetching?<i className="fas fa-spinner fa-spin"/>:<><i className="fas fa-plus"></i> Add to Queue</>}</button>
         </div>
 
-        {ci&&<>
-          <div className="checkout-guest-info">
-            <h4 style={{color:'var(--navy-primary)',marginBottom:'12px'}}><i className="fas fa-user"></i> Guest Details — {ci.checkInId}</h4>
-            <div className="checkout-guest-grid">
-              <p><strong>Guest:</strong> {ci.guestName}</p>
-              <p><strong>Company:</strong> {ci.companyName||'-'}</p>
-              <p><strong>GST No:</strong> {ci.gstNumber||'-'}</p>
-              <p><strong>Mobile:</strong> {ci.mobile||'-'}</p>
-              <p><strong>Email:</strong> {ci.email||'-'}</p>
-              <p><strong>Address:</strong> {ci.address||'-'}</p>
-              <p><strong>Check-In:</strong> {fmtDate(ci.checkInDate)} {ci.checkInTime}</p>
-              <p><strong>Advance Paid:</strong> {fmtCur(ci.advancePaid)}</p>
-              <p><strong>Bill To:</strong> {ci.billTo||'Individual'}</p>
+        {queuedCis.length > 0 && <>
+          <div style={{background:'#fff',padding:'20px',borderRadius:'4px',border:'1px solid #ddd',marginBottom:'20px'}}>
+            <h4 style={{color:'var(--navy-primary)',marginBottom:'15px'}}><i className="fas fa-list-ol"></i> Checkout Queue</h4>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                <thead>
+                  <tr style={{background:'#f8f9fa',textAlign:'left'}}>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Primary Bill To</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Check-In ID</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Guest Name</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Rooms</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Advance</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>POS Orders</th>
+                    <th style={{padding:'10px',borderBottom:'2px solid #ddd'}}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {queuedCis.map(ci => (
+                    <tr key={ci.checkInId} style={{borderBottom:'1px solid #eee'}}>
+                      <td style={{padding:'10px',textAlign:'center'}}>
+                        <input type="radio" name="primaryGuest" checked={primaryCiId === ci.checkInId} onChange={() => setPrimaryCiId(ci.checkInId)} style={{width:'20px',height:'20px',cursor:'pointer'}}/>
+                      </td>
+                      <td style={{padding:'10px'}}>{ci.checkInId}</td>
+                      <td style={{padding:'10px'}}><strong>{ci.guestName}</strong><br/><span style={{fontSize:'12px',color:'#666'}}>{ci.companyName}</span></td>
+                      <td style={{padding:'10px'}}>{ci.roomNumbers} ({ci.numberOfRooms} rooms)</td>
+                      <td style={{padding:'10px',color:'var(--success)'}}>{fmtCur(ci.advancePaid)}</td>
+                      <td style={{padding:'10px'}}>{(foodOrdersMap[ci.checkInId]||[]).length} items</td>
+                      <td style={{padding:'10px'}}><button className="btn btn-secondary" style={{padding:'5px 10px',margin:0,fontSize:'12px'}} onClick={() => removeQueued(ci.checkInId)}><i className="fas fa-trash"></i> Remove</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{background:'#f0f4f8',fontWeight:'bold'}}>
+                    <td colSpan="3" style={{padding:'10px',textAlign:'right'}}>COMBINED TOTALS:</td>
+                    <td style={{padding:'10px'}}>{totalRooms} Rooms / {combinedNights} Est. Nights</td>
+                    <td style={{padding:'10px',color:'var(--success)'}}>{fmtCur(totalAdvance)}</td>
+                    <td colSpan="2"></td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
-          </div>
-
-          <div style={{display:'flex',gap:'20px',flexWrap:'wrap',marginBottom:'20px'}}>
-            <div style={{flex:'1 1 300px',background:'#fff',padding:'15px',borderRadius:'4px',border:'1px solid #ddd'}}>
-              <h4 style={{color:'var(--navy-primary)',marginBottom:'10px'}}><i className="fas fa-bed"></i> Select Rooms for Checkout</h4>
-              <p style={{fontSize:'12px',color:'#666',marginBottom:'10px'}}>Check the rooms you want to include in this bill.</p>
-              {(ci.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean).map(rn => (
-                <label key={rn} style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px',cursor:'pointer'}}>
-                  <input type="checkbox" checked={selectedRooms.includes(rn)} onChange={()=>toggleRoom(rn)} style={{width:'18px',height:'18px'}} />
-                  Room {rn}
-                </label>
-              ))}
-            </div>
-
-            <div style={{flex:'1 1 300px',background:'#fff',padding:'15px',borderRadius:'4px',border:'1px solid #ddd'}}>
-              <h4 style={{color:'var(--navy-primary)',marginBottom:'10px'}}><i className="fas fa-utensils"></i> Select POS Orders</h4>
-              <p style={{fontSize:'12px',color:'#666',marginBottom:'10px'}}>Check the orders you want to include in this bill.</p>
-              {foodOrders.length===0 && <p style={{fontSize:'13px',color:'#888'}}>No pending POS orders.</p>}
-              {foodOrders.map(o => (
-                <label key={o.orderId} style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px',cursor:'pointer'}}>
-                  <input type="checkbox" checked={selectedOrders.includes(o.orderId)} onChange={()=>toggleOrder(o.orderId)} style={{width:'18px',height:'18px'}} />
-                  [{fmtDate(o.orderDate)}] {o.description} ({fmtCur(o.amount)})
-                </label>
-              ))}
-            </div>
+            {!primaryCiId && <p style={{color:'var(--danger)',fontSize:'13px',marginTop:'10px'}}><i className="fas fa-exclamation-triangle"></i> Please select a primary guest using the radio buttons above. This guest's name and details will appear on the master invoice.</p>}
           </div>
 
           <div className="checkout-bill-section">
-            <h4><i className="fas fa-calculator"></i> Checkout Options</h4>
+            <h4><i className="fas fa-calculator"></i> Master Checkout Options</h4>
             <div className="form-grid">
               <div className="form-group"><label>Check-Out Date</label><input type="date" value={checkOutDate} onChange={e=>setCheckOutDate(e.target.value)}/></div>
               <div className="form-group"><label>Check-Out Time</label><input type="time" value={checkOutTime} onChange={e=>setCheckOutTime(e.target.value)}/></div>
-              <div className="form-group"><label>Discount (%)</label><input type="number" step="0.01" min="0" max="100" value={discountPercent} onChange={e=>setDiscountPercent(e.target.value)}/></div>
-              <div className="form-group" style={{display:'flex',alignItems:'flex-end'}}><label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',marginBottom:'10px'}}><input type="checkbox" checked={applyAdvance} onChange={e=>setApplyAdvance(e.target.checked)} style={{width:'18px',height:'18px'}}/> Apply Advance Paid ({fmtCur(ci.advancePaid)})</label></div>
+              <div className="form-group"><label>Overall Discount (%)</label><input type="number" step="0.01" min="0" max="100" value={discountPercent} onChange={e=>setDiscountPercent(e.target.value)}/></div>
+              <div className="form-group" style={{display:'flex',alignItems:'flex-end'}}><label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',marginBottom:'10px'}}><input type="checkbox" checked={applyAdvance} onChange={e=>setApplyAdvance(e.target.checked)} style={{width:'18px',height:'18px'}}/> Apply Total Advance Paid ({fmtCur(totalAdvance)})</label></div>
               <div className="form-group"><label>Payment Mode</label><select value={payMode} onChange={e=>setPayMode(e.target.value)}><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>UPI</option><option>Online</option></select></div>
               <div className="form-group"><label>Amount Paid Now ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={amtPaid} onChange={e=>setAmtPaid(e.target.value)}/></div>
             </div>
           </div>
 
           <div className="form-actions">
-            <button className="btn btn-primary" onClick={doCheckout} disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-sign-out-alt"></i> Checkout Selected (Generate Invoice)</>}</button>
-            <button className="btn btn-secondary" onClick={()=>{setCiData(null);setRoomNo('');}}><i className="fas fa-times"></i> Cancel</button>
+            <button className="btn btn-primary" onClick={doGroupCheckout} disabled={saving || !primaryCiId}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-sign-out-alt"></i> Checkout Group & Generate Master Invoice</>}</button>
+            <button className="btn btn-secondary" onClick={()=>{setQueuedCis([]);setFoodOrdersMap({});setPrimaryCiId(null);}}><i className="fas fa-times"></i> Clear Queue</button>
           </div>
         </>}
 

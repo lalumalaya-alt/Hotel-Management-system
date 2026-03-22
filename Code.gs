@@ -2193,6 +2193,57 @@ function processPartialCheckout(checkInId, selectedRooms, selectedOrderIds, chec
 
     let billNumber = generateBillNumber();
 
+    // Build day-by-day data for invoice
+    let dayByDay = [];
+    let grandRunning = 0;
+    for (let d = 0; d < nights; d++) {
+      let dayDate = new Date(checkInDate);
+      dayDate.setDate(dayDate.getDate() + d);
+      let dateStr = dayDate.toISOString().split('T')[0];
+
+      let dayRoom = dailyRoomRate; // fallback
+      if (staySegments.length > 0) {
+        for (let s = staySegments.length - 1; s >= 0; s--) {
+          let seg = staySegments[s];
+          let segStartStr = seg.startDate.toISOString().split('T')[0];
+          let segEndStr = seg.endDate.toISOString().split('T')[0];
+          if (dateStr >= segStartStr && dateStr < segEndStr) {
+            dayRoom = seg.rate;
+            break;
+          }
+        }
+      }
+
+      let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
+      foodOrders.forEach(o => {
+        let oDate = o.orderDate.split('T')[0];
+        if (oDate === dateStr && dayCats.hasOwnProperty(o.category)) {
+          dayCats[o.category] += o.amount;
+        }
+      });
+
+      let dayTotal = dayRoom;
+      Object.values(dayCats).forEach(v => dayTotal += v);
+      grandRunning += dayTotal;
+
+      dayByDay.push({
+        date: dateStr,
+        rooms: dayRoom,
+        extraBed: dayCats.ExtraBed,
+        foodBev: dayCats.FoodBeverage,
+        miniBar: dayCats.MiniBar,
+        earlyClean: dayCats.EarlyClean,
+        xerox: dayCats.Xerox,
+        laundry: dayCats.Laundry,
+        fax: dayCats.Fax,
+        spbuc: dayCats.SPBUC,
+        travels: dayCats.Travels,
+        misc: dayCats.Misc,
+        dayTotal: dayTotal,
+        grandTotal: grandRunning
+      });
+    }
+
     // Process Database Updates
 
     // 1. Mark selected rooms as available
@@ -2240,6 +2291,48 @@ function processPartialCheckout(checkInId, selectedRooms, selectedOrderIds, chec
        restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
     });
 
+    // Database Updates: Generate ONE master invoice in the Invoices sheet
+    const invSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
+    if (invSheet) {
+      // Build a minimal summary of items for the invoice record
+      const invoiceItems = [
+        { description: `Combined Room Rent (${allRoomNosArr.length} rooms)`, amount: totalRoomRent },
+        { description: `Total POS Orders`, amount: totalFooding + totalExtraBed + totalOtherServices }
+      ];
+
+      // Note: INVOICES_SHEET_NAME headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "SourceQuoteID", "PDFDriveLink", "CreatedBy", "UpdatedAt"]
+      const nowStr = new Date().toISOString();
+      const invoiceRow = new Array(26).fill('');
+      invoiceRow[0] = billNumber; // InvoiceID
+      invoiceRow[1] = primaryGuestData.guestName; // GuestName
+      invoiceRow[2] = primaryGuestData.mobile; // Phone
+      invoiceRow[3] = primaryGuestData.email; // Email
+      invoiceRow[4] = ""; // CustomerTIN
+      invoiceRow[5] = defaultCurrency; // Currency
+      invoiceRow[6] = nowStr; // CreatedDate
+      invoiceRow[7] = nowStr; // DueDate
+      invoiceRow[8] = "Paid"; // Status
+      invoiceRow[9] = JSON.stringify(invoiceItems); // Items
+      invoiceRow[10] = subtotal; // SubTotal
+      invoiceRow[11] = true; // GSTEnabled
+      invoiceRow[12] = gstPercent; // GSTPercent
+      invoiceRow[13] = sgstAmount + cgstAmount; // GSTAmount
+      invoiceRow[14] = false; // GreenTaxEnabled
+      invoiceRow[15] = 0; // GreenTaxPerNight
+      invoiceRow[16] = 0; // GreenTaxPax
+      invoiceRow[17] = 0; // GreenTaxNights
+      invoiceRow[18] = 0; // GreenTaxAmount
+      invoiceRow[19] = discountAmount; // Discount
+      invoiceRow[20] = billAmount; // TotalAmount
+      invoiceRow[21] = `Merged: ${checkInIdsArray.join(', ')}`; // Notes / Linked CheckInIDs
+      invoiceRow[22] = ""; // SourceQuoteID
+      invoiceRow[23] = ""; // PDFDriveLink
+      invoiceRow[24] = "System"; // CreatedBy
+      invoiceRow[25] = nowStr; // UpdatedAt
+
+      invSheet.appendRow(invoiceRow);
+    }
+
     SpreadsheetApp.flush();
 
     return {
@@ -2259,11 +2352,329 @@ function processPartialCheckout(checkInId, selectedRooms, selectedOrderIds, chec
         gstType, sgstPercent, cgstPercent, sgstAmount, cgstAmount,
         billAmount, advancePaid, netAmount,
         paymentMode, amountPaid, balance,
-        dayByDay: [] // We skip dayByDay for partial checkouts to simplify the complex UI parsing, can be built later if required
+        dayByDay
       }
     };
   } catch (e) {
     Logger.log("Error in processPartialCheckout: " + e.toString());
+    return { success: false, message: e.message };
+  }
+}
+
+
+function processMergedCheckout(checkInIdsArray, primaryGuestData, checkoutData) {
+  try {
+    if (!checkInIdsArray || checkInIdsArray.length === 0) {
+      return { success: false, message: "No Check-Ins selected for merged checkout." };
+    }
+
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const ciSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+    const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
+    const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
+    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+
+    // Read settings for GST
+    let gstPercent = 5;
+    let hotelName = 'Hill View Eco Retreat', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
+    try {
+      const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
+      if (setSheet && setSheet.getLastRow() > 1) {
+        const setRow = setSheet.getRange(2, 1, 1, setSheet.getLastColumn()).getValues()[0];
+        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString();
+        hotelAddress = (setRow[SET_HOTEL_ADDRESS_COL] || '').toString();
+        hotelPhone = (setRow[SET_HOTEL_PHONE_COL] || '').toString();
+        hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
+        hotelTIN = (setRow[SET_HOTEL_TIN_COL] || '').toString();
+        hotelLogo = (setRow[SET_LOGO_URL_COL] || '').toString();
+        defaultCurrency = (setRow[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString();
+        gstPercent = parseFloat(setRow[SET_GST_DEFAULT_COL]) || 5;
+      }
+    } catch (se) { Logger.log("Settings read error: " + se); }
+
+    const ciData = ciSheet ? ciSheet.getDataRange().getValues() : [[]];
+    const roomsData = roomsSheet ? roomsSheet.getDataRange().getValues() : [[]];
+    const segmentsData = staySegmentsSheet ? staySegmentsSheet.getDataRange().getValues() : [[]];
+
+    let totalRoomRent = 0;
+    let advancePaid = 0;
+    let allRoomNosArr = [];
+    let combinedRoomTypes = [];
+    let totalPax = 0;
+    let totalExtraPerson = 0;
+    let earliestCheckInDate = null;
+    let latestCheckInTime = "14:00";
+
+    const actualCheckOutDate = checkoutData.checkOutDate ? new Date(checkoutData.checkOutDate) : new Date();
+    const checkOutTime = checkoutData.checkOutTime || '12:00';
+
+    let matchedCis = [];
+
+    // Loop through each CheckIn to sum advances and gather base data
+    for (let cId of checkInIdsArray) {
+      let found = false;
+      for (let i = 1; i < ciData.length; i++) {
+        if ((ciData[i][CI_ID_COL] || '').toString() === cId) {
+          matchedCis.push({ id: cId, rowIndex: i, data: ciData[i] });
+          found = true;
+
+          let ciAdvance = parseFloat(ciData[i][CI_ADVANCE_PAID_COL]) || 0;
+          advancePaid += ciAdvance;
+
+          let rNs = (ciData[i][CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
+          allRoomNosArr = allRoomNosArr.concat(rNs);
+
+          let rTs = (ciData[i][CI_ROOM_TYPES_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
+          combinedRoomTypes = combinedRoomTypes.concat(rTs);
+
+          totalPax += parseInt(ciData[i][CI_PAX_COL]) || 1;
+          totalExtraPerson += parseInt(ciData[i][CI_EXTRA_PERSON_COL]) || 0;
+
+          let cidDate = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
+          if (!earliestCheckInDate || cidDate < earliestCheckInDate) {
+             earliestCheckInDate = cidDate;
+             latestCheckInTime = (ciData[i][CI_CHECKIN_TIME_COL] || '14:00').toString();
+          }
+
+          // Compute room rent for this specific CI exactly like processFullCheckout
+          let nights = daysBetween(cidDate, actualCheckOutDate);
+          if (nights < 1) nights = 1;
+
+          let staySegments = [];
+          if (staySegmentsSheet) {
+            for (let s = 1; s < segmentsData.length; s++) {
+              if ((segmentsData[s][SEG_CHECKIN_ID_COL] || '').toString() === cId.toString()) {
+                let segStartDateStr = (segmentsData[s][SEG_START_DATE_COL] || '').toString();
+                let segEndDateStr = (segmentsData[s][SEG_END_DATE_COL] || '').toString();
+
+                if (!segEndDateStr) {
+                   segEndDateStr = actualCheckOutDate.toISOString();
+                   staySegmentsSheet.getRange(s + 1, SEG_END_DATE_COL + 1).setValue(segEndDateStr);
+                }
+
+                if (segStartDateStr && segEndDateStr) {
+                  let segStartDate = new Date(segStartDateStr);
+                  let segEndDate = new Date(segEndDateStr);
+                  let segNights = daysBetween(segStartDate, segEndDate);
+                  if (segNights < 0) segNights = 0;
+
+                  let segRate = parseFloat(segmentsData[s][SEG_RATE_COL]) || 0;
+                  staySegments.push({ rate: segRate, nights: segNights });
+                }
+              }
+            }
+          }
+
+          if (staySegments.length === 1 && staySegments[0].nights === 0 && nights === 1) {
+            staySegments[0].nights = 1;
+          }
+
+          if (staySegments.length > 0) {
+             for (let s of staySegments) {
+                totalRoomRent += s.rate * s.nights;
+             }
+          } else {
+             // Fallback legacy calc if no segments
+             let fixRoomRent = (ciData[i][CI_FIX_RENT_COL] || 'No').toString();
+             let fixRoomRentAmount = parseFloat(ciData[i][CI_FIX_RENT_AMT_COL]) || 0;
+             let dailyRoomRate = 0;
+             if (fixRoomRent === 'Yes' && fixRoomRentAmount > 0) {
+                dailyRoomRate = fixRoomRentAmount;
+             } else {
+                for (let r = 0; r < rNs.length; r++) {
+                  for (let j = 1; j < roomsData.length; j++) {
+                    if ((roomsData[j][ROOM_NO_COL] || '').toString() === rNs[r]) {
+                      dailyRoomRate += parseFloat(roomsData[j][ROOM_RATE_COL]) || 0;
+                      break;
+                    }
+                  }
+                }
+             }
+             totalRoomRent += dailyRoomRate * nights;
+          }
+          break;
+        }
+      }
+      if (!found) {
+         return { success: false, message: `Check-In ${cId} could not be found.` };
+      }
+    }
+
+    if (!checkoutData.applyAdvance) {
+      advancePaid = 0;
+    }
+
+    // Get food/service orders across ALL check-ins in the group
+    let foodOrders = [];
+    if (restSheet && restSheet.getLastRow() > 1) {
+      const restData = restSheet.getDataRange().getValues();
+      for (let i = 1; i < restData.length; i++) {
+        let ciId = (restData[i][REST_CHECKIN_ID_COL] || '').toString();
+        if (checkInIdsArray.includes(ciId) && (restData[i][REST_STATUS_COL] || '').toString() === 'Active') {
+          foodOrders.push({
+            rowIndex: i,
+            orderDate: (restData[i][REST_ORDER_DATE_COL] || '').toString(),
+            category: (restData[i][REST_CATEGORY_COL] || '').toString(),
+            description: (restData[i][REST_DESC_COL] || '').toString(),
+            amount: parseFloat(restData[i][REST_AMOUNT_COL]) || 0
+          });
+        }
+      }
+    }
+
+    let totalFooding = 0, totalExtraBed = 0, totalOtherServices = 0;
+    let categoryTotals = {};
+    foodOrders.forEach(o => {
+      categoryTotals[o.category] = (categoryTotals[o.category] || 0) + o.amount;
+      if (o.category === 'FoodBeverage') totalFooding += o.amount;
+      else if (o.category === 'ExtraBed') totalExtraBed += o.amount;
+      else totalOtherServices += o.amount;
+    });
+
+    let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices;
+    let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
+    let discountAmount = subtotal * (discountPercent / 100);
+    let afterDiscount = subtotal - discountAmount;
+
+    let sgstPercent = gstPercent / 2;
+    let cgstPercent = gstPercent / 2;
+    let sgstAmount = 0, cgstAmount = 0;
+    if (primaryGuestData.gstType === 'Excluding') {
+      sgstAmount = afterDiscount * (sgstPercent / 100);
+      cgstAmount = afterDiscount * (cgstPercent / 100);
+    }
+
+    let billAmount = afterDiscount + sgstAmount + cgstAmount;
+    let netAmount = billAmount - advancePaid;
+    if (netAmount < 0) netAmount = 0;
+
+    let paymentMode = checkoutData.paymentMode || 'Cash';
+    let amountPaid = parseFloat(checkoutData.amountPaid) || 0;
+    let balance = netAmount - amountPaid;
+
+    let billNumber = generateBillNumber();
+
+    // Build day-by-day data for merged invoice (simulated by dividing total rent equally)
+    let dayByDay = [];
+    let grandRunning = 0;
+    let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
+    if (combinedNights < 1) combinedNights = 1;
+    let syntheticDailyRoomRate = totalRoomRent / combinedNights;
+
+    for (let d = 0; d < combinedNights; d++) {
+      let dayDate = new Date(earliestCheckInDate);
+      dayDate.setDate(dayDate.getDate() + d);
+      let dateStr = dayDate.toISOString().split('T')[0];
+
+      let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
+      foodOrders.forEach(o => {
+        let oDate = o.orderDate.split('T')[0];
+        if (oDate === dateStr && dayCats.hasOwnProperty(o.category)) {
+          dayCats[o.category] += o.amount;
+        }
+      });
+
+      let dayTotal = syntheticDailyRoomRate;
+      Object.values(dayCats).forEach(v => dayTotal += v);
+      grandRunning += dayTotal;
+
+      dayByDay.push({
+        date: dateStr,
+        rooms: syntheticDailyRoomRate,
+        extraBed: dayCats.ExtraBed,
+        foodBev: dayCats.FoodBeverage,
+        miniBar: dayCats.MiniBar,
+        earlyClean: dayCats.EarlyClean,
+        xerox: dayCats.Xerox,
+        laundry: dayCats.Laundry,
+        fax: dayCats.Fax,
+        spbuc: dayCats.SPBUC,
+        travels: dayCats.Travels,
+        misc: dayCats.Misc,
+        dayTotal: dayTotal,
+        grandTotal: grandRunning
+      });
+    }
+
+    // Database Updates: Mark all rooms Available
+    for (let j = 1; j < roomsData.length; j++) {
+      let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
+      if (allRoomNosArr.includes(rn)) {
+        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+      }
+    }
+
+    // Database Updates: Mark all linked bookings as Checked Out
+    if (bookingsSheet && bookingsSheet.getLastRow() > 1) {
+      const bData = bookingsSheet.getDataRange().getValues();
+      for (let ciRec of matchedCis) {
+         let linkedTkt = (ciRec.data[CI_LINKED_TICKET_COL] || '').toString();
+         if (linkedTkt) {
+            for (let i = 1; i < bData.length; i++) {
+              if ((bData[i][TICKET_ID_COL] || '').toString() === linkedTkt) {
+                bookingsSheet.getRange(i + 1, BOOKING_STATUS_COL + 1).setValue("Checked Out");
+                break;
+              }
+            }
+         }
+      }
+    }
+
+    // Database Updates: Mark all Check-Ins as Checked Out
+    for (let ciRec of matchedCis) {
+       ciSheet.getRange(ciRec.rowIndex + 1, CI_STATUS_COL + 1).setValue("Checked Out");
+       ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
+       ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_TIME_COL + 1).setValue(checkOutTime);
+    }
+
+    // Database Updates: Mark all POS orders Billed
+    foodOrders.forEach(o => {
+       restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
+       restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
+    });
+
+    SpreadsheetApp.flush();
+
+    // Return the composite invoice payload
+    return {
+      success: true,
+      message: "Merged checkout completed successfully.",
+      invoiceData: {
+        billNumber,
+        checkInId: checkInIdsArray.join(', '),
+        hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo, currency: defaultCurrency,
+        guestName: primaryGuestData.guestName,
+        companyName: primaryGuestData.companyName,
+        gstNumber: primaryGuestData.gstNumber,
+        mobile: primaryGuestData.mobile,
+        email: primaryGuestData.email,
+        address: primaryGuestData.address,
+        checkInDate: earliestCheckInDate ? earliestCheckInDate.toISOString() : "",
+        checkInTime: latestCheckInTime,
+        checkOutDate: actualCheckOutDate.toISOString(),
+        checkOutTime,
+        roomNumbers: allRoomNosArr.join(', '),
+        roomTypes: combinedRoomTypes.join(', '),
+        numberOfRooms: allRoomNosArr.length,
+        pax: totalPax,
+        extraPerson: totalExtraPerson,
+        foodPlan: "Multiple",
+        billTo: primaryGuestData.billTo,
+        nights: daysBetween(earliestCheckInDate, actualCheckOutDate),
+        dailyRoomRate: totalRoomRent / (daysBetween(earliestCheckInDate, actualCheckOutDate) || 1), // synthetic blended average
+        totalRoomRent,
+        totalFooding, totalExtraBed, totalOtherServices, categoryTotals,
+        subtotal, discountPercent, discountAmount,
+        gstType: primaryGuestData.gstType, sgstPercent, cgstPercent, sgstAmount, cgstAmount,
+        billAmount, advancePaid, netAmount,
+        paymentMode, amountPaid, balance,
+        dayByDay
+      }
+    };
+
+  } catch (e) {
+    Logger.log("Error in processMergedCheckout: " + e.toString());
     return { success: false, message: e.message };
   }
 }
