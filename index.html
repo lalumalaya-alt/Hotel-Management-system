@@ -1329,6 +1329,7 @@
       const tRef=useRef(null);
       const [updateRec,setUpdateRec]=useState(null);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});
+      const [activeCis, setActiveCis] = useState([]);
 
       useEffect(()=>{
         google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllRooms();
@@ -1336,7 +1337,12 @@
         return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
 
-      const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);initT(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
+      const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{
+        setLd(false);
+        const data = Array.isArray(r) ? r : [];
+        setActiveCis(data.filter(ci => ci.status === 'Active'));
+        initT(data);
+      }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
@@ -1359,48 +1365,96 @@
       const [advBks, setAdvBks] = useState([]);
       const [advLd, setAdvLd] = useState(false);
 
-      // Compute which physical rooms are currently free by deducting active generic type bookings.
-      const getFreeRooms = () => {
-        let free = rooms.filter(rm => (rm.roomStatus || '').toLowerCase() === 'available');
-        if (advBks && advBks.length > 0 && fd.checkInDate && fd.checkOutDate) {
-          const typeBookings = {};
+      // Compute physical room states by checking overlapping CheckIns and Advance Bookings
+      const getRoomStates = () => {
+        let states = {};
+        // Initialize all rooms as available, unless they are in Maintenance
+        rooms.forEach(rm => {
+          states[rm.roomNo.toString()] = {
+            status: (rm.roomStatus || '').toLowerCase() === 'maintenance' ? 'maintenance' : 'available',
+            label: (rm.roomStatus || '').toLowerCase() === 'maintenance' ? 'Maintenance' : 'Available',
+            room: rm
+          };
+        });
+
+        if (fd.checkInDate && fd.checkOutDate) {
           const cIn = new Date(fd.checkInDate);
           const cOut = new Date(fd.checkOutDate);
 
-          advBks.forEach(bk => {
-            if (bk.status === 'Booked' && bk.roomNo && bk.ticketId !== (linkedBooking && linkedBooking.ticketId)) {
-              const bIn = new Date(bk.checkIn);
-              const bOut = new Date(bk.checkOut);
-
-              if (cIn < bOut && cOut > bIn) {
-                const roomNosArr = bk.roomNo.split(',').map(r => r.trim()).filter(r => r);
-                roomNosArr.forEach(r => {
-                  const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
-                  if (match && match[2]) {
-                    const type = match[1].trim();
-                    const qty = parseInt(match[2], 10);
-                    typeBookings[type] = (typeBookings[type] || 0) + qty;
-                  }
-                });
-              }
+          // 1. Check overlapping Active Check-Ins (except current edit row)
+          activeCis.forEach(ci => {
+            if (editRowIndex && ci.rowIndex === editRowIndex) return; // Skip the one we are editing
+            const ciIn = new Date(ci.checkInDate);
+            const ciOut = new Date(ci.checkOutDate);
+            if (cIn < ciOut && cOut > ciIn) {
+              const ciRooms = (ci.roomNumbers || '').split(',').map(r => r.trim()).filter(Boolean);
+              ciRooms.forEach(rn => {
+                if (states[rn]) {
+                  states[rn].status = 'occupied';
+                  states[rn].label = 'Checked In';
+                }
+              });
             }
           });
-          // Greedily reserve matching free rooms for other overlapping pending bookings
-          for (const [type, qty] of Object.entries(typeBookings)) {
-            let remainingToDeduct = qty;
-            for (let i = 0; i < free.length; i++) {
-              if (remainingToDeduct <= 0) break;
-              if (free[i] && free[i].roomType === type) {
-                free[i] = null; // Remove from free list
-                remainingToDeduct--;
+
+          // 2. Check overlapping Advance Bookings (except the linked one)
+          if (advBks && advBks.length > 0) {
+            const typeBookings = {};
+            advBks.forEach(bk => {
+              if (bk.status === 'Booked' && bk.roomNo && bk.ticketId !== (linkedBooking && linkedBooking.ticketId)) {
+                const bIn = new Date(bk.checkIn);
+                const bOut = new Date(bk.checkOut);
+
+                if (cIn < bOut && cOut > bIn) {
+                  const roomNosArr = bk.roomNo.split(',').map(r => r.trim()).filter(Boolean);
+                  roomNosArr.forEach(r => {
+                    const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
+                    if (match && match[2]) {
+                      const type = match[1].trim();
+                      const qty = parseInt(match[2], 10);
+                      typeBookings[type] = (typeBookings[type] || 0) + qty;
+                    } else {
+                      // It's a specific legacy physical room booking, mark it reserved
+                      if (states[r]) {
+                        states[r].status = 'reserved';
+                        states[r].label = 'Reserved';
+                      }
+                    }
+                  });
+                }
+              }
+            });
+
+            // Greedily reserve matching available rooms for other overlapping pending type bookings
+            for (const [type, qty] of Object.entries(typeBookings)) {
+              let remainingToDeduct = qty;
+              for (const rn in states) {
+                if (remainingToDeduct <= 0) break;
+                if (states[rn].room.roomType === type && states[rn].status === 'available') {
+                  states[rn].status = 'reserved';
+                  states[rn].label = 'Reserved';
+                  remainingToDeduct--;
+                }
               }
             }
           }
+        } else {
+           // If no dates selected, fallback to simple filtering for UI initial load
+           for (const rn in states) {
+             if (states[rn].room.roomStatus.toLowerCase() === 'booked') {
+                states[rn].status = 'occupied';
+                states[rn].label = 'Checked In';
+             } else if (states[rn].room.roomStatus.toLowerCase() === 'reserved') {
+                states[rn].status = 'reserved';
+                states[rn].label = 'Reserved';
+             }
+           }
         }
-        return free.filter(rm => rm !== null);
+
+        return states;
       };
 
-      const freeRooms = getFreeRooms();
+      const roomStatesMap = getRoomStates();
 
       const getDynRooms = () => {
         if (!linkedBooking) return [];
@@ -1492,8 +1546,8 @@
         // Before sending, verify room statuses again on the frontend if walk-in and not editing
         if (mode === 'walkin' && !editRowIndex) {
           for (let rn of selectedRooms) {
-            const rm = freeRooms.find(x => x.roomNo.toString() === rn);
-            if (!rm) {
+            const rState = roomStatesMap[rn];
+            if (!rState || rState.status !== 'available') {
               Swal.fire({icon:'error',text:`Room ${rn} is no longer available.`});
               return;
             }
@@ -1585,10 +1639,21 @@
           </div>
 
           <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'8px',color:'#555',fontWeight:500,fontSize:'14px'}}>Select Rooms * ({selectedRooms.length} selected)</label>
-            <div className="room-tiles-grid">{freeRooms.map(rm=><div key={rm.roomNo} className={'room-tile'+(selectedRooms.includes(rm.roomNo.toString())?' multi-selected':'')} onClick={()=>toggleRoom(rm.roomNo.toString())}>
-              <div className="room-number">#{rm.roomNo}</div><div className="room-type">{rm.roomType}</div><div className="room-rate">{fmtCur(rm.roomRate)}/night</div>
-            </div>)}</div>
-            {freeRooms.length === 0 && <p style={{color:'#666',fontSize:'13px',fontStyle:'italic'}}>No rooms available for check-in right now.</p>}
+            <div className="room-tiles-grid">{rooms.map(rm=>{
+              const rState = roomStatesMap[rm.roomNo.toString()];
+              const isAvail = rState && rState.status === 'available';
+              const isSelected = selectedRooms.includes(rm.roomNo.toString());
+              let tileCls = 'room-tile';
+              if (!isAvail && !isSelected) tileCls += ' disabled-tile status-' + rState.status;
+              if (isSelected) tileCls += ' multi-selected';
+              return (
+              <div key={rm.roomNo} className={tileCls} onClick={()=>isAvail || isSelected ? toggleRoom(rm.roomNo.toString()) : null}>
+                <div className="room-number">#{rm.roomNo}</div>
+                <div className="room-type">{rm.roomType}</div>
+                <div className="room-rate">{!isAvail && !isSelected ? rState.label : `${fmtCur(rm.roomRate)}/night`}</div>
+              </div>)
+            })}</div>
+            {rooms.length === 0 && <p style={{color:'#666',fontSize:'13px',fontStyle:'italic'}}>No rooms exist in the system.</p>}
           </div>
 
           <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>

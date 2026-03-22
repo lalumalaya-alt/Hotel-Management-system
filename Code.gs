@@ -4137,7 +4137,10 @@ function askAIAssistant(question, username, role, chatHistory) {
       return { success: false, message: "Please enter a question." };
     }
 
-    const GEMINI_API_KEY = "AIzaSyCfOu4Vt-aZ3Q2SvA3wjQH3e1k_0JBHT1M";
+    const GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY") || "";
+    if (!GEMINI_API_KEY) {
+      return { success: false, message: "AI Assistant is not configured. Please set GEMINI_API_KEY in script properties." };
+    }
     const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
 
     // Build data context based on role
