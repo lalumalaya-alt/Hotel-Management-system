@@ -608,13 +608,13 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const LOGO = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGXxCe0WNNedmFqSWeF761f7Kshhc-NP5ChRQKz9fr97cO8VaarvD0KlCwqHojJVBWv-RAxfOqMI5rD4H78KnARyOc6QgwL1nRRFWf5xNQ1d9F9HfAoLPPGlTyP0GwNl4n-INMEsWLQ4Y7zJtz5bOdAnc2ePH9-uCRgshlo6BsS6gJEz6fhrxL-5U5O3sX/s160/channels4_profile.jpg';
-    const fmtDate = (s) => { 
-      if(!s) return '-'; 
-      return new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit' }); 
+    const fmtDate = (s) => {
+      if(!s) return '-';
+      return new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit' });
     };
-    const fmtDateTime = (s) => { 
-      if(!s) return '-'; 
-      return new Date(s).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true }); 
+    const fmtDateTime = (s) => {
+      if(!s) return '-';
+      return new Date(s).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year:'numeric',month:'short',day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true });
     };
     let APP_CURRENCY = 'MVR';
     const fmtCur = (a, currency) => (currency || APP_CURRENCY || 'MVR') + ' ' + (parseFloat(a)||0).toFixed(2);
@@ -786,7 +786,7 @@
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);setTimeout(()=>charts(r),200);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();return()=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});};},[]);
       const charts=(d)=>{Object.values(cr.current).forEach(c=>{if(c)c.destroy();});cr.current={};
         const palette=['#001f3f','#0074D9','#34a853','#fbbc04','#ea4335','#6f42c1','#20c997','#e67e22','#3498db','#9b59b6'];
-        
+
         // 1. Invoice Status Doughnut
         const c5=document.getElementById('invStatusChart');
         if(c5){const iv=d.invoiceStats||{};cr.current.is=new Chart(c5,{type:'doughnut',data:{labels:['Draft','Sent','Paid','Overdue','Cancelled'],datasets:[{data:[iv.draftInvoices||0,iv.sentInvoices||0,iv.paidInvoices||0,iv.overdueInvoices||0,iv.cancelledInvoices||0],backgroundColor:['#6c757d','#006d6f','#00a89d','#f39c12','#d35400'],borderColor:'#fff',borderWidth:2,hoverOffset:10}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#333',padding:12,usePointStyle:true}},title:{display:true,text:'Invoice Status',color:'#001f3f',font:{size:16,weight:'bold'}}}}});}
@@ -802,7 +802,7 @@
           <div className="kpi-card c-green"><i className="fas fa-wallet kpi-card-icon"></i><div className="kpi-card-title">Net Balance</div><div className="kpi-card-value">{fmtCur(f.netBalance)}</div><div className="kpi-card-sub"><i className="fas fa-arrow-up"></i> {fmtCur(f.totalIncome)} income</div></div>
           <div className="kpi-card c-orange"><i className="fas fa-chart-pie kpi-card-icon"></i><div className="kpi-card-title">Occupancy Rate</div><div className="kpi-card-value">{occRate}%</div><div className="kpi-card-sub"><i className="fas fa-door-open"></i> {st?.bookedRooms||0} of {st?.totalRooms||0} rooms</div></div>
         </div>
-        
+
         {/* Row 2: 8 White Stat Cards in single row */}
         <div className="dashboard-grid-9">
           <div className="stat-card"><div className="stat-card-icon"><i className="fas fa-door-open"></i></div><div className="stat-card-value">{st?.totalRooms||0}</div><div className="stat-card-label">Total Rooms</div></div>
@@ -813,7 +813,7 @@
           <div className="stat-card"><div className="stat-card-icon"><i className="fas fa-file-invoice-dollar"></i></div><div className="stat-card-value">{inv.totalInvoices||0}</div><div className="stat-card-label">Invoices</div></div>
           <div className="stat-card green"><div className="stat-card-icon"><i className="fas fa-check-double"></i></div><div className="stat-card-value">{inv.paidInvoices||0}</div><div className="stat-card-label">Paid</div></div>
           <div className="stat-card red"><div className="stat-card-icon"><i className="fas fa-exclamation-triangle"></i></div><div className="stat-card-value">{inv.overdueInvoices||0}</div><div className="stat-card-label">Overdue</div></div>
-          
+
         </div>
 
         {/* Room Block View & Recent Bookings */}
@@ -826,7 +826,7 @@
                 if(rm.status==='Booked') bg = '#0074D9';
                 if(rm.status==='Maintenance') bg = '#fbbc04';
                 if(rm.status==='Reserved') bg = '#6f42c1';
-                
+
                 return (
                   <div key={rm.roomNo} style={{background:bg,color:'#fff',padding:'12px 8px',borderRadius:'8px',textAlign:'center',boxShadow:'0 2px 4px rgba(0,0,0,0.1)',display:'flex',flexDirection:'column',justifyContent:'center',minHeight:'90px', gap:'4px'}}>
                     <div style={{fontSize:'18px',fontWeight:'bold'}}>{rm.roomNo}</div>
@@ -864,7 +864,7 @@
         <div className="dashboard-grid-2" style={{gridTemplateColumns:'1fr'}}>
           <div className="chart-card"><div className="chart-container"><canvas id="invStatusChart"></canvas></div></div>
         </div>
-        
+
       </div>);
     }
 
@@ -936,7 +936,7 @@
       const isAdmin=role==='admin';
       // If editing, parsing is tricky if the format changed. We will support both room numbers and types.
       const parsedEditRoomNos = isEdit?(booking.roomNo||'').split(',').map(r=>r.trim()).filter(r=>r):[];
-      
+
       const [selectedRoomsByType,setSelectedRoomsByType]=useState(
         isEdit ? parsedEditRoomNos.reduce((acc, rm) => {
           const match = rm.match(/(.+?)(?:\s*\((\d+)\))?$/);
@@ -957,13 +957,13 @@
       const [customers,setCustomers]=useState([]);const [selCust,setSelCust]=useState('');
       useEffect(()=>{google.script.run.withSuccessHandler(r=>{setCustomers(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllCustomers();},[]);
       const pickCustomer=(val)=>{setSelCust(val);if(val){const c=customers.find(x=>x.customerId===val);if(c)setFd(p=>({...p,guestName:c.name||p.guestName,phone:c.phone||p.phone,email:c.email||p.email}));}};
-      
+
       // Calculate dynamic availability
       const getAvailByType = () => {
         if (!fd.checkIn || !fd.checkOut) return [];
         const ci = new Date(fd.checkIn); const co = new Date(fd.checkOut);
         if (isNaN(ci) || isNaN(co) || co <= ci) return [];
-        
+
         // 1. Total rooms by type
         const totals = rooms.reduce((acc, r) => {
           const status = (r.roomStatus||'').toLowerCase();
@@ -972,7 +972,7 @@
           }
           return acc;
         }, {});
-        
+
         // 2. Count overlapping bookings
         const overlaps = {};
         const overlappingBks = allBookings.filter(b => {
@@ -981,13 +981,13 @@
           const bCi = new Date(b.checkIn); const bCo = new Date(b.checkOut);
           return (ci < bCo && co > bCi);
         });
-        
+
         overlappingBks.forEach(b => {
           const rNos = (b.roomNo||'').split(',').map(r=>r.trim()).filter(r=>r);
           rNos.forEach(rn => {
             const match = rn.match(/(.+?)(?:\s*\((\d+)\))?$/);
             if (match) {
-              let type = match[1].trim(); 
+              let type = match[1].trim();
               const qty = parseInt(match[2]||1,10);
               const physRoom = rooms.find(r => r.roomNo.toString() === type);
               if(physRoom) type = physRoom.roomType;
@@ -995,7 +995,7 @@
             }
           });
         });
-        
+
         // 3. Count active check-ins (since they hold physical rooms)
         const overlappingCis = allCheckIns.filter(c => {
           if (c.status !== 'Active') return false;
@@ -1017,9 +1017,9 @@
           return { type, available: Math.max(0, t - o), rate };
         });
       };
-      
+
       const availByType = getAvailByType();
-      
+
       const setRoomTypeQty = (type, qty) => {
         qty = parseInt(qty, 10) || 0;
         setSelectedRoomsByType(prev => {
@@ -1043,7 +1043,7 @@
       }, 0);
 
       const editRate=combinedRate;
-      
+
       const submit=(e)=>{e.preventDefault();if(selectedCount===0){Swal.fire({icon:'warning',text:'Please select at least one room'});return;}setSv(true);
         const roomNosStr = Object.entries(selectedRoomsByType).map(([type, qty]) => `${type} (${qty})`).join(', ');
         const calcTotals = calcTotal();
@@ -1060,7 +1060,7 @@
           <div className="form-group"><label>Check-out Time</label><input type="time" value={fd.checkOutTime} onChange={e=>setFd({...fd,checkOutTime:e.target.value})}/></div>
           <div className="form-group" style={{gridColumn:'1 / -1'}}><hr style={{border:'0',borderTop:'1px solid #ddd'}}/></div>
         </div>
-        
+
         {!isEdit&&customers.length>0&&<div className="form-group"><label><i className="fas fa-user-tag"></i> Select Customer</label><SearchableSelect value={selCust} onChange={pickCustomer} options={[{value:'',label:'-- Manual Entry --'},...customers.map(c=>({value:c.customerId,label:c.name+(c.email?' ('+c.email+')':'')}))] } placeholder="Search customer..." /></div>}
         <div className="form-group"><label>Select Room Types *</label><div className="room-types-list">{(!fd.checkIn||!fd.checkOut)?<p style={{color:'#666'}}>Select dates first.</p>:availByType.length===0?<p style={{color:'#666'}}>No rooms available.</p>:availByType.map(t=>(<div key={t.type} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px',border:'1px solid #ddd',borderRadius:'4px',marginBottom:'8px'}}><div><strong>{t.type}</strong><br/><span style={{fontSize:'12px',color:'#666'}}>Standard Rate: {fmtCur(t.rate)}/night | Available: {t.available}</span></div><div style={{display:'flex',gap:'8px'}}>{selectedRoomsByType[t.type]>0&&<input type="number" step="0.01" min="0" placeholder={`Custom Rate (${t.rate})`} value={customRates[t.type]||''} onChange={e=>handleCustomRate(t.type, e.target.value)} style={{width:'110px',padding:'4px'}} title="Leave blank for standard rate" />}<input type="number" min="0" max={t.available} value={selectedRoomsByType[t.type]||''} onChange={e=>setRoomTypeQty(t.type, e.target.value)} style={{width:'60px',padding:'4px'}} placeholder="Qty"/></div></div>))}</div>{selectedCount>0&&<p style={{marginTop:'8px',color:'var(--navy-primary)',fontWeight:'600'}}>Total Rooms: {selectedCount} — Combined Rate: {fmtCur(combinedRate)}/night</p>}</div>
         <div className="form-grid">
@@ -1082,9 +1082,9 @@
     function BookingsView({user,role}){
       const isAdmin=role==='admin';
       const [ld,setLd]=useState(true);const [bks,setBks]=useState([]);const [rooms,setRooms]=useState([]);const [cis,setCis]=useState([]);const [show,setShow]=useState(false);const [editBooking,setEditBooking]=useState(null);const tRef=useRef(null);
-      
+
       useEffect(()=>{load();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[]);
-      
+
       const load=()=>{setLd(true);
         google.script.run.withSuccessHandler(r=>{const data=Array.isArray(r)?r:[];
           let filtered=isAdmin?data:data.filter(b=>b.email===user);
@@ -1094,7 +1094,7 @@
             google.script.run.withSuccessHandler(ci=>{setCis(Array.isArray(ci)?ci:[]);setLd(false);initT(filtered);}).withFailureHandler(()=>{setLd(false);initT(filtered);}).getAllCheckIns();
           }).withFailureHandler(()=>{setLd(false);initT(filtered);}).getAllRooms();
         }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
-        
+
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#bkT').empty();}catch(e){}}
         setTimeout(()=>{try{
           const t=$('#bkT').DataTable({data,destroy:true,columns:[
@@ -1163,7 +1163,7 @@
       const toggleRoom=(rn)=>{
         setSelectedRooms(prev => {
           if (prev.includes(rn)) return prev.filter(r => r !== rn);
-          
+
           // Before adding, check if there are enough free rooms of this type remaining
           // to satisfy other pending advance bookings.
           const rState = roomStatesMap[rn];
@@ -1186,7 +1186,7 @@
                     currentlySelectedOfType++;
                  }
                });
-               
+
                // If (total - selected - 1) < reqQty, then adding this room would prevent fulfilling the advance bookings
                if ((totalAvailOfType - currentlySelectedOfType - 1) < reqQty) {
                  Swal.fire({icon: 'warning', text: `Cannot select this room. There are ${reqQty} advance booking(s) pending for ${type} rooms that need to be fulfilled from the remaining availability.`});
@@ -1210,7 +1210,7 @@
         let states = {};
         // Initialize all rooms as available, unless they are in Maintenance
         rooms.forEach(rm => {
-          states[rm.roomNo.toString()] = { 
+          states[rm.roomNo.toString()] = {
             status: (rm.roomStatus || '').toLowerCase() === 'maintenance' ? 'maintenance' : 'available',
             label: (rm.roomStatus || '').toLowerCase() === 'maintenance' ? 'Maintenance' : 'Available',
             room: rm
@@ -1244,7 +1244,7 @@
               if (bk.status === 'Booked' && bk.roomNo && bk.ticketId !== (linkedBooking && linkedBooking.ticketId)) {
                 const bIn = new Date(bk.checkIn);
                 const bOut = new Date(bk.checkOut);
-                
+
                 if (cIn < bOut && cOut > bIn) {
                   const roomNosArr = bk.roomNo.split(',').map(r => r.trim()).filter(Boolean);
                   roomNosArr.forEach(r => {
@@ -1265,9 +1265,9 @@
               }
             });
 
-            // Instead of greedily reserving rooms and hiding them from selection, 
+            // Instead of greedily reserving rooms and hiding them from selection,
             // we simply keep track of how many of each type are required by other bookings.
-            // The validation step below will ensure the user doesn't pick so many 
+            // The validation step below will ensure the user doesn't pick so many
             // that these required types cannot be fulfilled.
             states._typeBookings = typeBookings;
           }
@@ -1304,7 +1304,7 @@
             requiredTypes[type] = (requiredTypes[type] || 0) + 1;
           }
         });
-        
+
         const selectedCountByType = {};
         selectedRooms.forEach(rn => {
           const physRoom = rooms.find(rx => rx.roomNo.toString() === rn);
@@ -1312,13 +1312,13 @@
             selectedCountByType[physRoom.roomType] = (selectedCountByType[physRoom.roomType] || 0) + 1;
           }
         });
-        
+
         return Object.entries(requiredTypes).map(([type, reqQty]) => {
           const selQty = selectedCountByType[type] || 0;
           return { type, reqQty, selQty, fulfilled: selQty === reqQty, over: selQty > reqQty };
         });
       };
-      
+
       const dynRooms = getDynRooms();
       const needsRoomSelection = mode === 'advance' && dynRooms.length > 0 && !dynRooms.every(d => d.fulfilled);
 
@@ -1347,15 +1347,15 @@
           const isPhys = bk.roomNo && !bk.roomNo.match(/\(\d+\)/);
           setSelectedRooms(isPhys ? bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r) : []);
           setFd(p => ({
-            ...p, 
-            guestName: bk.guestName || '', 
-            mobile: bk.phone || '', 
-            email: bk.email || '', 
-            checkInDate: bk.checkIn ? bk.checkIn.split('T')[0] : p.checkInDate, 
-            checkInTime: bk.checkInTime || '14:00', 
-            checkOutDate: bk.checkOut ? bk.checkOut.split('T')[0] : '', 
-            checkOutTime: bk.checkOutTime || '12:00', 
-            foodPlan: bk.foodPlan || 'None', 
+            ...p,
+            guestName: bk.guestName || '',
+            mobile: bk.phone || '',
+            email: bk.email || '',
+            checkInDate: bk.checkIn ? bk.checkIn.split('T')[0] : p.checkInDate,
+            checkInTime: bk.checkInTime || '14:00',
+            checkOutDate: bk.checkOut ? bk.checkOut.split('T')[0] : '',
+            checkOutTime: bk.checkOutTime || '12:00',
+            foodPlan: bk.foodPlan || 'None',
             advancePaid: bk.advancePaid || 0,
             gstType: bk.tax > 0 ? 'Including' : 'Excluding', // Infer from old or explicit new
             fixRoomRentAmount: bk.fixRoomRentAmount || '', // Sync fixed rent if present
@@ -1371,7 +1371,7 @@
       const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);};
 
       const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
-      
+
       const handleCheckout=(ci)=>{Swal.fire({title:'Checkout Guest?',text:`Initiate checkout for ${ci.guestName}?`,icon:'question',showCancelButton:true,confirmButtonText:'Yes, Checkout'}).then((res)=>{if(res.isConfirmed){Swal.fire({title:'Processing...',didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(r=>{if(r.success){Swal.fire({icon:'success',title:'Checked Out',timer:2000,showConfirmButton:false});loadCheckIns();google.script.run.withSuccessHandler(r2=>{setRooms(Array.isArray(r2)?r2:[]);}).getAllRooms();}else{Swal.fire('Error',r.message,'error');}}).withFailureHandler(e=>Swal.fire('Error',e.message,'error')).processFullCheckout(ci.checkInId);}});};
 
       const submit=(e)=>{e.preventDefault();
@@ -1379,7 +1379,7 @@
         if(selectedRooms.length===0){Swal.fire({icon:'warning',text:'Select at least one room.'});return;}
         if(needsRoomSelection){Swal.fire({icon:'warning',text:'Please allocate the exact number of physical rooms required by the advance booking.'});return;}
         if(!fd.checkInDate){Swal.fire({icon:'warning',text:'Check-in date is required.'});return;}
-        
+
         // Before sending, verify room statuses again on the frontend if walk-in and not editing
         if (mode === 'walkin' && !editRowIndex) {
           for (let rn of selectedRooms) {
@@ -1392,7 +1392,7 @@
         }
 
         setSaving(true);Swal.fire({title:'Processing Check-In...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        
+
         const payload = {
           linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,advancePaid:fd.advancePaid,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRentAmount?'Yes':'No',fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent
         };
@@ -1437,7 +1437,7 @@
                 loading={advLd}
               />
             </div>
-            
+
             {linkedBooking && dynRooms.length > 0 && (
               <div style={{ marginTop: '15px', padding: '15px', background: '#fff', border: '1px solid #c3e6cb', borderRadius: '4px' }}>
                 <h5 style={{ margin: '0 0 10px 0', color: '#155724' }}><i className="fas fa-info-circle"></i> Booking Requirements</h5>
@@ -1773,11 +1773,11 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
     function CheckoutView({user}){
       const [roomNo,setRoomNo]=useState('');
       const [fetching,setFetching]=useState(false);
-      
+
       const [queuedCis, setQueuedCis] = useState([]);
       const [primaryCiId, setPrimaryCiId] = useState(null);
       const [foodOrdersMap, setFoodOrdersMap] = useState({}); // { checkInId: [orders] }
-      
+
       // Fine-grained selection tracking
       const [selectedRoomsMap, setSelectedRoomsMap] = useState({}); // { checkInId: [roomNos] }
       const [selectedOrdersMap, setSelectedOrdersMap] = useState({}); // { checkInId: [orderIds] }
@@ -1794,7 +1794,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
       const fetchRoom=()=>{
         if(!roomNo.trim()){Swal.fire({icon:'warning',text:'Enter a room number.'});return;}
         setFetching(true);
-        
+
         google.script.run.withSuccessHandler(res=>{
           if(res){
             if (queuedCis.find(ci => ci.checkInId === res.checkInId)) {
@@ -1806,24 +1806,24 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
 
             if (queuedCis.length === 0) {
                setPrimaryCiId(res.checkInId);
-               setDiscountPercent(res.discountPercent || 0); 
+               setDiscountPercent(res.discountPercent || 0);
             }
 
             setQueuedCis(prev => [...prev, res]);
             const roomsArr = (res.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
             setSelectedRoomsMap(prev => ({...prev, [res.checkInId]: roomsArr}));
-            
+
             google.script.run.withSuccessHandler(orders=>{
               setFetching(false);
               const activeOrders = Array.isArray(orders) ? orders.filter(o => o.checkInId === res.checkInId && o.status === 'Active') : [];
               setFoodOrdersMap(prev => ({...prev, [res.checkInId]: activeOrders}));
               setSelectedOrdersMap(prev => ({...prev, [res.checkInId]: activeOrders.map(o => o.orderId)}));
-              
+
               // Recalculate advance
               setAdvanceToApply(prev => prev + (parseFloat(res.advancePaid)||0));
               setRoomNo('');
             }).withFailureHandler(e=>{setFetching(false);Swal.fire('Error',e.message,'error')}).getAllFoodOrders();
-            
+
           } else {
             setFetching(false);
             Swal.fire({icon:'info',title:'Not Found',text:'No active check-in found for room #'+roomNo});
@@ -1862,7 +1862,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
       const doAdvancedCheckout=()=>{
         if(queuedCis.length === 0){Swal.fire({icon:'warning',text:'Add at least one check-in to the queue.'});return;}
         if(!primaryCiId){Swal.fire({icon:'warning',text:'Please select a primary billing guest from the queue.'});return;}
-        
+
         let hasAnySelection = false;
         const selectedRoomsFlat = [];
         for (const ciId in selectedRoomsMap) {
@@ -1871,7 +1871,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
              selectedRoomsMap[ciId].forEach(rn => selectedRoomsFlat.push({ checkInId: ciId, roomNo: rn }));
           }
         }
-        
+
         const selectedOrdersFlat = [];
         for (const ciId in selectedOrdersMap) {
           if (selectedOrdersMap[ciId] && selectedOrdersMap[ciId].length > 0) {
@@ -1883,14 +1883,14 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
         if (!hasAnySelection) {
            Swal.fire({icon:'warning',text:'Please select at least one room or POS order to checkout.'});return;
         }
-        
+
         setSaving(true);Swal.fire({title:'Processing Advanced Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        
+
         const payload = {
-          checkOutDate, checkOutTime, paymentMode:payMode, amountPaid:parseFloat(amtPaid)||0, 
+          checkOutDate, checkOutTime, paymentMode:payMode, amountPaid:parseFloat(amtPaid)||0,
           discountPercent, advanceToApply: parseFloat(advanceToApply)||0
         };
-        
+
         const primaryCi = queuedCis.find(ci => ci.checkInId === primaryCiId);
         const primaryGuestData = {
           guestName: primaryCi.guestName,
@@ -1925,7 +1925,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
         {queuedCis.length > 0 && <>
           <div style={{background:'#fff',padding:'20px',borderRadius:'4px',border:'1px solid #ddd',marginBottom:'20px'}}>
             <h4 style={{color:'var(--navy-primary)',marginBottom:'15px'}}><i className="fas fa-shopping-cart"></i> Checkout Cart (Select items to pay)</h4>
-            
+
             <div style={{display:'flex', gap:'20px', overflowX:'auto', paddingBottom:'10px'}}>
               {queuedCis.map(ci => {
                  const ciRooms = (ci.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
@@ -1942,7 +1942,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
                        </div>
                        <button className="btn btn-secondary" style={{padding:'4px 8px',margin:0,fontSize:'11px'}} onClick={() => removeQueued(ci.checkInId)}><i className="fas fa-times"></i></button>
                      </div>
-                     
+
                      <div style={{marginTop:'15px'}}>
                        <strong>Rooms</strong>
                        {ciRooms.map(rn => (
@@ -1952,7 +1952,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
                          </label>
                        ))}
                      </div>
-                     
+
                      <div style={{marginTop:'15px'}}>
                        <strong>POS Orders</strong>
                        {ciOrders.length===0 && <div style={{fontSize:'12px',color:'#888',marginTop:'5px'}}>No pending orders</div>}
@@ -2229,7 +2229,7 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
             <p><strong>Phone:</strong> {invoice.phone||'-'}</p><p><strong>Status:</strong> <span className={`status-badge ${statusCls(invoice.status)}`}>{invoice.status}</span></p>
             <p><strong>Email:</strong> {invoice.email||'-'}</p><p><strong>Currency:</strong> {cur}</p>
             {invoice.customerTIN&&<p><strong>Customer TIN:</strong> {invoice.customerTIN}</p>}
-            
+
           </div>
           <table className="invoice-table"><thead><tr><th>Description</th><th>Details</th><th className="right">Amount ({cur})</th></tr></thead><tbody>
             {roomItems.map((it,i)=><tr key={'r'+i}><td>{it.roomType||'Room'}</td><td>{it.quantity||1} room(s) x {it.nights} night(s) x {fc(it.rate)}</td><td className="right">{fc(it.amount)}</td></tr>)}
