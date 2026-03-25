@@ -3939,7 +3939,7 @@ function setupDemoData() {
     ["TKT-20260220-008", "110", "Demo Guest 8", "+960-1000008", "guest8@demo.com",  "2026-02-20T14:00:00Z", "2026-02-25T12:00:00Z", "Checked In",  1800, 200, 80,  "Bank Transfer", 8880,  "Unpaid",  0,    "14:00", "12:00", "Including Breakfast and Dinner", 0, 1, "CHK-0002"],
     ["TKT-20260225-009", "102", "Demo Guest 9", "+960-1000009", "guest9@demo.com",  "2026-02-25T14:00:00Z", "2026-02-28T12:00:00Z", "Checked In",  800,  0,   48,  "Cash",        2448,  "Unpaid",  0,    "14:00", "12:00", "None", 0, 1, "CHK-0003"]
   ];
-  bookingsSheet.getRange(2, 1, bookingsData.length, 26).setValues(bookingsData);
+  bookingsSheet.getRange(2, 1, bookingsData.length, 25).setValues(bookingsData);
 
   // ===== INVOICES (3 invoices) =====
   const invItems1 = JSON.stringify([
