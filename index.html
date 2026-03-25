@@ -1112,7 +1112,6 @@
 
     function CheckInView({user,role}){
       const [mode,setMode]=useState('walkin');
-      const [walkinStep,setWalkinStep]=useState(1);
       const [rooms,setRooms]=useState([]);
       const [selectedRooms,setSelectedRooms]=useState([]);
       const [searchQ,setSearchQ]=useState('');
@@ -1355,9 +1354,9 @@
 
       const [editRowIndex, setEditRowIndex] = useState(null);
 
-      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);setWalkinStep(1);};
+      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);};
 
-      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setWalkinStep(3);};
+      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');};
       
       const handleCheckout=(ci)=>{Swal.fire({title:'Checkout Guest?',text:`Initiate checkout for ${ci.guestName}?`,icon:'question',showCancelButton:true,confirmButtonText:'Yes, Checkout'}).then((res)=>{if(res.isConfirmed){Swal.fire({title:'Processing...',didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(r=>{if(r.success){Swal.fire({icon:'success',title:'Checked Out',timer:2000,showConfirmButton:false});loadCheckIns();google.script.run.withSuccessHandler(r2=>{setRooms(Array.isArray(r2)?r2:[]);}).getAllRooms();}else{Swal.fire('Error',r.message,'error');}}).withFailureHandler(e=>Swal.fire('Error',e.message,'error')).processFullCheckout(ci.checkInId);}});};
 
@@ -1439,48 +1438,19 @@
         )}
 
         <form onSubmit={submit}>
-          {mode === 'walkin' && <div className="step-indicator" style={{marginBottom:'20px'}}>
-            <div className={'step-dot' + (walkinStep >= 1 ? ' active' : '') + (walkinStep > 1 ? ' completed' : '')}></div>
-            <div className={'step-dot' + (walkinStep >= 2 ? ' active' : '') + (walkinStep > 2 ? ' completed' : '')}></div>
-            <div className={'step-dot' + (walkinStep >= 3 ? ' active' : '')}></div>
-          </div>}
-          
-          <div className="form-grid" style={{ display: (mode==='advance' || walkinStep === 1) ? 'grid' : 'none' }}>
-            <h4 style={{gridColumn:'1/-1', color:'var(--navy-primary)'}}>1. Stay Details</h4>
-            <div className="form-group"><label>Check-In Date *</label><input type="date" value={fd.checkInDate} onChange={e=>setFd({...fd,checkInDate:e.target.value})} required/></div>
-            <div className="form-group"><label>Check-In Time</label><input type="time" value={fd.checkInTime} onChange={e=>setFd({...fd,checkInTime:e.target.value})}/></div>
-            <div className="form-group"><label>Expected Check-Out Date *</label><input type="date" value={fd.checkOutDate} onChange={e=>setFd({...fd,checkOutDate:e.target.value})} required={mode==='walkin' && walkinStep === 1}/></div>
-            <div className="form-group"><label>Check-Out Time</label><input type="time" value={fd.checkOutTime} onChange={e=>setFd({...fd,checkOutTime:e.target.value})}/></div>
-            
-            {mode === 'walkin' && walkinStep === 1 && (
-              <div className="form-group" style={{gridColumn:'1/-1', textAlign:'right'}}>
-                <button type="button" className="btn btn-primary" onClick={() => {
-                  if(!fd.checkInDate || !fd.checkOutDate) {
-                    Swal.fire({icon:'warning', text:'Please enter both Check-In and Check-Out dates to proceed.'});
-                    return;
-                  }
-                  if(new Date(fd.checkOutDate) <= new Date(fd.checkInDate)) {
-                    Swal.fire({icon:'warning', text:'Check-Out date must be after Check-In date.'});
-                    return;
-                  }
-                  setWalkinStep(2);
-                }}>Next: Select Rooms <i className="fas fa-arrow-right"></i></button>
-              </div>
-            )}
-          </div>
-          
-          {mode === 'advance' && <div className="form-grid"><div className="form-group" style={{gridColumn:'1/-1'}}><hr/></div></div>}
-          
-          <div className="form-grid" style={{ display: (mode==='advance' || walkinStep >= 3) ? 'grid' : 'none' }}>
-            <h4 style={{gridColumn:'1/-1', color:'var(--navy-primary)', marginTop: mode==='advance'?'0':'20px'}}>3. Guest & Billing Details</h4>
-            <div className="form-group"><label>Guest Name *</label><input value={fd.guestName} onChange={e=>setFd({...fd,guestName:e.target.value})} required={mode==='advance' || walkinStep >= 3}/></div>
-            <div className="form-group"><label>Mobile</label><input value={fd.mobile} onChange={e=>setFd({...fd,mobile:e.target.value})}/></div>
-            <div className="form-group"><label>Identity Proof</label><input value={fd.identityProof} onChange={e=>setFd({...fd,identityProof:e.target.value})} placeholder="Aadhar/Passport No."/></div>
-            <div className="form-group"><label>Email</label><input type="email" value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
+          <div className="form-grid">
+            <div className="form-group"><label>Guest Name *</label><input value={fd.guestName} onChange={e=>setFd({...fd,guestName:e.target.value})} required/></div>
             <div className="form-group"><label>Company Name</label><input value={fd.companyName} onChange={e=>setFd({...fd,companyName:e.target.value})}/></div>
             <div className="form-group"><label>GST Number</label><input value={fd.gstNumber} onChange={e=>setFd({...fd,gstNumber:e.target.value})}/></div>
+            <div className="form-group"><label>Identity Proof</label><input value={fd.identityProof} onChange={e=>setFd({...fd,identityProof:e.target.value})} placeholder="Aadhar/Passport No."/></div>
+            <div className="form-group"><label>Mobile</label><input value={fd.mobile} onChange={e=>setFd({...fd,mobile:e.target.value})}/></div>
+            <div className="form-group"><label>Email</label><input type="email" value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
             <div className="form-group" style={{gridColumn:'1/-1'}}><label>Address</label><input value={fd.address} onChange={e=>setFd({...fd,address:e.target.value})}/></div>
             <div className="form-group"><label>Purpose of Visit</label><input value={fd.purposeOfVisit} onChange={e=>setFd({...fd,purposeOfVisit:e.target.value})}/></div>
+            <div className="form-group"><label>Check-In Date *</label><input type="date" value={fd.checkInDate} onChange={e=>setFd({...fd,checkInDate:e.target.value})} required/></div>
+            <div className="form-group"><label>Check-In Time</label><input type="time" value={fd.checkInTime} onChange={e=>setFd({...fd,checkInTime:e.target.value})}/></div>
+            <div className="form-group"><label>Expected Check-Out Date</label><input type="date" value={fd.checkOutDate} onChange={e=>setFd({...fd,checkOutDate:e.target.value})}/></div>
+            <div className="form-group"><label>Check-Out Time</label><input type="time" value={fd.checkOutTime} onChange={e=>setFd({...fd,checkOutTime:e.target.value})}/></div>
             <div className="form-group"><label>Pax</label><input type="number" min="1" value={fd.pax} onChange={e=>setFd({...fd,pax:e.target.value})}/></div>
             <div className="form-group"><label>Extra Person</label><input type="number" min="0" value={fd.extraPerson} onChange={e=>setFd({...fd,extraPerson:e.target.value})}/></div>
             <div className="form-group"><label>Advance Paid ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={fd.advancePaid} onChange={e=>setFd({...fd,advancePaid:e.target.value})}/></div>
@@ -1491,8 +1461,7 @@
             <div className="form-group"><label>Fixed Rent Amount ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" placeholder="Leave blank for standard rent" value={fd.fixRoomRentAmount} onChange={e=>setFd({...fd,fixRoomRentAmount:e.target.value})}/></div>
           </div>
 
-          <div style={{ display: (mode === 'advance' || walkinStep >= 2) ? 'block' : 'none', marginTop: '20px' }}>
-            <h4 style={{ color: 'var(--navy-primary)', marginBottom: '15px' }}>2. Select Rooms * ({selectedRooms.length} selected)</h4>
+          <div style={{marginBottom:'15px'}}><label style={{display:'block',marginBottom:'8px',color:'#555',fontWeight:500,fontSize:'14px'}}>Select Rooms * ({selectedRooms.length} selected)</label>
             <div className="room-tiles-grid">{rooms.map(rm=>{
               const rState = roomStatesMap[rm.roomNo.toString()];
               const isAvail = rState && rState.status === 'available';
@@ -1508,29 +1477,9 @@
               </div>)
             })}</div>
             {rooms.length === 0 && <p style={{color:'#666',fontSize:'13px',fontStyle:'italic'}}>No rooms exist in the system.</p>}
-            
-            {mode === 'walkin' && walkinStep === 2 && (
-              <div style={{ textAlign: 'right', marginTop: '20px' }}>
-                <button type="button" className="btn btn-secondary" style={{ marginRight: '10px' }} onClick={() => setWalkinStep(1)}><i className="fas fa-arrow-left"></i> Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => {
-                  if(selectedRooms.length === 0) {
-                    Swal.fire({icon: 'warning', text: 'Please select at least one room to proceed.'});
-                    return;
-                  }
-                  setWalkinStep(3);
-                }}>Next: Guest Details <i className="fas fa-arrow-right"></i></button>
-              </div>
-            )}
           </div>
 
-          
-          <div className="form-actions" style={{ display: (mode === 'advance' || walkinStep >= 3) ? 'flex' : 'none', marginTop: '20px' }}>
-            {mode === 'walkin' && walkinStep === 3 && (
-              <button type="button" className="btn btn-secondary" onClick={() => setWalkinStep(2)}><i className="fas fa-arrow-left"></i> Back to Rooms</button>
-            )}
-            <button type="submit" className="btn btn-primary" disabled={saving} style={{ flex: 1 }}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button>
-            <button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button>
-          </div>
+          <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Processing...</>:<><i className="fas fa-door-open"></i> Complete Check-In</>}</button><button type="button" className="btn btn-secondary" onClick={resetForm}><i className="fas fa-undo"></i> Reset</button></div>
         </form>
 
         <div style={{marginTop:'30px'}}><h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Check-Ins</h3>
@@ -2560,14 +2509,30 @@ const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fa
       return(<div className="app-container"><Sidebar activeMenu={am} setActiveMenu={setAm} role={role} user={user} onLogout={onLogout} isOpen={so} setIsOpen={setSo}/><div className="main-content"><div className="header"><div style={{display:'flex',alignItems:'center',gap:'10px'}}><button className="hamburger" onClick={()=>setSo(!so)}><i className="fas fa-bars"></i></button><h1><i className="fas fa-hotel"></i> Hill View Eco Retreat</h1></div><div style={{fontSize:'14px',color:'#666'}}>Welcome, {user}</div></div><MainContent activeMenu={am} user={user} role={role}/></div><BottomNav activeMenu={am} setActiveMenu={setAm} role={role} onLogout={onLogout}/></div>);
     }
 
+    const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in ms
+
     function App(){
-      const getSession=()=>{try{const s=localStorage.getItem('mri_session');if(!s)return null;const d=JSON.parse(s);return d;}catch(e){localStorage.removeItem('mri_session');return null;}};
+      const getSession=()=>{try{const s=localStorage.getItem('mri_session');if(!s)return null;const d=JSON.parse(s);if(Date.now()-d.loginTime>=SESSION_TIMEOUT){localStorage.removeItem('mri_session');return null;}return d;}catch(e){localStorage.removeItem('mri_session');return null;}};
       const saved=getSession();
       const [li,setLi]=useState(!!saved);const [cu,setCu]=useState(saved?saved.user:null);const [ur,setUr]=useState(saved?saved.role:null);
 
       const doLogout=()=>{localStorage.removeItem('mri_session');setLi(false);setCu(null);setUr(null);};
 
-      const handleLogin=(u,r)=>{const session={user:u,role:r};localStorage.setItem('mri_session',JSON.stringify(session));setLi(true);setCu(u);setUr(r);};
+      const handleLogin=(u,r)=>{const session={user:u,role:r,loginTime:Date.now()};localStorage.setItem('mri_session',JSON.stringify(session));setLi(true);setCu(u);setUr(r);};
+
+      // Check session expiry every 30 seconds
+      useEffect(()=>{
+        if(!li)return;
+        const timer=setInterval(()=>{
+          const s=getSession();
+          if(!s){
+            clearInterval(timer);
+            doLogout();
+            Swal.fire({icon:'info',title:'Session Expired',text:'Your session has expired after 1 hour. Please login again.',confirmButtonColor:'#001f3f'});
+          }
+        },30000);
+        return()=>clearInterval(timer);
+      },[li]);
 
       return(<div>{!li?<LoginPage onLogin={handleLogin}/>:<Dashboard user={cu} role={ur} onLogout={doLogout}/>}</div>);
     }
