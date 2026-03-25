@@ -1321,13 +1321,17 @@
 
       const [selAdvBkId, setSelAdvBkId] = useState('');
 
+      const loadAdvanceBookings = () => {
+        setAdvLd(true);
+        google.script.run.withSuccessHandler(r => {
+          setAdvLd(false);
+          setAdvBks((Array.isArray(r) ? r : []).filter(b => (b.status || '').toLowerCase() === 'booked'));
+        }).withFailureHandler(() => setAdvLd(false)).getAllBookings();
+      };
+
       useEffect(() => {
         if (mode === 'advance' || mode === 'walkin') { // need advBks even in walkin to block freeRooms
-          setAdvLd(true);
-          google.script.run.withSuccessHandler(r => {
-            setAdvLd(false);
-            setAdvBks((Array.isArray(r) ? r : []).filter(b => b.status === 'Booked'));
-          }).withFailureHandler(() => setAdvLd(false)).getAllBookings();
+          loadAdvanceBookings();
         }
       }, [mode]);
 
@@ -1392,13 +1396,13 @@
 
         if (editRowIndex) {
           google.script.run.withSuccessHandler(res=>{Swal.close();setSaving(false);
-            if(res.success){Swal.fire({icon:'success',title:'Update Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();setShowModal(false);loadCheckIns();
+            if(res.success){Swal.fire({icon:'success',title:'Update Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();setShowModal(false);loadCheckIns();loadAdvanceBookings();
               google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();
             }else Swal.fire({icon:'error',text:res.message});
           }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).updateCheckIn(editRowIndex, payload);
         } else {
           google.script.run.withSuccessHandler(res=>{Swal.close();setSaving(false);
-            if(res.success){Swal.fire({icon:'success',title:'Check-In Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();setShowModal(false);loadCheckIns();
+            if(res.success){Swal.fire({icon:'success',title:'Check-In Successful!',text:res.message,timer:2500,showConfirmButton:false});resetForm();setShowModal(false);loadCheckIns();loadAdvanceBookings();
               google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).getAllRooms();
             }else Swal.fire({icon:'error',text:res.message});
           }).withFailureHandler(e=>{Swal.close();setSaving(false);Swal.fire({icon:'error',text:e.message});}).addCheckIn(payload);
