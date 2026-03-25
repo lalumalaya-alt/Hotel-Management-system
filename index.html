@@ -976,7 +976,7 @@
         // 2. Count overlapping bookings
         const overlaps = {};
         const overlappingBks = allBookings.filter(b => {
-          if (b.status === 'Cancelled' || b.status === 'Checked Out') return false;
+          if (b.status === 'Cancelled' || b.status === 'Checked Out' || b.status === 'Checked In') return false;
           if (isEdit && b.ticketId === booking.ticketId) return false;
           const bCi = new Date(b.checkIn); const bCo = new Date(b.checkOut);
           return (ci < bCo && co > bCi);
@@ -997,10 +997,16 @@
         });
         
         // 3. Count active check-ins (since they hold physical rooms)
-        allCheckIns.filter(ci => ci.status === 'Active').forEach(c => {
+        const overlappingCis = allCheckIns.filter(c => {
+          if (c.status !== 'Active') return false;
+          const cCi = new Date(c.checkInDate); const cCo = new Date(c.checkOutDate);
+          return (ci < cCo && co > cCi);
+        });
+
+        overlappingCis.forEach(c => {
           const rNos = (c.roomNumbers||'').split(',').map(r=>r.trim()).filter(r=>r);
           rNos.forEach(rn => {
-            const roomObj = rooms.find(rx => rx.roomNo === rn);
+            const roomObj = rooms.find(rx => rx.roomNo.toString() === rn);
             if (roomObj) overlaps[roomObj.roomType] = (overlaps[roomObj.roomType]||0) + 1;
           });
         });
