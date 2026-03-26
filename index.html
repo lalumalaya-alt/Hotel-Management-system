@@ -1634,8 +1634,7 @@
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#restT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#restT').DataTable({data,destroy:true,columns:[
           {data:'orderId',title:'Order ID'},{data:'roomNo',title:'Room'},{data:'checkInId',title:'Check-In'},
-          {data:'orderDate',title:'Date',render:d=>fmtDate(d)},{data:'category',title:'Category',render:d=>CAT_LABELS[d]||d},
-          {data:'description',title:'Description'},{data:'amount',title:'Amount',render:d=>fmtCur(d)},
+          {data:'orderDate',title:'Date',render:d=>fmtDate(d)},
           {data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase()+'">'+d+'</span>'},
           {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
         ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
@@ -1650,12 +1649,11 @@
 
       const submit=(e)=>{e.preventDefault();
         if(!selRoom){Swal.fire({icon:'warning',text:'Select a room first.'});return;}
-        if(!fd.amount||parseFloat(fd.amount)<=0){Swal.fire({icon:'warning',text:'Enter a valid amount.'});return;}
         setSaving(true);
         if(editOrder){
-          google.script.run.withSuccessHandler(res=>{setSaving(false);if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});resetOrderForm();loadOrders();}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>{setSaving(false);Swal.fire({icon:'error',text:e.message});}).updateFoodOrder(editOrder.rowIndex,{roomNo:selRoom,checkInId:selCheckIn,orderDate:fd.orderDate,category:fd.category,description:fd.description,amount:fd.amount,status:'Active'});
+          google.script.run.withSuccessHandler(res=>{setSaving(false);if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});resetOrderForm();loadOrders();}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>{setSaving(false);Swal.fire({icon:'error',text:e.message});}).updateFoodOrder(editOrder.rowIndex,{roomNo:selRoom,checkInId:selCheckIn,orderDate:fd.orderDate,category:'FoodBeverage',description:'Food Order',amount:'0',status:'Active'});
         }else{
-          google.script.run.withSuccessHandler(res=>{setSaving(false);if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});resetOrderForm();loadOrders();}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>{setSaving(false);Swal.fire({icon:'error',text:e.message});}).addFoodOrder({roomNo:selRoom,checkInId:selCheckIn,orderDate:fd.orderDate,category:fd.category,description:fd.description,amount:fd.amount});
+          google.script.run.withSuccessHandler(res=>{setSaving(false);if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});resetOrderForm();loadOrders();}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>{setSaving(false);Swal.fire({icon:'error',text:e.message});}).addFoodOrder({roomNo:selRoom,checkInId:selCheckIn,orderDate:fd.orderDate,category:'FoodBeverage',description:'Food Order',amount:'0'});
         }
       };
 
@@ -1669,9 +1667,6 @@
           <form onSubmit={submit}>
             <div className="form-grid">
               <div className="form-group"><label>Room *</label><select value={selRoom} onChange={e=>pickRoom(e.target.value)}><option value="">{activeRooms.length===0?'No active check-ins found':'Select Room'}</option>{activeRooms.map(rm=><option key={rm.roomNo} value={rm.roomNo}>#{rm.roomNo} — {rm.guestName}</option>)}</select>{activeRooms.length===0&&<small style={{color:'#e74c3c',fontSize:'12px'}}><i className="fas fa-info-circle"></i> Check in guests first from the Check-In page.</small>}</div>
-              <div className="form-group"><label>Category *</label><select value={fd.category} onChange={e=>setFd({...fd,category:e.target.value})}>{CATEGORIES.map(c=><option key={c} value={c}>{CAT_LABELS[c]}</option>)}</select></div>
-              <div className="form-group"><label>Description</label><input value={fd.description} onChange={e=>setFd({...fd,description:e.target.value})} placeholder="Item description"/></div>
-              <div className="form-group"><label>Amount ({APP_CURRENCY}) *</label><input type="number" step="0.01" min="0" value={fd.amount} onChange={e=>setFd({...fd,amount:e.target.value})} required/></div>
               <div className="form-group"><label>Date</label><input type="date" value={fd.orderDate} onChange={e=>setFd({...fd,orderDate:e.target.value})}/></div>
             </div>
             {selGuestName&&<p style={{fontSize:'13px',color:'#666',marginBottom:'10px'}}><i className="fas fa-info-circle"></i> Guest: <strong>{selGuestName}</strong> | Check-In: <strong>{selCheckIn}</strong></p>}
@@ -1679,7 +1674,7 @@
           </form>
         </div>
         <h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Orders</h3>
-        {ld&&<TableSkeleton rows={5} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="restT" className="display" style={{width:'100%'}}></table></div>
+        {ld&&<TableSkeleton rows={5} columns={5}/>}<div style={{display:ld?'none':'block'}}><table id="restT" className="display" style={{width:'100%'}}></table></div>
       </div>);
     }
 
