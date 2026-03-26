@@ -1144,8 +1144,9 @@
       const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{
         setLd(false);
         const data = Array.isArray(r) ? r : [];
-        setActiveCis(data.filter(ci => ci.status === 'Active'));
-        initT(data);
+        const activeOnly = data.filter(ci => ci.status === 'Active');
+        setActiveCis(activeOnly);
+        initT(activeOnly);
       }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCheckIns();};
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
