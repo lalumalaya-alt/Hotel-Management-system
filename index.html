@@ -1670,23 +1670,35 @@
               {activeRooms.length===0 ? (
                 <div style={{color:'#e74c3c',fontSize:'14px',marginBottom:'15px'}}><i className="fas fa-info-circle"></i> No active check-ins found. Check in guests first from the Check-In page.</div>
               ) : (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(120px, 1fr))', gap:'10px', marginBottom:'15px'}}>
-                  {activeRooms.map(rm => (
-                    <div
-                      key={rm.roomNo}
-                      onClick={() => pickRoom(rm.roomNo)}
-                      style={{
-                        padding: '10px',
-                        border: selRoom === rm.roomNo ? '2px solid var(--navy-primary)' : '1px solid #ddd',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        backgroundColor: selRoom === rm.roomNo ? '#e8f4fd' : '#fff',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{fontWeight: 'bold', fontSize: '16px', color: 'var(--navy-primary)'}}>#{rm.roomNo}</div>
-                      <div style={{fontSize: '12px', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{rm.guestName}</div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '15px'}}>
+                  {Object.entries(activeRooms.reduce((acc, rm) => {
+                    if (!acc[rm.checkInId]) acc[rm.checkInId] = { guestName: rm.guestName, rooms: [] };
+                    acc[rm.checkInId].rooms.push(rm);
+                    return acc;
+                  }, {})).map(([ciId, group]) => (
+                    <div key={ciId} style={{border: '1px solid #ddd', borderRadius: '6px', padding: '15px', backgroundColor: '#fff'}}>
+                      <div style={{fontWeight: 'bold', color: 'var(--navy-primary)', marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '5px'}}>
+                        <i className="fas fa-user-circle"></i> {group.guestName} <span style={{fontSize: '12px', color: '#888', fontWeight: 'normal'}}>(ID: {ciId})</span>
+                      </div>
+                      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(80px, 1fr))', gap:'10px'}}>
+                        {group.rooms.map(rm => (
+                          <div
+                            key={rm.roomNo}
+                            onClick={() => pickRoom(rm.roomNo)}
+                            style={{
+                              padding: '10px',
+                              border: selRoom === rm.roomNo ? '2px solid var(--navy-primary)' : '1px solid #ccc',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              backgroundColor: selRoom === rm.roomNo ? '#e8f4fd' : '#f9f9f9',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <div style={{fontWeight: 'bold', fontSize: '16px', color: selRoom === rm.roomNo ? 'var(--navy-primary)' : '#444'}}>#{rm.roomNo}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
