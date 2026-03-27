@@ -427,7 +427,7 @@ function bookRoom(bookingDetails) {
     let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
 
-    let discountPercent = parseFloat(bookingDetails.discountPercent || "0") || 0; 
+    let discountPercent = parseFloat(bookingDetails.discountPercent || "0") || 0;
     let discount = (totalRoomRate * totalRoomsCount * nights * discountPercent) / 100;
 
     let roomNosStr = roomNosArr.join(', ');
@@ -747,7 +747,7 @@ function updateBooking(rowIndex, bookingData) {
     const totalRoomRate = bookingData.roomRate !== undefined ? parseFloat(bookingData.roomRate) : existingRate;
     const finalAmount = bookingData.totalAmount !== undefined ? parseFloat(bookingData.totalAmount) : 0;
     const tax = bookingData.tax !== undefined ? parseFloat(bookingData.tax) : 0;
-    
+
     // In updateBooking, discount is an absolute amount in DISCOUNT_COL, so we convert discountPercent to absolute
     const discountPercent = bookingData.discountPercent !== undefined ? parseFloat(bookingData.discountPercent) : 0;
     const discount = (totalRoomRate * totalRoomsCount * nights * discountPercent) / 100;
@@ -791,13 +791,13 @@ function updateBooking(rowIndex, bookingData) {
     ];
 
     sheet.getRange(rowIndex, 1, 1, 26).setValues([row]);
-    
+
     // Update room statuses for the new set of rooms
     if (existingStatus !== 'Cancelled' && existingStatus !== 'Checked Out') {
       const ss = SpreadsheetApp.openById(SS_ID);
       const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
       const roomsData = roomsSheet.getDataRange().getValues();
-      
+
       // Free up old physical rooms first
       let oldRooms = existingRoomNo.split(',').map(r => r.trim()).filter(r => r);
       oldRooms.forEach(rn => {
@@ -811,7 +811,7 @@ function updateBooking(rowIndex, bookingData) {
           }
         }
       });
-      
+
       // Book new physical rooms
       if (!isTypeBooking) {
         let newRooms = roomNosStr.split(',').map(r => r.trim()).filter(r => r);
@@ -1552,7 +1552,7 @@ function processFullCheckout(checkInId, checkoutData) {
         if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === checkInId.toString()) {
           let segStartDateStr = (segmentsData[i][SEG_START_DATE_COL] || '').toString();
           let segEndDateStr = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
-          
+
           if (!segEndDateStr) {
              // Close the active segment
              segEndDateStr = actualCheckOutDate.toISOString();
@@ -1567,7 +1567,7 @@ function processFullCheckout(checkInId, checkoutData) {
             if (segNights < 0) segNights = 0;
 
             let segRate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
-            
+
             staySegments.push({
               startDate: segStartDate,
               endDate: segEndDate,
@@ -1579,12 +1579,12 @@ function processFullCheckout(checkInId, checkoutData) {
           }
         }
       }
-      
+
       // Calculate total rent based on actual segments
       if (staySegments.length === 1 && staySegments[0].nights === 0 && nights === 1) {
         staySegments[0].nights = 1;
       }
-      
+
       for (let s of staySegments) {
         totalRoomRent += s.rate * s.nights;
       }
@@ -1776,7 +1776,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
     const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
     const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-    
+
     // Read settings for GST
     let gstPercent = 5;
     let hotelName = 'Hill View Eco Retreat', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', hotelLogo = '', defaultCurrency = 'MVR';
@@ -1798,12 +1798,12 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     const actualCheckOutDate = checkoutData.checkOutDate ? new Date(checkoutData.checkOutDate) : new Date();
     const checkOutTime = checkoutData.checkOutTime || '12:00';
     let advanceToApply = parseFloat(checkoutData.advanceToApply) || 0;
-    
+
     // Pre-read all data
     const ciData = ciSheet ? ciSheet.getDataRange().getValues() : [[]];
     const roomsData = roomsSheet ? roomsSheet.getDataRange().getValues() : [[]];
     const segmentsData = staySegmentsSheet ? staySegmentsSheet.getDataRange().getValues() : [[]];
-    
+
     // Group selected rooms by checkInId
     const roomsByCi = {};
     selectedRoomsFlat.forEach(sr => {
@@ -1826,15 +1826,15 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         if ((ciData[i][CI_ID_COL] || '').toString() === cId) {
           matchedCis.push({ id: cId, rowIndex: i, data: ciData[i], selectedRoomNos });
           found = true;
-          
+
           let rNs = (ciData[i][CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
           allRoomNosArr = allRoomNosArr.concat(selectedRoomNos);
-          
+
           let rTs = (ciData[i][CI_ROOM_TYPES_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
           combinedRoomTypes = combinedRoomTypes.concat(rTs);
-          
+
           totalPax += parseInt(ciData[i][CI_PAX_COL]) || 1; // Simplification: we just add total pax of the CI
-          
+
           let cidDate = new Date(ciData[i][CI_CHECKIN_DATE_COL]);
           if (!earliestCheckInDate || cidDate < earliestCheckInDate) {
              earliestCheckInDate = cidDate;
@@ -1843,14 +1843,14 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
           let nights = daysBetween(cidDate, actualCheckOutDate);
           if (nights < 1) nights = 1;
-          
+
           let staySegments = [];
           if (staySegmentsSheet) {
             for (let s = 1; s < segmentsData.length; s++) {
               if ((segmentsData[s][SEG_CHECKIN_ID_COL] || '').toString() === cId.toString()) {
                 let segRoomNosStr = (segmentsData[s][SEG_ROOM_NOS_COL] || '').toString();
                 let segRoomsArr = segRoomNosStr.split(',').map(r => r.trim()).filter(Boolean);
-                
+
                 let activeRoomsInSegment = 0;
                 for (let rn of selectedRoomNos) {
                   if (segRoomsArr.includes(rn)) activeRoomsInSegment++;
@@ -1867,9 +1867,9 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
                   let segRate = parseFloat(segmentsData[s][SEG_RATE_COL]) || 0;
                   let proportionedRate = (segRate / segRoomsArr.length) * activeRoomsInSegment;
-                  
+
                   staySegments.push({ rate: proportionedRate, nights: segNights });
-                  
+
                   // Split segment handling in database
                   if (!segEndDateStr) {
                     const remainingRooms = segRoomsArr.filter(r => !selectedRoomNos.includes(r));
@@ -1977,12 +1977,12 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
     if (combinedNights < 1) combinedNights = 1;
     let syntheticDailyRoomRate = totalRoomRent / combinedNights;
-    
+
     for (let d = 0; d < combinedNights; d++) {
       let dayDate = new Date(earliestCheckInDate);
       dayDate.setDate(dayDate.getDate() + d);
       let dateStr = dayDate.toISOString().split('T')[0];
-      
+
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
       foodOrders.forEach(o => {
         let oDate = o.orderDate.split('T')[0];
@@ -1990,11 +1990,11 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           dayCats[o.category] += o.amount;
         }
       });
-      
+
       let dayTotal = syntheticDailyRoomRate;
       Object.values(dayCats).forEach(v => dayTotal += v);
       grandRunning += dayTotal;
-      
+
       dayByDay.push({
         date: dateStr,
         rooms: syntheticDailyRoomRate,
@@ -2037,32 +2037,32 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
       const nowStr = new Date().toISOString();
       const invoiceRow = new Array(25).fill('');
-      invoiceRow[0] = billNumber; 
-      invoiceRow[1] = primaryGuestData.guestName; 
-      invoiceRow[2] = primaryGuestData.mobile; 
-      invoiceRow[3] = primaryGuestData.email; 
-      invoiceRow[4] = primaryGuestData.gstNumber || ""; 
-      invoiceRow[5] = defaultCurrency; 
-      invoiceRow[6] = nowStr; 
-      invoiceRow[7] = nowStr; 
-      invoiceRow[8] = "Paid"; 
-      invoiceRow[9] = JSON.stringify(invoiceItems); 
-      invoiceRow[10] = subtotal; 
-      invoiceRow[11] = true; 
-      invoiceRow[12] = gstPercent; 
-      invoiceRow[13] = sgstAmount + cgstAmount; 
-      invoiceRow[14] = false; 
-      invoiceRow[15] = 0; 
-      invoiceRow[16] = 0; 
-      invoiceRow[17] = 0; 
-      invoiceRow[18] = 0; 
-      invoiceRow[19] = discountAmount; 
-      invoiceRow[20] = billAmount; 
-      invoiceRow[21] = `Merged: ${Object.keys(roomsByCi).join(', ')}`; 
-      invoiceRow[22] = ""; 
-      invoiceRow[23] = ""; 
-      invoiceRow[24] = "System"; 
-      invoiceRow[25] = nowStr; 
+      invoiceRow[0] = billNumber;
+      invoiceRow[1] = primaryGuestData.guestName;
+      invoiceRow[2] = primaryGuestData.mobile;
+      invoiceRow[3] = primaryGuestData.email;
+      invoiceRow[4] = primaryGuestData.gstNumber || "";
+      invoiceRow[5] = defaultCurrency;
+      invoiceRow[6] = nowStr;
+      invoiceRow[7] = nowStr;
+      invoiceRow[8] = "Paid";
+      invoiceRow[9] = JSON.stringify(invoiceItems);
+      invoiceRow[10] = subtotal;
+      invoiceRow[11] = true;
+      invoiceRow[12] = gstPercent;
+      invoiceRow[13] = sgstAmount + cgstAmount;
+      invoiceRow[14] = false;
+      invoiceRow[15] = 0;
+      invoiceRow[16] = 0;
+      invoiceRow[17] = 0;
+      invoiceRow[18] = 0;
+      invoiceRow[19] = discountAmount;
+      invoiceRow[20] = billAmount;
+      invoiceRow[21] = `Merged: ${Object.keys(roomsByCi).join(', ')}`;
+      invoiceRow[22] = "";
+      invoiceRow[23] = "";
+      invoiceRow[24] = "System";
+      invoiceRow[25] = nowStr;
 
       masterInvSheet.appendRow(invoiceRow);
     }
@@ -2073,17 +2073,17 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       let allCiRoomNumbers = (ciRec.data[CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
       let remainingCiRooms = allCiRoomNumbers.filter(r => !ciRec.selectedRoomNos.includes(r));
       let currentCiAdvance = parseFloat(ciRec.data[CI_ADVANCE_PAID_COL]) || 0;
-      
+
       if (remainingCiRooms.length === 0) {
         // Full checkout for this CI
         ciSheet.getRange(ciRec.rowIndex + 1, CI_STATUS_COL + 1).setValue("Checked Out");
         ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
         ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_TIME_COL + 1).setValue(checkOutTime);
-        
+
         // Advance is considered fully consumed, deduct it from our pool so we know how much more to drain
         advanceToDeduct = advanceToDeduct - currentCiAdvance;
         if (advanceToDeduct < 0) advanceToDeduct = 0; // Guard
-        
+
         // Mark linked booking as checked out
         if (ciRec.data[CI_LINKED_TICKET_COL]) {
           const bData = bookingsSheet.getDataRange().getValues();
@@ -2098,7 +2098,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         // Partial checkout for this CI - keep active
         ciSheet.getRange(ciRec.rowIndex + 1, CI_ROOM_NUMBERS_COL + 1).setValue(remainingCiRooms.join(', '));
         ciSheet.getRange(ciRec.rowIndex + 1, CI_NUM_ROOMS_COL + 1).setValue(remainingCiRooms.length);
-        
+
         // Proportionately or aggressively deduct used advance from the active sheet
         if (advanceToDeduct > 0) {
            if (currentCiAdvance >= advanceToDeduct) {
@@ -2118,27 +2118,27 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       success: true,
       message: "Advanced Checkout completed successfully.",
       invoiceData: {
-        billNumber, 
+        billNumber,
         checkInId: Object.keys(roomsByCi).join(', '),
         hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo, currency: defaultCurrency,
-        guestName: primaryGuestData.guestName, 
-        companyName: primaryGuestData.companyName, 
-        gstNumber: primaryGuestData.gstNumber, 
-        mobile: primaryGuestData.mobile, 
-        email: primaryGuestData.email, 
+        guestName: primaryGuestData.guestName,
+        companyName: primaryGuestData.companyName,
+        gstNumber: primaryGuestData.gstNumber,
+        mobile: primaryGuestData.mobile,
+        email: primaryGuestData.email,
         address: primaryGuestData.address,
-        checkInDate: earliestCheckInDate ? earliestCheckInDate.toISOString() : "", 
+        checkInDate: earliestCheckInDate ? earliestCheckInDate.toISOString() : "",
         checkInTime: latestCheckInTime,
-        checkOutDate: actualCheckOutDate.toISOString(), 
+        checkOutDate: actualCheckOutDate.toISOString(),
         checkOutTime,
-        roomNumbers: allRoomNosArr.join(', '), 
-        roomTypes: combinedRoomTypes.join(', '), 
+        roomNumbers: allRoomNosArr.join(', '),
+        roomTypes: combinedRoomTypes.join(', '),
         numberOfRooms: allRoomNosArr.length,
-        pax: totalPax, 
-        extraPerson: 0, 
-        foodPlan: "Multiple", 
+        pax: totalPax,
+        extraPerson: 0,
+        foodPlan: "Multiple",
         billTo: primaryGuestData.billTo,
-        nights: combinedNights, 
+        nights: combinedNights,
         dailyRoomRate: syntheticDailyRoomRate,
         totalRoomRent,
         totalFooding, totalExtraBed, totalOtherServices, categoryTotals,
@@ -2198,14 +2198,14 @@ function getDashboardData() {
             const gName = (ciData[i][CI_GUEST_NAME_COL] || '').toString();
             const cin = ciData[i][CI_CHECKIN_DATE_COL] ? new Date(ciData[i][CI_CHECKIN_DATE_COL]).toISOString() : '';
             const cout = ciData[i][CI_CHECKOUT_DATE_COL] ? new Date(ciData[i][CI_CHECKOUT_DATE_COL]).toISOString() : '';
-            
+
             rns.forEach(rn => {
               guestMap[rn] = { guestName: gName, checkIn: cin, checkOut: cout };
             });
           }
         }
       }
-      
+
       const bkSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(BOOKINGS_SHEET_NAME);
       if (bkSheet) {
         const bkData = bkSheet.getDataRange().getValues();
@@ -2216,7 +2216,7 @@ function getDashboardData() {
             const gName = (bkData[i][GUEST_NAME_COL] || '').toString();
             const cin = bkData[i][CHECK_IN_COL] ? new Date(bkData[i][CHECK_IN_COL]).toISOString() : '';
             const cout = bkData[i][CHECK_OUT_COL] ? new Date(bkData[i][CHECK_OUT_COL]).toISOString() : '';
-            
+
             rns.forEach(rn => {
               // Only apply if not already claimed by a check-in
               if (!guestMap[rn]) {
@@ -2232,18 +2232,18 @@ function getDashboardData() {
       let roomNo = (row[ROOM_NO_COL] || "").toString();
       let type   = (row[ROOM_TYPE_COL] || "").toString();
       let status = (row[ROOM_STATUS_COL] || "").toString();
-      
+
       let guestData = guestMap[roomNo] || {};
-      
-      allRoomsDetails.push({ 
-        roomNo, 
-        type, 
+
+      allRoomsDetails.push({
+        roomNo,
+        type,
         status,
         guestName: guestData.guestName || '',
         checkIn: guestData.checkIn || '',
         checkOut: guestData.checkOut || ''
       });
-      
+
       if (status.toLowerCase() === "booked") {
         bookedCount++;
         bookedRoomsList.push(roomNo);
@@ -3836,7 +3836,7 @@ function manageSheetsDataStructure(configArray) {
     if (config.headers && config.headers.length > 0) {
       const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 1).getValues()[0];
       const newHeaders = [...config.headers];
-      
+
       // If the sheet is empty, just append the headers
       if (sheet.getLastRow() === 0) {
         sheet.appendRow(newHeaders);
@@ -4090,7 +4090,7 @@ function updateStaySegment(checkInId, newRoomNos, newRate, newPax) {
     const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
     const checkInSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
     const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
-    
+
     if (!staySegmentsSheet || !checkInSheet || !roomsSheet) {
       return { success: false, message: "Required sheets not found." };
     }
