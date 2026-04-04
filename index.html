@@ -702,7 +702,6 @@
 
     function TableSkeleton({rows=5,columns=6}){return(<div className="skeleton-table"><div className="skeleton-table-row">{[...Array(columns)].map((_,i)=><div key={i} className="skeleton skeleton-table-cell" style={{flex:1}}></div>)}</div>{[...Array(rows)].map((_,r)=><div key={r} className="skeleton-table-row">{[...Array(columns)].map((_,c)=><div key={c} className="skeleton skeleton-table-cell" style={{flex:1}}></div>)}</div>)}</div>);}
     function DashboardCardSkeleton(){return(<div className="skeleton-card"><div className="skeleton skeleton-icon"></div><div className="skeleton skeleton-text-large" style={{width:'60%'}}></div><div className="skeleton skeleton-text" style={{width:'80%'}}></div></div>);}
-    function ChartSkeleton(){return <div className="chart-card"><div className="skeleton skeleton-chart"></div></div>;}
 
     function SearchableSelect({ value, onChange, options, placeholder, className, required, disabled }) {
       const [isOpen, setIsOpen] = useState(false);
@@ -812,7 +811,7 @@
       const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();},[]);
       
-      if(ld)return(<div><div className="dashboard-split"><ChartSkeleton/><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div></div></div>);
+      if(ld)return(<div><div className="dashboard-split" style={{gridTemplateColumns:'2fr 1fr'}}><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div></div></div>);
       
       const f=st?.financeSummary||{};const b=st?.bookingRevenue||{};const inv=st?.invoiceStats||{};const bdg=st?.currentBudget||null;const rb=st?.recentBookings||[];
       const todaysCheckIns=st?.todaysCheckIns||[];
