@@ -17,6 +17,12 @@ const SETTINGS_SHEET_NAME   = "Settings";
 const BUDGETS_SHEET_NAME    = "Budgets";
 const CATEGORIES_SHEET_NAME = "Categories";
 const STAY_SEGMENTS_SHEET_NAME = "StaySegments";
+const MENU_SHEET_NAME       = "Menu";
+
+// MENU sheet columns (0-based)
+const MENU_ITEM_NAME_COL    = 0;
+const MENU_CATEGORY_COL     = 1;
+const MENU_PRICE_COL        = 2;
 
 // STAY_SEGMENTS sheet columns (0-based)
 const SEG_ID_COL         = 0;
@@ -176,21 +182,25 @@ const CI_STATUS_COL         = 26;
 const CI_CREATED_AT_COL     = 27;
 
 // RESTAURANT sheet columns (0-based)
-const REST_ORDER_ID_COL     = 0;
-const REST_ROOM_NO_COL      = 1;
-const REST_CHECKIN_ID_COL   = 2;
-const REST_ORDER_DATE_COL   = 3;
-const REST_CATEGORY_COL     = 4;
-const REST_DESC_COL         = 5;
-const REST_AMOUNT_COL       = 6;
-const REST_STATUS_COL       = 7;
-const REST_CREATED_AT_COL   = 8;
-const REST_BILLED_CHECKIN_COL = 8; // Assuming index 8 is used for BilledCheckInID as per new schema. Note: CREATED_AT might actually be 9 if BilledCheckInID is 8. Let's fix this properly.
+const REST_ORDER_ID_COL          = 0;
+const REST_CHECKIN_ID_COL        = 1;
+const REST_ROOM_NO_COL           = 2;
+const REST_ORDER_DATE_COL        = 3;
+const REST_MEAL_PERIOD_COL       = 4;
+const REST_ITEM_NAME_COL         = 5;
+const REST_QUANTITY_COL          = 6;
+const REST_RATE_COL              = 7;
+const REST_TOTAL_AMOUNT_COL      = 8;
+const REST_STATUS_COL            = 9;
+const REST_BILLED_CHECKIN_ID_COL = 10;
+const REST_ADDED_BY_COL          = 11;
 
-// Let's redefine REST_ columns based on manageSheetsDataStructure new schema:
-// ["OrderID", "CheckInID", "RoomNo", "Date", "Category", "Description", "Amount", "Status", "BilledCheckInID", "AddedBy"]
-const REST_BILLED_CHECKIN_ID_COL = 8;
-const REST_ADDED_BY_COL = 9;
+// Aliases for backward compatibility
+const REST_CATEGORY_COL          = REST_MEAL_PERIOD_COL;
+const REST_DESC_COL              = REST_ITEM_NAME_COL;
+const REST_AMOUNT_COL            = REST_TOTAL_AMOUNT_COL;
+const REST_CREATED_AT_COL        = REST_ADDED_BY_COL;
+const REST_BILLED_CHECKIN_COL    = REST_BILLED_CHECKIN_ID_COL;
 
 // SETTINGS sheet NEW columns (appended)
 const SET_NEXT_CHECKIN_COL  = 13;
@@ -1068,6 +1078,112 @@ function addCheckIn(checkInData) {
   }
 }
 
+function getActiveCheckInsWithStats() {
+  try {
+    const checkIns = getAllCheckIns();
+    if (checkIns.error || !Array.isArray(checkIns)) return [];
+    
+    const activeCis = checkIns.filter(ci => ci.status === 'Active');
+    
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
+    const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
+    const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+    
+    const roomsData = roomsSheet && roomsSheet.getLastRow() > 1 ? roomsSheet.getDataRange().getValues() : [];
+    const restData = restSheet && restSheet.getLastRow() > 1 ? restSheet.getDataRange().getValues() : [];
+    const segmentsData = staySegmentsSheet && staySegmentsSheet.getLastRow() > 1 ? staySegmentsSheet.getDataRange().getValues() : [];
+    
+    // Map room rates for quick lookup
+    const roomRates = {};
+    for (let i = 1; i < roomsData.length; i++) {
+      const rNo = (roomsData[i][ROOM_NO_COL] || '').toString();
+      const rate = parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
+      roomRates[rNo] = rate;
+    }
+    
+    const now = new Date();
+    
+    return activeCis.map(ci => {
+      // Find StaySegments for this check-in
+      const ciSegments = [];
+      for (let i = 1; i < segmentsData.length; i++) {
+        if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === ci.checkInId) {
+          let sStart = new Date(segmentsData[i][SEG_START_DATE_COL]);
+          if (isNaN(sStart.getTime())) sStart = new Date(ci.checkInDate);
+          
+          let endDateStr = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
+          let sEnd = endDateStr ? new Date(endDateStr) : now;
+          if (isNaN(sEnd.getTime())) sEnd = now;
+
+          // Default minimum of 1 night for calculating
+          let sDiff = sEnd.getTime() - sStart.getTime();
+          let sDays = Math.ceil(sDiff / (1000 * 3600 * 24));
+          if (sDays < 1) sDays = 1;
+          
+          let rate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
+          let roomNos = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
+
+          ciSegments.push({
+             roomNos: roomNos,
+             rate: rate,
+             nights: sDays,
+             segmentTotal: rate * sDays
+          });
+        }
+      }
+      
+      // Calculate nightsStayed
+      let ciDate = new Date(ci.checkInDate);
+      if (isNaN(ciDate.getTime())) ciDate = now; // Fallback
+      let timeDiff = now.getTime() - ciDate.getTime();
+      let days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      if (days < 1) days = 1;
+      
+      const nightsStayed = days;
+      
+      // Calculate liveRoomRent
+      let liveRoomRent = 0;
+      if (ciSegments.length > 0) {
+        ciSegments.forEach(seg => {
+          liveRoomRent += seg.segmentTotal;
+        });
+      } else {
+        const assignedRooms = (ci.roomNumbers || '').split(',').map(r => r.trim()).filter(Boolean);
+        assignedRooms.forEach(rn => {
+          liveRoomRent += (roomRates[rn] || 0) * nightsStayed;
+        });
+      }
+      
+      // Calculate liveFoodBill
+      let liveFoodBill = 0;
+      for (let i = 1; i < restData.length; i++) {
+        const cId = (restData[i][REST_CHECKIN_ID_COL] || '').toString();
+        const status = (restData[i][REST_STATUS_COL] || '').toString();
+        if (cId === ci.checkInId && status === 'Active') {
+           liveFoodBill += parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0;
+        }
+      }
+      
+      // Calculate liveBalance
+      const advancePaid = parseFloat(ci.advancePaid) || 0;
+      const liveBalance = (liveRoomRent + liveFoodBill) - advancePaid;
+      
+      return {
+        ...ci,
+        nightsStayed,
+        liveRoomRent,
+        liveFoodBill,
+        liveBalance,
+        staySegments: ciSegments
+      };
+    });
+  } catch (e) {
+    Logger.log("Error in getActiveCheckInsWithStats: " + e.toString());
+    return [];
+  }
+}
+
 function getAllCheckIns() {
   try {
     const ss = SpreadsheetApp.openById(SS_ID);
@@ -1118,11 +1234,11 @@ function getAllCheckIns() {
 
 function getCheckInByRoomNo(roomNo) {
   try {
-    const checkIns = getAllCheckIns();
-    if (!checkIns.error) {
+    const checkIns = getActiveCheckInsWithStats();
+    if (!checkIns.error && Array.isArray(checkIns)) {
       for (let i = 0; i < checkIns.length; i++) {
         if (checkIns[i].status === 'Active') {
-          let rooms = checkIns[i].roomNumbers.split(',').map(r => r.trim());
+          let rooms = (checkIns[i].roomNumbers || '').split(',').map(r => r.trim());
           if (rooms.indexOf(roomNo.toString().trim()) !== -1) {
             return checkIns[i];
           }
@@ -1269,18 +1385,40 @@ function addFoodOrder(orderData) {
 
     const orderId = generateOrderId();
     const now = new Date().toISOString();
+    
+    // Ensure roomNo supports comma-separated string if it's an array
+    let roomNos = orderData.roomNo;
+    if (Array.isArray(roomNos)) {
+      roomNos = roomNos.join(', ');
+    } else if (typeof roomNos !== 'string') {
+      roomNos = (roomNos || '').toString();
+    }
 
-    sheet.appendRow([
-      orderId,
-      orderData.roomNo || '',
-      orderData.checkInId || '',
-      orderData.orderDate || now.split('T')[0],
-      orderData.category || 'FoodBeverage',
-      orderData.description || '',
-      parseFloat(orderData.amount) || 0,
-      'Active',
-      now
-    ]);
+    // The new logic requires processing an array of items to prevent concurrency faults
+    // If frontend sends legacy single-item payload, wrap it in an array to maintain backwards compatibility
+    const items = Array.isArray(orderData.items) ? orderData.items : [{
+      itemName: orderData.description || '',
+      quantity: orderData.quantity || 1,
+      defaultPrice: orderData.rate || orderData.amount || 0,
+      totalAmount: orderData.amount || 0
+    }];
+
+    items.forEach(item => {
+      sheet.appendRow([
+        orderId,
+        orderData.checkInId || '',
+        roomNos,
+        orderData.orderDate || now.split('T')[0],
+        orderData.category || 'FoodBeverage',
+        item.itemName || '',
+        parseInt(item.quantity) || 1,
+        parseFloat(item.defaultPrice) || 0,
+        parseFloat(item.totalAmount) || 0,
+        'Active',
+        '',
+        'Admin'
+      ]);
+    });
     SpreadsheetApp.flush();
     return { success: true, message: "Order added successfully.", orderId };
   } catch (e) {
@@ -1304,11 +1442,18 @@ function getAllFoodOrders() {
         roomNo: (row[REST_ROOM_NO_COL] || '').toString(),
         checkInId: (row[REST_CHECKIN_ID_COL] || '').toString(),
         orderDate: (row[REST_ORDER_DATE_COL] || '').toString(),
-        category: (row[REST_CATEGORY_COL] || '').toString(),
-        description: (row[REST_DESC_COL] || '').toString(),
-        amount: parseFloat(row[REST_AMOUNT_COL]) || 0,
+        mealPeriod: (row[REST_MEAL_PERIOD_COL] || '').toString(),
+        itemName: (row[REST_ITEM_NAME_COL] || '').toString(),
+        quantity: parseInt(row[REST_QUANTITY_COL]) || 1,
+        rate: parseFloat(row[REST_RATE_COL]) || 0,
+        totalAmount: parseFloat(row[REST_TOTAL_AMOUNT_COL]) || 0,
         status: (row[REST_STATUS_COL] || 'Active').toString(),
-        createdAt: (row[REST_CREATED_AT_COL] || '').toString()
+        addedBy: (row[REST_ADDED_BY_COL] || '').toString(),
+        
+        // Backward compatibility properties needed by unmodified frontend code
+        category: (row[REST_MEAL_PERIOD_COL] || '').toString(),
+        description: (row[REST_ITEM_NAME_COL] || '').toString(),
+        amount: parseFloat(row[REST_TOTAL_AMOUNT_COL]) || 0
       });
     }
     return orders;
@@ -1346,19 +1491,30 @@ function updateFoodOrder(rowIndex, orderData) {
 
     const existingId = sheet.getRange(rowIndex, REST_ORDER_ID_COL + 1).getValue();
     const existingCreated = sheet.getRange(rowIndex, REST_CREATED_AT_COL + 1).getValue();
+    
+    // Ensure roomNo supports comma-separated string if it's an array
+    let roomNos = orderData.roomNo;
+    if (Array.isArray(roomNos)) {
+      roomNos = roomNos.join(', ');
+    } else if (typeof roomNos !== 'string') {
+      roomNos = (roomNos || '').toString();
+    }
 
     const row = [
       existingId,
-      orderData.roomNo || '',
       orderData.checkInId || '',
+      roomNos,
       orderData.orderDate || '',
       orderData.category || 'FoodBeverage',
       orderData.description || '',
+      parseInt(orderData.quantity) || 1,
+      parseFloat(orderData.rate) || parseFloat(orderData.amount) || 0,
       parseFloat(orderData.amount) || 0,
       orderData.status || 'Active',
-      existingCreated
+      '',
+      'Admin'
     ];
-    sheet.getRange(rowIndex, 1, 1, 9).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 12).setValues([row]);
     SpreadsheetApp.flush();
     return { success: true, message: "Order updated successfully." };
   } catch (e) {
@@ -1404,6 +1560,181 @@ function getActiveCheckInRooms() {
 /***************************************************
  * CHECKOUT FUNCTIONS (REVAMPED)
  ***************************************************/
+
+function processWalkinCheckout(guestName, orderIds, checkoutData) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
+    const invSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
+    
+    if (!restSheet || !invSheet) return { success: false, message: "Required sheets not found." };
+    
+    const restData = restSheet.getDataRange().getValues();
+    let selectedOrders = [];
+    let totalFooding = 0;
+    
+    // 1. Collect orders and calculate sum
+    for (let i = 1; i < restData.length; i++) {
+      let oId = (restData[i][REST_ORDER_ID_COL] || '').toString();
+      if (orderIds.includes(oId) && (restData[i][REST_STATUS_COL] || '').toString() === 'Active') {
+        let amt = parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0;
+        let desc = (restData[i][REST_ITEM_NAME_COL] || '').toString();
+        let qty = parseInt(restData[i][REST_QUANTITY_COL]) || 1;
+        selectedOrders.push({ rowIndex: i, orderId: oId, description: desc, amount: amt, quantity: qty });
+        totalFooding += amt;
+      }
+    }
+    
+    if (selectedOrders.length === 0) return { success: false, message: "No active orders found." };
+
+    // 2. Billing Math
+    let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
+    let discountAmount = totalFooding * (discountPercent / 100);
+    let afterDiscount = totalFooding - discountAmount;
+    
+    let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
+    let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
+    let sgstAmount = 0, cgstAmount = 0;
+    
+    if (checkoutData.gstType === 'Excluding') {
+      sgstAmount = afterDiscount * (sgstPercent / 100);
+      cgstAmount = afterDiscount * (cgstPercent / 100);
+    }
+    
+    let billAmount = afterDiscount + sgstAmount + cgstAmount;
+    let paymentMode = checkoutData.paymentMode || 'Cash';
+
+    // Read Settings
+    let hotelName = 'Hill View Eco Retreat', hotelAddress = '', hotelPhone = '', hotelEmail = '', hotelTIN = '', defaultCurrency = 'MVR', hotelLogo = '';
+    try {
+      const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
+      if (setSheet && setSheet.getLastRow() > 1) {
+        const setRow = setSheet.getRange(2, 1, 1, setSheet.getLastColumn()).getValues()[0];
+        hotelName = (setRow[SET_HOTEL_NAME_COL] || 'Hill View Eco Retreat').toString();
+        hotelAddress = (setRow[SET_HOTEL_ADDRESS_COL] || '').toString();
+        hotelPhone = (setRow[SET_HOTEL_PHONE_COL] || '').toString();
+        hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
+        hotelTIN = (setRow[SET_HOTEL_TIN_COL] || '').toString();
+        defaultCurrency = (setRow[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString();
+        hotelLogo = (setRow[SET_LOGO_URL_COL] || '').toString();
+      }
+    } catch (e) {}
+
+    const billNumber = generateInvoiceId();
+    const nowStr = new Date().toISOString();
+
+    // 3. Database Updates
+    selectedOrders.forEach(o => {
+       restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
+       restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
+    });
+
+    const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
+
+    const invoiceRow = new Array(25).fill('');
+    invoiceRow[0] = billNumber; 
+    invoiceRow[1] = guestName; 
+    invoiceRow[2] = ""; 
+    invoiceRow[3] = ""; 
+    invoiceRow[4] = ""; 
+    invoiceRow[5] = defaultCurrency; 
+    invoiceRow[6] = nowStr; 
+    invoiceRow[7] = nowStr; 
+    invoiceRow[8] = "Paid"; 
+    invoiceRow[9] = JSON.stringify(invoiceItems); 
+    invoiceRow[10] = totalFooding; 
+    invoiceRow[11] = true; 
+    invoiceRow[12] = sgstPercent + cgstPercent; 
+    invoiceRow[13] = sgstAmount + cgstAmount; 
+    invoiceRow[14] = false; 
+    invoiceRow[15] = 0; 
+    invoiceRow[16] = 0; 
+    invoiceRow[17] = 0; 
+    invoiceRow[18] = 0; 
+    invoiceRow[19] = discountAmount; 
+    invoiceRow[20] = billAmount; 
+    invoiceRow[21] = "Walk-in POS Bill"; 
+    invoiceRow[22] = ""; 
+    invoiceRow[23] = ""; 
+    invoiceRow[24] = "System"; 
+    invoiceRow[25] = nowStr; 
+
+    invSheet.appendRow(invoiceRow);
+
+    // 4. Log Income
+    addFinanceRecord({
+      date: nowStr.split('T')[0],
+      type: 'Income',
+      description: `Walk-in POS Payment (Bill #${billNumber})`,
+      shopSource: 'Restaurant',
+      amount: billAmount,
+      category: 'Restaurant Income',
+      currency: defaultCurrency,
+      enteredBy: 'System'
+    });
+
+    SpreadsheetApp.flush();
+    try { recalculateBalances(); } catch(e) {}
+
+    // 5. Construct invoiceData for frontend
+    let syntheticDayByDay = [{
+      date: nowStr.split('T')[0],
+      rooms: 0,
+      extraBed: 0,
+      foodBev: totalFooding,
+      miniBar: 0,
+      earlyClean: 0,
+      xerox: 0,
+      laundry: 0,
+      fax: 0,
+      spbuc: 0,
+      travels: 0,
+      misc: 0,
+      dayTotal: totalFooding,
+      grandTotal: totalFooding
+    }];
+
+    return {
+      success: true,
+      message: "Walk-in Checkout completed successfully.",
+      invoiceData: {
+        billNumber,
+        checkInId: "Walk-in",
+        guestName: guestName,
+        companyName: "",
+        gstNumber: "",
+        mobile: "",
+        email: "",
+        address: "",
+        billTo: "Individual",
+        checkInDate: nowStr,
+        checkInTime: "",
+        checkOutDate: nowStr,
+        checkOutTime: "",
+        foodPlan: "None",
+        pax: 1,
+        numberOfRooms: 0,
+        roomNumbers: "",
+        dayByDay: syntheticDayByDay,
+        subtotal: totalFooding,
+        discountPercent,
+        discountAmount,
+        sgstPercent,
+        sgstAmount,
+        cgstPercent,
+        cgstAmount,
+        gstType: checkoutData.gstType,
+        billAmount,
+        advancePaid: 0,
+        netAmount: billAmount,
+        hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo
+      }
+    };
+  } catch (e) {
+    Logger.log("Error in processWalkinCheckout: " + e.toString());
+    return { success: false, message: e.message };
+  }
+}
 
 function processFullCheckout(checkInId, checkoutData) {
   try {
@@ -1593,9 +1924,9 @@ function processFullCheckout(checkInId, checkoutData) {
         if ((restData[i][REST_CHECKIN_ID_COL] || '').toString() === checkInId && (restData[i][REST_STATUS_COL] || '').toString() === 'Active') {
           foodOrders.push({
             orderDate: (restData[i][REST_ORDER_DATE_COL] || '').toString(),
-            category: (restData[i][REST_CATEGORY_COL] || '').toString(),
-            description: (restData[i][REST_DESC_COL] || '').toString(),
-            amount: parseFloat(restData[i][REST_AMOUNT_COL]) || 0
+            category: (restData[i][REST_MEAL_PERIOD_COL] || '').toString(),
+            description: (restData[i][REST_ITEM_NAME_COL] || '').toString(),
+            amount: parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0
           });
         }
       }
@@ -1608,9 +1939,17 @@ function processFullCheckout(checkInId, checkoutData) {
     let categoryTotals = {};
     foodOrders.forEach(o => {
       categoryTotals[o.category] = (categoryTotals[o.category] || 0) + o.amount;
-      if (o.category === 'FoodBeverage') totalFooding += o.amount;
-      else if (o.category === 'ExtraBed') totalExtraBed += o.amount;
-      else totalOtherServices += o.amount;
+      
+      if (['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'FoodBeverage'].includes(o.category)) {
+        totalFooding += o.amount;
+        o.mappedCategory = 'FoodBeverage'; // used in dayByDay generator
+      } else if (o.category === 'ExtraBed') {
+        totalExtraBed += o.amount;
+        o.mappedCategory = 'ExtraBed';
+      } else {
+        totalOtherServices += o.amount;
+        o.mappedCategory = o.category;
+      }
     });
 
     let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices;
@@ -1667,8 +2006,8 @@ function processFullCheckout(checkInId, checkoutData) {
 
       foodOrders.forEach(o => {
         let oDate = o.orderDate.split('T')[0];
-        if (oDate === dateStr && dayCats.hasOwnProperty(o.category)) {
-          dayCats[o.category] += o.amount;
+        if (oDate === dateStr && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
+          dayCats[o.mappedCategory || o.category] += o.amount;
         }
       });
 
@@ -1912,9 +2251,9 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           foodOrders.push({
             rowIndex: i,
             orderDate: (restData[i][REST_ORDER_DATE_COL] || '').toString(),
-            category: (restData[i][REST_CATEGORY_COL] || '').toString(),
-            description: (restData[i][REST_DESC_COL] || '').toString(),
-            amount: parseFloat(restData[i][REST_AMOUNT_COL]) || 0
+            category: (restData[i][REST_MEAL_PERIOD_COL] || '').toString(),
+            description: (restData[i][REST_ITEM_NAME_COL] || '').toString(),
+            amount: parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0
           });
         }
       }
@@ -1924,9 +2263,16 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     let categoryTotals = {};
     foodOrders.forEach(o => {
       categoryTotals[o.category] = (categoryTotals[o.category] || 0) + o.amount;
-      if (o.category === 'FoodBeverage') totalFooding += o.amount;
-      else if (o.category === 'ExtraBed') totalExtraBed += o.amount;
-      else totalOtherServices += o.amount;
+      if (['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'FoodBeverage'].includes(o.category)) {
+        totalFooding += o.amount;
+        o.mappedCategory = 'FoodBeverage';
+      } else if (o.category === 'ExtraBed') {
+        totalExtraBed += o.amount;
+        o.mappedCategory = 'ExtraBed';
+      } else {
+        totalOtherServices += o.amount;
+        o.mappedCategory = o.category;
+      }
     });
 
     // 3. Billing Math
@@ -1956,6 +2302,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     // 5. Build Synthetic DayByDay for PDF
     let dayByDay = [];
     let grandRunning = 0;
+    if (!earliestCheckInDate) { earliestCheckInDate = actualCheckOutDate; }
     let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
     if (combinedNights < 1) combinedNights = 1;
     let syntheticDailyRoomRate = totalRoomRent / combinedNights;
@@ -1968,8 +2315,8 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
       foodOrders.forEach(o => {
         let oDate = o.orderDate.split('T')[0];
-        if (oDate === dateStr && dayCats.hasOwnProperty(o.category)) {
-          dayCats[o.category] += o.amount;
+        if (oDate === dateStr && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
+          dayCats[o.mappedCategory || o.category] += o.amount;
         }
       });
       
@@ -1995,110 +2342,112 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       });
     }
 
-    // 6. Database Updates: Physical Rooms
-    for (let j = 1; j < roomsData.length; j++) {
-      let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
-      if (allRoomNosArr.includes(rn)) {
-        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+    if (!checkoutData.isPreview) {
+      // 6. Database Updates: Physical Rooms
+      for (let j = 1; j < roomsData.length; j++) {
+        let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
+        if (allRoomNosArr.includes(rn)) {
+          roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+        }
       }
-    }
 
-    // 7. Database Updates: POS Orders
-    foodOrders.forEach(o => {
-       restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
-       restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
-    });
+      // 7. Database Updates: POS Orders
+      foodOrders.forEach(o => {
+         restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
+         restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
+      });
 
-    // 8. Database Updates: Generate ONE master invoice in the Invoices sheet
-    const masterInvSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
-    if (masterInvSheet) {
-      const invoiceItems = [
-        { description: `Combined Room Rent (${allRoomNosArr.length} rooms)`, amount: totalRoomRent },
-        { description: `Total POS Orders`, amount: totalFooding + totalExtraBed + totalOtherServices }
-      ];
+      // 8. Database Updates: Generate ONE master invoice in the Invoices sheet
+      const masterInvSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
+      if (masterInvSheet) {
+        const invoiceItems = [
+          { description: `Combined Room Rent (${allRoomNosArr.length} rooms)`, amount: totalRoomRent },
+          { description: `Total POS Orders`, amount: totalFooding + totalExtraBed + totalOtherServices }
+        ];
 
-      const nowStr = new Date().toISOString();
-      const invoiceRow = new Array(25).fill('');
-      invoiceRow[0] = billNumber; 
-      invoiceRow[1] = primaryGuestData.guestName; 
-      invoiceRow[2] = primaryGuestData.mobile; 
-      invoiceRow[3] = primaryGuestData.email; 
-      invoiceRow[4] = primaryGuestData.gstNumber || ""; 
-      invoiceRow[5] = defaultCurrency; 
-      invoiceRow[6] = nowStr; 
-      invoiceRow[7] = nowStr; 
-      invoiceRow[8] = "Paid"; 
-      invoiceRow[9] = JSON.stringify(invoiceItems); 
-      invoiceRow[10] = subtotal; 
-      invoiceRow[11] = true; 
-      invoiceRow[12] = gstPercent; 
-      invoiceRow[13] = sgstAmount + cgstAmount; 
-      invoiceRow[14] = false; 
-      invoiceRow[15] = 0; 
-      invoiceRow[16] = 0; 
-      invoiceRow[17] = 0; 
-      invoiceRow[18] = 0; 
-      invoiceRow[19] = discountAmount; 
-      invoiceRow[20] = billAmount; 
-      invoiceRow[21] = `Merged: ${Object.keys(roomsByCi).join(', ')}`; 
-      invoiceRow[22] = ""; 
-      invoiceRow[23] = ""; 
-      invoiceRow[24] = "System"; 
-      invoiceRow[25] = nowStr; 
+        const nowStr = new Date().toISOString();
+        const invoiceRow = new Array(25).fill('');
+        invoiceRow[0] = billNumber; 
+        invoiceRow[1] = primaryGuestData.guestName; 
+        invoiceRow[2] = primaryGuestData.mobile; 
+        invoiceRow[3] = primaryGuestData.email; 
+        invoiceRow[4] = primaryGuestData.gstNumber || ""; 
+        invoiceRow[5] = defaultCurrency; 
+        invoiceRow[6] = nowStr; 
+        invoiceRow[7] = nowStr; 
+        invoiceRow[8] = "Paid"; 
+        invoiceRow[9] = JSON.stringify(invoiceItems); 
+        invoiceRow[10] = subtotal; 
+        invoiceRow[11] = true; 
+        invoiceRow[12] = gstPercent; 
+        invoiceRow[13] = sgstAmount + cgstAmount; 
+        invoiceRow[14] = false; 
+        invoiceRow[15] = 0; 
+        invoiceRow[16] = 0; 
+        invoiceRow[17] = 0; 
+        invoiceRow[18] = 0; 
+        invoiceRow[19] = discountAmount; 
+        invoiceRow[20] = billAmount; 
+        invoiceRow[21] = `Merged: ${Object.keys(roomsByCi).join(', ')}`; 
+        invoiceRow[22] = ""; 
+        invoiceRow[23] = ""; 
+        invoiceRow[24] = "System"; 
+        invoiceRow[25] = nowStr; 
 
-      masterInvSheet.appendRow(invoiceRow);
-    }
+        masterInvSheet.appendRow(invoiceRow);
+      }
 
-    // 9. Database Updates: Check-In Records (Partial vs Full logic)
-    let advanceToDeduct = advanceToApply; // How much advance we still need to deduct from the active sheets
-    for (let ciRec of matchedCis) {
-      let allCiRoomNumbers = (ciRec.data[CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
-      let remainingCiRooms = allCiRoomNumbers.filter(r => !ciRec.selectedRoomNos.includes(r));
-      let currentCiAdvance = parseFloat(ciRec.data[CI_ADVANCE_PAID_COL]) || 0;
-      
-      if (remainingCiRooms.length === 0) {
-        // Full checkout for this CI
-        ciSheet.getRange(ciRec.rowIndex + 1, CI_STATUS_COL + 1).setValue("Checked Out");
-        ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
-        ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_TIME_COL + 1).setValue(checkOutTime);
+      // 9. Database Updates: Update CheckIn/Bookings Sheets
+      let advanceToDeduct = advanceToApply; // How much advance we still need to deduct from the active sheets
+      for (let ciRec of matchedCis) {
+        let allCiRoomNumbers = (ciRec.data[CI_ROOM_NUMBERS_COL] || '').toString().split(',').map(r => r.trim()).filter(Boolean);
+        let remainingCiRooms = allCiRoomNumbers.filter(r => !ciRec.selectedRoomNos.includes(r));
+        let currentCiAdvance = parseFloat(ciRec.data[CI_ADVANCE_PAID_COL]) || 0;
         
-        // Advance is considered fully consumed, deduct it from our pool so we know how much more to drain
-        advanceToDeduct = advanceToDeduct - currentCiAdvance;
-        if (advanceToDeduct < 0) advanceToDeduct = 0; // Guard
-        
-        // Mark linked booking as checked out
-        if (ciRec.data[CI_LINKED_TICKET_COL]) {
-          const bData = bookingsSheet.getDataRange().getValues();
-          for (let i = 1; i < bData.length; i++) {
-            if ((bData[i][TICKET_ID_COL] || '').toString() === ciRec.data[CI_LINKED_TICKET_COL].toString()) {
-              bookingsSheet.getRange(i + 1, BOOKING_STATUS_COL + 1).setValue("Checked Out");
-              break;
+        if (remainingCiRooms.length === 0) {
+          // Full checkout for this CI
+          ciSheet.getRange(ciRec.rowIndex + 1, CI_STATUS_COL + 1).setValue("Checked Out");
+          ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
+          ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_TIME_COL + 1).setValue(checkOutTime);
+          
+          // Advance is considered fully consumed, deduct it from our pool so we know how much more to drain
+          advanceToDeduct = advanceToDeduct - currentCiAdvance;
+          if (advanceToDeduct < 0) advanceToDeduct = 0; // Guard
+          
+          // Mark linked booking as checked out
+          if (ciRec.data[CI_LINKED_TICKET_COL]) {
+            const bData = bookingsSheet.getDataRange().getValues();
+            for (let i = 1; i < bData.length; i++) {
+              if ((bData[i][TICKET_ID_COL] || '').toString() === ciRec.data[CI_LINKED_TICKET_COL].toString()) {
+                bookingsSheet.getRange(i + 1, BOOKING_STATUS_COL + 1).setValue("Checked Out");
+                break;
+              }
             }
           }
-        }
-      } else {
-        // Partial checkout for this CI - keep active
-        ciSheet.getRange(ciRec.rowIndex + 1, CI_ROOM_NUMBERS_COL + 1).setValue(remainingCiRooms.join(', '));
-        ciSheet.getRange(ciRec.rowIndex + 1, CI_NUM_ROOMS_COL + 1).setValue(remainingCiRooms.length);
-        
-        // Proportionately or aggressively deduct used advance from the active sheet
-        if (advanceToDeduct > 0) {
-           if (currentCiAdvance >= advanceToDeduct) {
-              ciSheet.getRange(ciRec.rowIndex + 1, CI_ADVANCE_PAID_COL + 1).setValue(currentCiAdvance - advanceToDeduct);
-              advanceToDeduct = 0;
-           } else {
-              ciSheet.getRange(ciRec.rowIndex + 1, CI_ADVANCE_PAID_COL + 1).setValue(0);
-              advanceToDeduct -= currentCiAdvance;
-           }
+        } else {
+          // Partial checkout for this CI - keep active
+          ciSheet.getRange(ciRec.rowIndex + 1, CI_ROOM_NUMBERS_COL + 1).setValue(remainingCiRooms.join(', '));
+          ciSheet.getRange(ciRec.rowIndex + 1, CI_NUM_ROOMS_COL + 1).setValue(remainingCiRooms.length);
+          
+          // Proportionately or aggressively deduct used advance from the active sheet
+          if (advanceToDeduct > 0) {
+             if (currentCiAdvance >= advanceToDeduct) {
+                ciSheet.getRange(ciRec.rowIndex + 1, CI_ADVANCE_PAID_COL + 1).setValue(currentCiAdvance - advanceToDeduct);
+                advanceToDeduct = 0;
+             } else {
+                ciSheet.getRange(ciRec.rowIndex + 1, CI_ADVANCE_PAID_COL + 1).setValue(0);
+                advanceToDeduct -= currentCiAdvance;
+             }
+          }
         }
       }
-    }
 
-    SpreadsheetApp.flush();
+      SpreadsheetApp.flush();
+    }
 
     return {
       success: true,
-      message: "Advanced Checkout completed successfully.",
+      message: checkoutData.isPreview ? 'Preview generated.' : 'Advanced Checkout completed successfully.',
       invoiceData: {
         billNumber, 
         checkInId: Object.keys(roomsByCi).join(', '),
@@ -2210,7 +2559,7 @@ function getDashboardData() {
       }
     } catch(e) { Logger.log("Error attaching guest details: " + e); }
 
-    roomsData.forEach(row => {
+    roomsData.forEach((row, index) => {
       let roomNo = (row[ROOM_NO_COL] || "").toString();
       let type   = (row[ROOM_TYPE_COL] || "").toString();
       let status = (row[ROOM_STATUS_COL] || "").toString();
@@ -2221,6 +2570,8 @@ function getDashboardData() {
         roomNo, 
         type, 
         status,
+        roomRate: parseFloat(row[ROOM_RATE_COL]) || 0,
+        rowIndex: index + 2,
         guestName: guestData.guestName || '',
         checkIn: guestData.checkIn || '',
         checkOut: guestData.checkOut || ''
@@ -2291,12 +2642,18 @@ function getDashboardData() {
     // Booking Revenue
     let bookingRevenue = { totalRevenue: 0, checkedOutCount: 0, activeBookingCount: 0, totalBookings: 0 };
     let recentBookings = [];
+    let todaysCheckIns = [];
+    
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
     try {
       const bookSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(BOOKINGS_SHEET_NAME);
       const bookData = bookSheet.getDataRange().getValues();
 
       for (let i = 1; i < bookData.length; i++) {
-        let bStatus = (bookData[i][BOOKING_STATUS_COL] || "").toString().toLowerCase();
+        let bStatusRaw = (bookData[i][BOOKING_STATUS_COL] || "").toString();
+        let bStatus = bStatusRaw.toLowerCase();
         let bAmount = parseFloat(bookData[i][TOTAL_AMOUNT_COL]) || 0;
         let ciDate = bookData[i][CHECK_IN_COL] ? new Date(bookData[i][CHECK_IN_COL]) : null;
         if (bStatus === "checked out" || bStatus === "completed") {
@@ -2311,6 +2668,17 @@ function getDashboardData() {
           if (monthlyBookings.hasOwnProperty(mKey)) {
             monthlyBookings[mKey]++;
             monthlyRevenue[mKey] += bAmount;
+          }
+          
+          if (bStatusRaw === 'Booked') {
+             const ciStr = ciDate.getFullYear() + '-' + String(ciDate.getMonth() + 1).padStart(2, '0') + '-' + String(ciDate.getDate()).padStart(2, '0');
+             if (ciStr === todayStr) {
+               todaysCheckIns.push({
+                 guestName: (bookData[i][GUEST_NAME_COL] || '').toString(),
+                 roomNo: (bookData[i][BOOKING_ROOM_NO_COL] || '').toString(),
+                 totalAmount: bAmount
+               });
+             }
           }
         }
         recentBookings.push({
@@ -2368,6 +2736,30 @@ function getDashboardData() {
       }
     } catch (invErr) { Logger.log("Could not load invoice data: " + invErr); }
 
+    // Today's Expected Check-Outs
+    let todaysCheckOuts = [];
+    try {
+      const ciSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CHECKIN_SHEET_NAME);
+      if (ciSheet && ciSheet.getLastRow() > 1) {
+        const ciData = ciSheet.getDataRange().getValues();
+        for (let i = 1; i < ciData.length; i++) {
+          if ((ciData[i][CI_STATUS_COL] || '').toString() === 'Active') {
+            let coDate = ciData[i][CI_CHECKOUT_DATE_COL] ? new Date(ciData[i][CI_CHECKOUT_DATE_COL]) : null;
+            if (coDate) {
+               const coStr = coDate.getFullYear() + '-' + String(coDate.getMonth() + 1).padStart(2, '0') + '-' + String(coDate.getDate()).padStart(2, '0');
+               if (coStr === todayStr) {
+                 todaysCheckOuts.push({
+                   guestName: (ciData[i][CI_GUEST_NAME_COL] || '').toString(),
+                   roomNo: (ciData[i][CI_ROOM_NUMBERS_COL] || '').toString(),
+                   checkInId: (ciData[i][CI_ID_COL] || '').toString()
+                 });
+               }
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
     // Current month budget
     let currentBudget = null;
     try {
@@ -2398,6 +2790,8 @@ function getDashboardData() {
       incomeCategories,
       bookingRevenue,
       recentBookings,
+      todaysCheckIns,
+      todaysCheckOuts,
       invoiceStats,
       currentBudget,
       defaultCurrency: settingsDefaultCurrency,
@@ -3862,15 +4256,16 @@ function initDataStructure() {
     { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
     { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date"] },
     { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Address", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Advance Paid", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
-    { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "Category", "Description", "Amount", "Status", "BilledCheckInID", "AddedBy"] },
-    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] }
+    { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "MealPeriod", "ItemName", "Quantity", "Rate", "TotalAmount", "Status", "BilledCheckInID", "AddedBy"] },
+    { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] },
+    { sheetName: MENU_SHEET_NAME, headers: ["ItemName", "FoodCategory", "DefaultPrice"] }
   ];
   manageSheetsDataStructure(config);
 }
 
 function setupDemoData() {
   const ss = SpreadsheetApp.openById(SS_ID);
-  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME];
+  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME, MENU_SHEET_NAME];
 
   // --- 1. Delete all existing sheets ---
   let tempSheet = ss.insertSheet("_TEMP_SETUP_");
@@ -3896,9 +4291,10 @@ function setupDemoData() {
   const checkinSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
   const restaurantSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
   const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
+  const menuSheet = ss.getSheetByName(MENU_SHEET_NAME);
 
   // SETTINGS (1 data row after headers)
-  settingsSheet.appendRow(["MRI Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, "", "", 4, 1]);
+  settingsSheet.appendRow(["Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, "", "", 4, 1]);
 
   // Delete temp sheet
   ss.deleteSheet(tempSheet);
@@ -4051,8 +4447,18 @@ function setupDemoData() {
   ];
   restaurantSheet.getRange(2, 1, restaurantData.length, 9).setValues(restaurantData);
 
+  // ===== MENU (5 demo items) =====
+  const menuData = [
+    ["Paneer Tikka", "Starter", 150],
+    ["Butter Naan", "Roti/Rice", 40],
+    ["Mix Veg Curry", "Veg", 220],
+    ["Chicken Masala", "Non Veg", 350],
+    ["Tandoori Chicken", "Tandoori", 450]
+  ];
+  menuSheet.getRange(2, 1, menuData.length, 3).setValues(menuData);
+
   // --- 4. Format header rows ---
-  [loginSheet, roomsSheet, bookingsSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet, staySegmentsSheet].forEach(function(sheet) {
+  [loginSheet, roomsSheet, bookingsSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet, staySegmentsSheet, menuSheet].forEach(function(sheet) {
     const lastCol = sheet.getLastColumn();
     if (lastCol > 0) {
       const headerRange = sheet.getRange(1, 1, 1, lastCol);
@@ -4066,7 +4472,83 @@ function setupDemoData() {
   SpreadsheetApp.getUi().alert("Demo data setup complete!\n\nLogin credentials:\n• admin@demo.com / admin123 (Admin)\n• user1@demo.com / user123 (User)\n• user2@demo.com / user123 (User)\n• client1@demo.com / client123 (Client)\n• client2@demo.com / client123 (Client)\n\nSheets created: " + sheetNames.join(", ") + "\n\nNew sheets added: CheckIn, Restaurant");
 }
 
-function updateStaySegment(checkInId, newRoomNos, newRate, newPax) {
+function getAllMenuItems() {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+    if (!sheet || sheet.getLastRow() < 2) return [];
+    
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const itemName = (row[MENU_ITEM_NAME_COL] || "").toString().trim();
+      if (itemName) {
+        items.push({
+          itemName: itemName,
+          foodCategory: (row[MENU_CATEGORY_COL] || "").toString().trim(),
+          defaultPrice: parseFloat(row[MENU_PRICE_COL]) || 0
+        });
+      }
+    }
+    
+    return items;
+  } catch (e) {
+    Logger.log("Error in getAllMenuItems: " + e.toString());
+    return [];
+  }
+}
+
+function addMidStayAdvance(checkInId, additionalAmount, paymentMode, user) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const ciSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    if (!ciSheet) return { success: false, message: "Check-In sheet not found." };
+    
+    const amt = parseFloat(additionalAmount);
+    if (isNaN(amt) || amt <= 0) return { success: false, message: "Invalid amount." };
+
+    const data = ciSheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let currentAdvance = 0;
+    
+    for (let i = 1; i < data.length; i++) {
+      if ((data[i][CI_ID_COL] || '').toString() === checkInId.toString()) {
+        rowIndex = i + 1;
+        currentAdvance = parseFloat(data[i][CI_ADVANCE_PAID_COL]) || 0;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) return { success: false, message: "Check-in ID not found." };
+    
+    const newTotal = currentAdvance + amt;
+    ciSheet.getRange(rowIndex, CI_ADVANCE_PAID_COL + 1).setValue(newTotal);
+    SpreadsheetApp.flush();
+    
+    // Log to Finance
+    const financePayload = {
+      date: new Date().toISOString().slice(0, 10),
+      type: 'Income',
+      description: 'Mid-Stay Advance for ' + checkInId,
+      shopSource: 'Front Desk',
+      amount: amt,
+      category: 'Other Income',
+      currency: 'MVR', // Defaulting, you could pull from settings
+      enteredBy: user || 'System'
+    };
+    
+    addFinanceRecord(financePayload);
+    
+    return { success: true, message: "Advance added successfully.", newTotal: newTotal };
+  } catch (e) {
+    Logger.log("Error in addMidStayAdvance: " + e.toString());
+    return { success: false, message: e.message };
+  }
+}
+
+function updateStaySegment(checkInId, newRoomNos, newRate, newPax, switchDateTime) {
   try {
     const ss = SpreadsheetApp.openById(SS_ID);
     const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
@@ -4077,7 +4559,7 @@ function updateStaySegment(checkInId, newRoomNos, newRate, newPax) {
       return { success: false, message: "Required sheets not found." };
     }
 
-    const now = new Date().toISOString();
+    const now = switchDateTime ? new Date(switchDateTime).toISOString() : new Date().toISOString();
     let oldRoomNosStr = "";
 
     // 1. Find the active segment for this checkInId and end it
