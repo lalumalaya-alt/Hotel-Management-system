@@ -1292,9 +1292,12 @@ return (ci < cCo && co > cCi);
       const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});
       const [activeCis, setActiveCis] = useState([]);
       const [showModal, setShowModal] = useState(false);
+      const [customers, setCustomers] = useState([]);
+      const [selCust, setSelCust] = useState('');
 
       useEffect(()=>{
         google.script.run.withSuccessHandler(r=>{setRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllRooms();
+        google.script.run.withSuccessHandler(r => setCustomers(Array.isArray(r) ? r : [])).getAllCustomers();
         loadCheckIns();
         return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
@@ -1589,7 +1592,30 @@ const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.g
 
       const [editRowIndex, setEditRowIndex] = useState(null);
 
-      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);};
+      const pickCustomer = (val) => {
+        setSelCust(val);
+        if (val) {
+          const c = customers.find(x => x.customerId === val);
+          if (c) {
+            setFd(p => ({
+              ...p,
+              guestName: c.name || p.guestName,
+              mobile: c.phone || p.mobile,
+              email: c.email || p.email,
+              companyName: c.companyName || p.companyName,
+              gstNumber: c.gstNumber || p.gstNumber,
+              identityProof: c.identityProof || p.identityProof,
+              address: c.address || p.address,
+              city: c.city || p.city,
+              state: c.state || p.state,
+              pinCode: c.pinCode || p.pinCode,
+              country: c.country || p.country
+            }));
+          }
+        }
+      };
+
+      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);setSelCust('');};
 
       const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0,city:ci.city||'',state:ci.state||'',pinCode:ci.pinCode||'',country:ci.country||'',roomPaxBreakdown:ci.roomPaxBreakdown||'',paymentMethod:ci.paymentMethod||''});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
 
@@ -1701,6 +1727,17 @@ const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.g
             {rooms.length === 0 && <p style={{color:'#666',fontSize:'13px',fontStyle:'italic'}}>No rooms exist in the system.</p>}
           </div>
 
+          {customers.length > 0 && (
+            <div className="form-group" style={{ background: '#e8f0fe', padding: '15px', borderRadius: '4px', border: '1px solid #b6d4fe', marginBottom: '20px' }}>
+              <label style={{ color: 'var(--navy-primary)' }}><i className="fas fa-search"></i> Search Returning Guest (Auto-fills details)</label>
+              <SearchableSelect
+                value={selCust}
+                onChange={pickCustomer}
+                options={[{value:'', label:'-- New Guest (Type manually below) --'}, ...customers.map(c => ({value: c.customerId, label: `${c.phone} - ${c.name}`}))]}
+                placeholder="Search by Phone Number or Name..."
+              />
+            </div>
+          )}
           <div className="form-grid">
             <div className="form-group"><label>Guest Name *</label><input value={fd.guestName} onChange={e=>setFd({...fd,guestName:e.target.value})} required/></div>
             <div className="form-group"><label>Company Name</label><input value={fd.companyName} onChange={e=>setFd({...fd,companyName:e.target.value})}/></div>

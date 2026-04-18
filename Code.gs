@@ -1112,6 +1112,10 @@ function addCheckIn(checkInData) {
         phone: checkInData.mobile,
         email: checkInData.email,
         address: checkInData.address,
+        city: checkInData.city,
+        state: checkInData.state,
+        pinCode: checkInData.pinCode,
+        country: checkInData.country,
         companyName: checkInData.companyName,
         gstNumber: checkInData.gstNumber,
         identityProof: checkInData.identityProof
@@ -2136,6 +2140,10 @@ function processFullCheckout(checkInId, checkoutData) {
         phone: mobile,
         email: email,
         address: address,
+        city: city,
+        state: state,
+        pinCode: pinCode,
+        country: country,
         companyName: companyName,
         gstNumber: gstNumber
       });
@@ -2633,6 +2641,10 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         name: primaryGuestData.guestName,
         email: primaryGuestData.email,
         address: primaryGuestData.address,
+        city: primaryGuestData.city,
+        state: primaryGuestData.state,
+        pinCode: primaryGuestData.pinCode,
+        country: primaryGuestData.country,
         companyName: primaryGuestData.companyName,
         gstNumber: primaryGuestData.gstNumber
       });
