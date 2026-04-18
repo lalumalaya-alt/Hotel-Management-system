@@ -6,12 +6,12 @@
  * GLOBAL CONSTANTS
  ***************************************************/
 const SS_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+const DEFAULT_EXTRA_PERSON_RATE = 500;
 
 // SHEET NAMES
 const LOGIN_SHEET_NAME      = "Login";
 const ROOMS_SHEET_NAME      = "Rooms";
 const BOOKINGS_SHEET_NAME   = "Bookings";
-const FINANCE_SHEET_NAME    = "Finance";
 const INVOICES_SHEET_NAME   = "Invoices";
 const SETTINGS_SHEET_NAME   = "Settings";
 const BUDGETS_SHEET_NAME    = "Budgets";
@@ -72,20 +72,6 @@ const LOGIN_USERNAME_COL   = 0;
 const LOGIN_PASSWORD_COL   = 1;
 const LOGIN_ROLE_COL       = 2;
 
-// FINANCE sheet columns (0-based) — cols 0-8 original, 9-11 new
-const FIN_ID_COL           = 0;
-const FIN_DATE_COL         = 1;
-const FIN_TYPE_COL         = 2;
-const FIN_DESC_COL         = 3;
-const FIN_SHOP_COL         = 4;
-const FIN_AMOUNT_COL       = 5;
-const FIN_BALANCE_COL      = 6;
-const FIN_ENTERED_BY_COL   = 7;
-const FIN_CREATED_AT_COL   = 8;
-const FIN_CATEGORY_COL     = 9;
-const FIN_CURRENCY_COL     = 10;
-const FIN_LINKED_INV_COL   = 11;
-
 // INVOICES sheet columns (0-based)
 const INV_ID_COL              = 0;
 const INV_GUEST_NAME_COL      = 1;
@@ -101,17 +87,12 @@ const INV_SUBTOTAL_COL        = 10;
 const INV_GST_ENABLED_COL     = 11;
 const INV_GST_PERCENT_COL     = 12;
 const INV_GST_AMOUNT_COL      = 13;
-const INV_GREENTAX_ENABLED_COL= 14;
-const INV_GREENTAX_RATE_COL   = 15;
-const INV_GREENTAX_PAX_COL    = 16;
-const INV_GREENTAX_NIGHTS_COL = 17;
-const INV_GREENTAX_AMOUNT_COL = 18;
-const INV_DISCOUNT_COL        = 19;
-const INV_TOTAL_COL           = 20;
-const INV_NOTES_COL           = 21;
-const INV_PDF_LINK_COL        = 22;
-const INV_CREATED_BY_COL      = 23;
-const INV_UPDATED_AT_COL      = 24;
+const INV_DISCOUNT_COL        = 14;
+const INV_TOTAL_COL           = 15;
+const INV_NOTES_COL           = 16;
+const INV_PDF_LINK_COL        = 17;
+const INV_CREATED_BY_COL      = 18;
+const INV_UPDATED_AT_COL      = 19;
 
 // SETTINGS sheet columns (0-based, single data row at row 2)
 const SET_HOTEL_NAME_COL       = 0;
@@ -121,12 +102,12 @@ const SET_HOTEL_EMAIL_COL      = 3;
 const SET_HOTEL_TIN_COL        = 4;
 const SET_LOGO_FILE_ID_COL     = 5;
 const SET_LOGO_URL_COL         = 6;
-const SET_DEFAULT_CURRENCY_COL = 7;
-const SET_GST_DEFAULT_COL      = 8;
-const SET_GREENTAX_DEFAULT_COL = 9;
-const SET_NEXT_INVOICE_COL     = 10;
-const SET_PDF_FOLDER_ID_COL    = 11;
-const SET_LOGO_FOLDER_ID_COL   = 12;
+const SET_GST_DEFAULT_COL      = 7;
+const SET_NEXT_INVOICE_COL     = 8;
+const SET_PDF_FOLDER_ID_COL    = 9;
+const SET_LOGO_FOLDER_ID_COL   = 10;
+const SET_NEXT_CHECKIN_COL     = 11;
+const SET_NEXT_BILL_COL        = 12;
 
 // BUDGETS sheet columns (0-based)
 const BDG_ID_COL           = 0;
@@ -161,25 +142,31 @@ const CI_IDENTITY_COL       = 5;
 const CI_MOBILE_COL         = 6;
 const CI_EMAIL_COL          = 7;
 const CI_ADDRESS_COL        = 8;
-const CI_PURPOSE_COL        = 9;
-const CI_CHECKIN_DATE_COL   = 10;
-const CI_CHECKIN_TIME_COL   = 11;
-const CI_CHECKOUT_DATE_COL  = 12;
-const CI_CHECKOUT_TIME_COL  = 13;
-const CI_ROOM_NUMBERS_COL   = 14;
-const CI_ROOM_TYPES_COL     = 15;
-const CI_NUM_ROOMS_COL      = 16;
-const CI_PAX_COL            = 17;
-const CI_ADVANCE_PAID_COL   = 18;
-const CI_EXTRA_PERSON_COL   = 19;
-const CI_FOOD_PLAN_COL      = 20;
-const CI_GST_TYPE_COL       = 21;
-const CI_FIX_RENT_COL       = 22;
-const CI_FIX_RENT_AMT_COL   = 23;
-const CI_BILL_TO_COL        = 24;
-const CI_DISCOUNT_COL       = 25;
-const CI_STATUS_COL         = 26;
-const CI_CREATED_AT_COL     = 27;
+const CI_CITY_COL           = 9;
+const CI_STATE_COL          = 10;
+const CI_PINCODE_COL        = 11;
+const CI_COUNTRY_COL        = 12;
+const CI_PURPOSE_COL        = 13;
+const CI_CHECKIN_DATE_COL   = 14;
+const CI_CHECKIN_TIME_COL   = 15;
+const CI_CHECKOUT_DATE_COL  = 16;
+const CI_CHECKOUT_TIME_COL  = 17;
+const CI_ROOM_NUMBERS_COL   = 18;
+const CI_ROOM_TYPES_COL     = 19;
+const CI_NUM_ROOMS_COL      = 20;
+const CI_PAX_COL            = 21;
+const CI_ROOM_PAX_BREAKDOWN_COL = 22;
+const CI_ADVANCE_PAID_COL   = 23;
+const CI_PAYMENT_METHOD_COL = 24;
+const CI_EXTRA_PERSON_COL   = 25;
+const CI_FOOD_PLAN_COL      = 26;
+const CI_GST_TYPE_COL       = 27;
+const CI_FIX_RENT_COL       = 28;
+const CI_FIX_RENT_AMT_COL   = 29;
+const CI_BILL_TO_COL        = 30;
+const CI_DISCOUNT_COL       = 31;
+const CI_STATUS_COL         = 32;
+const CI_CREATED_AT_COL     = 33;
 
 // RESTAURANT sheet columns (0-based)
 const REST_ORDER_ID_COL          = 0;
@@ -202,20 +189,27 @@ const REST_AMOUNT_COL            = REST_TOTAL_AMOUNT_COL;
 const REST_CREATED_AT_COL        = REST_ADDED_BY_COL;
 const REST_BILLED_CHECKIN_COL    = REST_BILLED_CHECKIN_ID_COL;
 
-// SETTINGS sheet NEW columns (appended)
-const SET_NEXT_CHECKIN_COL  = 13;
-const SET_NEXT_BILL_COL     = 14;
 
 // CUSTOMERS sheet columns (0-based)
 const CUST_ID_COL           = 0;
 const CUST_NAME_COL         = 1;
 const CUST_PHONE_COL        = 2;
 const CUST_EMAIL_COL        = 3;
-const CUST_CITY_COL         = 4;
-const CUST_MARITAL_COL      = 5;
-const CUST_NOTES_COL        = 6;
-const CUST_CREATED_AT_COL   = 7;
-const CUST_LINKED_USER_COL  = 8;
+const CUST_ADDRESS_COL      = 4;
+const CUST_CITY_COL         = 5;
+const CUST_STATE_COL        = 6;
+const CUST_COUNTRY_COL      = 7;
+const CUST_PINCODE_COL      = 8;
+const CUST_DOB_COL          = 9;
+const CUST_ANNIV_COL        = 10;
+const CUST_GENDER_COL       = 11;
+const CUST_MARITAL_COL      = 12;
+const CUST_IDENTITY_COL     = 13;
+const CUST_LINKED_USER_COL  = 14;
+const CUST_NOTES_COL        = 15;
+const CUST_CREATED_AT_COL   = 16;
+const CUST_COMPANY_COL      = 17;
+const CUST_GST_COL          = 18;
 
 /***************************************************
  * WEB APP ENTRY POINT
@@ -522,7 +516,7 @@ function checkoutRoom(ticketId, paymentOverride) {
     try {
       const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
-        defaultCurrency = (setSheet.getRange(2, SET_DEFAULT_CURRENCY_COL + 1).getValue() || 'MVR').toString();
+        
       }
     } catch (ce) { Logger.log("Could not load settings currency: " + ce); }
 
@@ -697,6 +691,17 @@ function processCheckoutPayment(ticketId, amountPaid, paymentMethod) {
     if (paymentMethod) {
       sheet.getRange(rowIndex + 1, PAYMENT_METHOD_COL + 1).setValue(paymentMethod);
     }
+
+    try {
+      syncCustomerProfile({
+        phone: mobile,
+        name: guestName,
+        email: email,
+        companyName: companyName,
+        gstNumber: gstNumber
+      });
+    } catch(e) { Logger.log("Customer Sync Checkout Error: " + e.message); }
+
     SpreadsheetApp.flush();
 
     return {
@@ -1006,6 +1011,10 @@ function addCheckIn(checkInData) {
       checkInData.mobile || '',
       checkInData.email || '',
       checkInData.address || '',
+      checkInData.city || '',
+      checkInData.state || '',
+      checkInData.pinCode || '',
+      checkInData.country || '',
       checkInData.purposeOfVisit || '',
       checkInData.checkInDate || '',
       checkInData.checkInTime || '14:00',
@@ -1015,7 +1024,9 @@ function addCheckIn(checkInData) {
       roomTypes.join(','),
       roomNosArr.length,
       parseInt(checkInData.pax) || 1,
+      checkInData.roomPaxBreakdown || '',
       parseFloat(checkInData.advancePaid) || 0,
+      checkInData.paymentMethod || '',
       parseInt(checkInData.extraPerson) || 0,
       checkInData.foodPlan || 'None',
       checkInData.gstType || 'Excluding',
@@ -1035,6 +1046,28 @@ function addCheckIn(checkInData) {
         if ((bData[i][TICKET_ID_COL] || '').toString() === checkInData.linkedTicketId) {
           bookingsSheet.getRange(i + 1, BOOKING_STATUS_COL + 1).setValue("Checked In");
           bookingsSheet.getRange(i + 1, LINKED_CHECKIN_COL + 1).setValue(checkInId);
+          
+          // Free old physical rooms that are no longer being used
+          let oldRoomsStr = (bData[i][BOOKING_ROOM_NO_COL] || '').toString();
+          let oldRooms = oldRoomsStr.split(',').map(r => r.trim()).filter(Boolean);
+
+          oldRooms.forEach(rn => {
+            const match = rn.match(/(.+?)(?:\s*\((\d+)\))?$/);
+            const isType = match && match[2]; // Check if it was just a type request e.g., 'Cottage (1)'
+            if (!isType && !roomNosArr.includes(rn)) {
+              for (let j = 1; j < roomsData.length; j++) {
+                if ((roomsData[j][ROOM_NO_COL] || '').toString() === rn) {
+                  roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+                  break;
+                }
+              }
+            }
+          });
+
+          // Update the Booking record to reflect the final rooms chosen at the desk
+          bookingsSheet.getRange(i + 1, BOOKING_ROOM_NO_COL + 1).setValue(roomNosArr.join(', '));
+          bookingsSheet.getRange(i + 1, NUM_ROOMS_COL + 1).setValue(roomNosArr.length);
+
           break;
         }
       }
@@ -1064,13 +1097,29 @@ function addCheckIn(checkInData) {
         checkInId,
         roomNumbers,
         initialDailyRate,
-        parseInt(checkInData.pax) || 1,
-        now,
+        parseInt(checkInData.pax) || 1, // StaySegments uses total pax for historical record keeping
+        checkInData.checkInDate,
         ""
       ]);
     }
 
     SpreadsheetApp.flush();
+    
+    // Attempt customer sync in background
+    try {
+      syncCustomerProfile({
+        name: checkInData.guestName,
+        phone: checkInData.mobile,
+        email: checkInData.email,
+        address: checkInData.address,
+        companyName: checkInData.companyName,
+        gstNumber: checkInData.gstNumber,
+        identityProof: checkInData.identityProof
+      });
+    } catch(syncErr) {
+      Logger.log("Silent customer sync fail: " + syncErr.message);
+    }
+    
     return { success: true, message: `Check-in successful. ID: ${checkInId}`, checkInId };
   } catch (e) {
     Logger.log("Error in addCheckIn: " + e.toString());
@@ -1080,20 +1129,21 @@ function addCheckIn(checkInData) {
 
 function getActiveCheckInsWithStats() {
   try {
+    autoExtendOverstayingCheckIns();
     const checkIns = getAllCheckIns();
     if (checkIns.error || !Array.isArray(checkIns)) return [];
-    
+
     const activeCis = checkIns.filter(ci => ci.status === 'Active');
-    
+
     const ss = SpreadsheetApp.openById(SS_ID);
     const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
     const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
     const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-    
+
     const roomsData = roomsSheet && roomsSheet.getLastRow() > 1 ? roomsSheet.getDataRange().getValues() : [];
     const restData = restSheet && restSheet.getLastRow() > 1 ? restSheet.getDataRange().getValues() : [];
     const segmentsData = staySegmentsSheet && staySegmentsSheet.getLastRow() > 1 ? staySegmentsSheet.getDataRange().getValues() : [];
-    
+
     // Map room rates for quick lookup
     const roomRates = {};
     for (let i = 1; i < roomsData.length; i++) {
@@ -1101,9 +1151,9 @@ function getActiveCheckInsWithStats() {
       const rate = parseFloat(roomsData[i][ROOM_RATE_COL]) || 0;
       roomRates[rNo] = rate;
     }
-    
+
     const now = new Date();
-    
+
     return activeCis.map(ci => {
       // Find StaySegments for this check-in
       const ciSegments = [];
@@ -1111,16 +1161,15 @@ function getActiveCheckInsWithStats() {
         if ((segmentsData[i][SEG_CHECKIN_ID_COL] || '').toString() === ci.checkInId) {
           let sStart = new Date(segmentsData[i][SEG_START_DATE_COL]);
           if (isNaN(sStart.getTime())) sStart = new Date(ci.checkInDate);
-          
+
           let endDateStr = (segmentsData[i][SEG_END_DATE_COL] || '').toString();
           let sEnd = endDateStr ? new Date(endDateStr) : now;
           if (isNaN(sEnd.getTime())) sEnd = now;
 
           // Default minimum of 1 night for calculating
-          let sDiff = sEnd.getTime() - sStart.getTime();
-          let sDays = Math.ceil(sDiff / (1000 * 3600 * 24));
+          let sDays = daysBetween(sStart, sEnd);
           if (sDays < 1) sDays = 1;
-          
+
           let rate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
           let roomNos = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
 
@@ -1132,16 +1181,15 @@ function getActiveCheckInsWithStats() {
           });
         }
       }
-      
+
       // Calculate nightsStayed
       let ciDate = new Date(ci.checkInDate);
       if (isNaN(ciDate.getTime())) ciDate = now; // Fallback
-      let timeDiff = now.getTime() - ciDate.getTime();
-      let days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      let days = daysBetween(ciDate, now);
       if (days < 1) days = 1;
-      
+
       const nightsStayed = days;
-      
+
       // Calculate liveRoomRent
       let liveRoomRent = 0;
       if (ciSegments.length > 0) {
@@ -1154,7 +1202,7 @@ function getActiveCheckInsWithStats() {
           liveRoomRent += (roomRates[rn] || 0) * nightsStayed;
         });
       }
-      
+
       // Calculate liveFoodBill
       let liveFoodBill = 0;
       for (let i = 1; i < restData.length; i++) {
@@ -1164,11 +1212,11 @@ function getActiveCheckInsWithStats() {
            liveFoodBill += parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0;
         }
       }
-      
+
       // Calculate liveBalance
       const advancePaid = parseFloat(ci.advancePaid) || 0;
       const liveBalance = (liveRoomRent + liveFoodBill) - advancePaid;
-      
+
       return {
         ...ci,
         nightsStayed,
@@ -1204,6 +1252,10 @@ function getAllCheckIns() {
         mobile: (row[CI_MOBILE_COL] || '').toString(),
         email: (row[CI_EMAIL_COL] || '').toString(),
         address: (row[CI_ADDRESS_COL] || '').toString(),
+        city: (row[CI_CITY_COL] || '').toString(),
+        state: (row[CI_STATE_COL] || '').toString(),
+        pinCode: (row[CI_PINCODE_COL] || '').toString(),
+        country: (row[CI_COUNTRY_COL] || '').toString(),
         purposeOfVisit: (row[CI_PURPOSE_COL] || '').toString(),
         checkInDate: (row[CI_CHECKIN_DATE_COL] || '').toString(),
         checkInTime: (row[CI_CHECKIN_TIME_COL] || '14:00').toString(),
@@ -1213,7 +1265,9 @@ function getAllCheckIns() {
         roomTypes: (row[CI_ROOM_TYPES_COL] || '').toString(),
         numberOfRooms: parseInt(row[CI_NUM_ROOMS_COL]) || 0,
         pax: parseInt(row[CI_PAX_COL]) || 1,
+        roomPaxBreakdown: (row[CI_ROOM_PAX_BREAKDOWN_COL] || '').toString(),
         advancePaid: parseFloat(row[CI_ADVANCE_PAID_COL]) || 0,
+        paymentMethod: (row[CI_PAYMENT_METHOD_COL] || '').toString(),
         extraPerson: parseInt(row[CI_EXTRA_PERSON_COL]) || 0,
         foodPlan: (row[CI_FOOD_PLAN_COL] || 'None').toString(),
         gstType: (row[CI_GST_TYPE_COL] || 'Excluding').toString(),
@@ -1272,7 +1326,9 @@ function getCheckInByRoomNo(roomNo) {
             roomTypes: '',
             numberOfRooms: parseInt(bData[i][NUM_ROOMS_COL]) || 1,
             pax: 1,
+            roomPaxBreakdown: '',
             advancePaid: parseFloat(bData[i][ADVANCE_PAID_COL]) || 0,
+            paymentMethod: '', // Fallback safely
             extraPerson: parseInt(bData[i][EXTRA_PERSON_COL]) || 0,
             foodPlan: (bData[i][FOOD_PLAN_COL] || 'None').toString(),
             gstType: 'Excluding', fixRoomRent: 'No', fixRoomRentAmount: 0,
@@ -1349,18 +1405,20 @@ function updateCheckIn(rowIndex, checkInData) {
       existingId, existingLinked,
       checkInData.guestName || '', checkInData.companyName || '', checkInData.gstNumber || '',
       checkInData.identityProof || '', checkInData.mobile || '', checkInData.email || '',
-      checkInData.address || '', checkInData.purposeOfVisit || '',
-      checkInData.checkInDate || '', checkInData.checkInTime || '14:00',
+      checkInData.address || '', checkInData.city || '', checkInData.state || '', checkInData.pinCode || '', checkInData.country || '', 
+      checkInData.purposeOfVisit || '', checkInData.checkInDate || '', checkInData.checkInTime || '14:00',
       checkInData.checkOutDate || '', checkInData.checkOutTime || '12:00',
       roomNumbers, roomTypes.join(','), roomNosArr.length,
-      parseInt(checkInData.pax) || 1, parseFloat(checkInData.advancePaid) || 0,
+      parseInt(checkInData.pax) || 1, checkInData.roomPaxBreakdown || '',
+      parseFloat(checkInData.advancePaid) || 0,
+      checkInData.paymentMethod || '',
       parseInt(checkInData.extraPerson) || 0, checkInData.foodPlan || 'None',
       checkInData.gstType || 'Excluding', checkInData.fixRoomRent || 'No',
       parseFloat(checkInData.fixRoomRentAmount) || 0, checkInData.billTo || 'Individual',
       parseFloat(checkInData.discountPercent) || 0, existingStatus, existingCreatedAt
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 28).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 34).setValues([row]);
     SpreadsheetApp.flush();
     return { success: true, message: "Check-in updated successfully." };
   } catch (e) {
@@ -1385,7 +1443,7 @@ function addFoodOrder(orderData) {
 
     const orderId = generateOrderId();
     const now = new Date().toISOString();
-    
+
     // Ensure roomNo supports comma-separated string if it's an array
     let roomNos = orderData.roomNo;
     if (Array.isArray(roomNos)) {
@@ -1449,7 +1507,7 @@ function getAllFoodOrders() {
         totalAmount: parseFloat(row[REST_TOTAL_AMOUNT_COL]) || 0,
         status: (row[REST_STATUS_COL] || 'Active').toString(),
         addedBy: (row[REST_ADDED_BY_COL] || '').toString(),
-        
+
         // Backward compatibility properties needed by unmodified frontend code
         category: (row[REST_MEAL_PERIOD_COL] || '').toString(),
         description: (row[REST_ITEM_NAME_COL] || '').toString(),
@@ -1491,7 +1549,7 @@ function updateFoodOrder(rowIndex, orderData) {
 
     const existingId = sheet.getRange(rowIndex, REST_ORDER_ID_COL + 1).getValue();
     const existingCreated = sheet.getRange(rowIndex, REST_CREATED_AT_COL + 1).getValue();
-    
+
     // Ensure roomNo supports comma-separated string if it's an array
     let roomNos = orderData.roomNo;
     if (Array.isArray(roomNos)) {
@@ -1566,13 +1624,13 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
     const ss = SpreadsheetApp.openById(SS_ID);
     const restSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
     const invSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
-    
+
     if (!restSheet || !invSheet) return { success: false, message: "Required sheets not found." };
-    
+
     const restData = restSheet.getDataRange().getValues();
     let selectedOrders = [];
     let totalFooding = 0;
-    
+
     // 1. Collect orders and calculate sum
     for (let i = 1; i < restData.length; i++) {
       let oId = (restData[i][REST_ORDER_ID_COL] || '').toString();
@@ -1584,23 +1642,23 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         totalFooding += amt;
       }
     }
-    
+
     if (selectedOrders.length === 0) return { success: false, message: "No active orders found." };
 
     // 2. Billing Math
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
     let discountAmount = totalFooding * (discountPercent / 100);
     let afterDiscount = totalFooding - discountAmount;
-    
+
     let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
     let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
     let sgstAmount = 0, cgstAmount = 0;
-    
+
     if (checkoutData.gstType === 'Excluding') {
       sgstAmount = afterDiscount * (sgstPercent / 100);
       cgstAmount = afterDiscount * (cgstPercent / 100);
     }
-    
+
     let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let paymentMode = checkoutData.paymentMode || 'Cash';
 
@@ -1615,7 +1673,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         hotelPhone = (setRow[SET_HOTEL_PHONE_COL] || '').toString();
         hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
         hotelTIN = (setRow[SET_HOTEL_TIN_COL] || '').toString();
-        defaultCurrency = (setRow[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString();
+        
         hotelLogo = (setRow[SET_LOGO_URL_COL] || '').toString();
       }
     } catch (e) {}
@@ -1631,50 +1689,31 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
 
     const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
 
-    const invoiceRow = new Array(25).fill('');
-    invoiceRow[0] = billNumber; 
-    invoiceRow[1] = guestName; 
-    invoiceRow[2] = ""; 
-    invoiceRow[3] = ""; 
-    invoiceRow[4] = ""; 
-    invoiceRow[5] = defaultCurrency; 
-    invoiceRow[6] = nowStr; 
-    invoiceRow[7] = nowStr; 
-    invoiceRow[8] = "Paid"; 
-    invoiceRow[9] = JSON.stringify(invoiceItems); 
-    invoiceRow[10] = totalFooding; 
-    invoiceRow[11] = true; 
-    invoiceRow[12] = sgstPercent + cgstPercent; 
-    invoiceRow[13] = sgstAmount + cgstAmount; 
-    invoiceRow[14] = false; 
-    invoiceRow[15] = 0; 
-    invoiceRow[16] = 0; 
-    invoiceRow[17] = 0; 
-    invoiceRow[18] = 0; 
-    invoiceRow[19] = discountAmount; 
-    invoiceRow[20] = billAmount; 
-    invoiceRow[21] = "Walk-in POS Bill"; 
-    invoiceRow[22] = ""; 
-    invoiceRow[23] = ""; 
-    invoiceRow[24] = "System"; 
-    invoiceRow[25] = nowStr; 
+    const invoiceRow = new Array(20).fill('');
+    invoiceRow[0] = billNumber;
+    invoiceRow[1] = guestName;
+    invoiceRow[2] = "";
+    invoiceRow[3] = "";
+    invoiceRow[4] = "";
+    invoiceRow[5] = defaultCurrency;
+    invoiceRow[6] = nowStr;
+    invoiceRow[7] = nowStr;
+    invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
+    invoiceRow[9] = JSON.stringify(invoiceItems);
+    invoiceRow[10] = totalFooding;
+    invoiceRow[11] = true;
+    invoiceRow[12] = sgstPercent + cgstPercent;
+    invoiceRow[13] = sgstAmount + cgstAmount;
+    invoiceRow[14] = discountAmount;
+    invoiceRow[15] = billAmount;
+    invoiceRow[16] = "Walk-in POS Bill";
+    invoiceRow[17] = "";
+    invoiceRow[18] = "System";
+    invoiceRow[19] = nowStr;
 
     invSheet.appendRow(invoiceRow);
 
-    // 4. Log Income
-    addFinanceRecord({
-      date: nowStr.split('T')[0],
-      type: 'Income',
-      description: `Walk-in POS Payment (Bill #${billNumber})`,
-      shopSource: 'Restaurant',
-      amount: billAmount,
-      category: 'Restaurant Income',
-      currency: defaultCurrency,
-      enteredBy: 'System'
-    });
-
     SpreadsheetApp.flush();
-    try { recalculateBalances(); } catch(e) {}
 
     // 5. Construct invoiceData for frontend
     let syntheticDayByDay = [{
@@ -1682,14 +1721,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
       rooms: 0,
       extraBed: 0,
       foodBev: totalFooding,
-      miniBar: 0,
-      earlyClean: 0,
-      xerox: 0,
       laundry: 0,
-      fax: 0,
-      spbuc: 0,
-      travels: 0,
-      misc: 0,
       dayTotal: totalFooding,
       grandTotal: totalFooding
     }];
@@ -1765,13 +1797,17 @@ function processFullCheckout(checkInId, checkoutData) {
         if ((bData[i][TICKET_ID_COL] || '').toString() === checkInId) {
           let bStatus = (bData[i][BOOKING_STATUS_COL] || '').toString();
           if (bStatus === 'Checked Out') return { success: false, message: "This booking has already been checked out." };
-          ci = new Array(28).fill('');
+          ci = new Array(34).fill('');
           ci[CI_ID_COL]            = checkInId;
           ci[CI_LINKED_TICKET_COL] = checkInId;
           ci[CI_GUEST_NAME_COL]    = (bData[i][GUEST_NAME_COL] || '').toString();
           ci[CI_MOBILE_COL]        = (bData[i][PHONE_COL] || '').toString();
           ci[CI_EMAIL_COL]         = (bData[i][EMAIL_COL] || '').toString();
           ci[CI_ADDRESS_COL]       = '';
+          ci[CI_CITY_COL]          = '';
+          ci[CI_STATE_COL]         = '';
+          ci[CI_PINCODE_COL]       = '';
+          ci[CI_COUNTRY_COL]       = '';
           ci[CI_CHECKIN_DATE_COL]  = (bData[i][CHECK_IN_COL] || '').toString();
           ci[CI_CHECKIN_TIME_COL]  = (bData[i][CHECKIN_TIME_COL] || '14:00').toString();
           ci[CI_CHECKOUT_DATE_COL] = (bData[i][CHECK_OUT_COL] || '').toString();
@@ -1779,8 +1815,10 @@ function processFullCheckout(checkInId, checkoutData) {
           ci[CI_ROOM_NUMBERS_COL]  = (bData[i][BOOKING_ROOM_NO_COL] || '').toString();
           ci[CI_NUM_ROOMS_COL]     = parseInt(bData[i][NUM_ROOMS_COL]) || 1;
           ci[CI_PAX_COL]           = 1;
-          ci[CI_EXTRA_PERSON_COL]  = parseInt(bData[i][EXTRA_PERSON_COL]) || 0;
+          ci[CI_ROOM_PAX_BREAKDOWN_COL] = ''; // Not supported natively in advance bookings yet
           ci[CI_ADVANCE_PAID_COL]  = parseFloat(bData[i][ADVANCE_PAID_COL]) || 0;
+          ci[CI_PAYMENT_METHOD_COL] = ''; // Set to blank as requested to prevent mapping errors
+          ci[CI_EXTRA_PERSON_COL]  = parseInt(bData[i][EXTRA_PERSON_COL]) || 0;
           ci[CI_FOOD_PLAN_COL]     = (bData[i][FOOD_PLAN_COL] || 'None').toString();
           ci[CI_GST_TYPE_COL]      = 'Excluding';
           ci[CI_FIX_RENT_COL]      = 'No';
@@ -1808,7 +1846,7 @@ function processFullCheckout(checkInId, checkoutData) {
         hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
         hotelTIN = (setRow[SET_HOTEL_TIN_COL] || '').toString();
         hotelLogo = (setRow[SET_LOGO_URL_COL] || '').toString();
-        defaultCurrency = (setRow[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString();
+        
         gstPercent = parseFloat(setRow[SET_GST_DEFAULT_COL]) || 5;
       }
     } catch (se) { Logger.log("Settings read error: " + se); }
@@ -1819,6 +1857,10 @@ function processFullCheckout(checkInId, checkoutData) {
     const mobile = (ci[CI_MOBILE_COL] || '').toString();
     const email = (ci[CI_EMAIL_COL] || '').toString();
     const address = (ci[CI_ADDRESS_COL] || '').toString();
+    const city = (ci[CI_CITY_COL] || '').toString();
+    const state = (ci[CI_STATE_COL] || '').toString();
+    const pinCode = (ci[CI_PINCODE_COL] || '').toString();
+    const country = (ci[CI_COUNTRY_COL] || '').toString();
     const roomNumbers = (ci[CI_ROOM_NUMBERS_COL] || '').toString();
     const roomTypes = (ci[CI_ROOM_TYPES_COL] || '').toString();
     const pax = parseInt(ci[CI_PAX_COL]) || 1;
@@ -1922,8 +1964,14 @@ function processFullCheckout(checkInId, checkoutData) {
       const restData = restSheet.getDataRange().getValues();
       for (let i = 1; i < restData.length; i++) {
         if ((restData[i][REST_CHECKIN_ID_COL] || '').toString() === checkInId && (restData[i][REST_STATUS_COL] || '').toString() === 'Active') {
+          let oDateObj = new Date(restData[i][REST_ORDER_DATE_COL]);
+          let y = oDateObj.getFullYear();
+          let m = String(oDateObj.getMonth() + 1).padStart(2, '0');
+          let d = String(oDateObj.getDate()).padStart(2, '0');
+          let cleanOrderDate = y + '-' + m + '-' + d;
+
           foodOrders.push({
-            orderDate: (restData[i][REST_ORDER_DATE_COL] || '').toString(),
+            orderDate: cleanOrderDate,
             category: (restData[i][REST_MEAL_PERIOD_COL] || '').toString(),
             description: (restData[i][REST_ITEM_NAME_COL] || '').toString(),
             amount: parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0
@@ -1939,7 +1987,7 @@ function processFullCheckout(checkInId, checkoutData) {
     let categoryTotals = {};
     foodOrders.forEach(o => {
       categoryTotals[o.category] = (categoryTotals[o.category] || 0) + o.amount;
-      
+
       if (['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'FoodBeverage'].includes(o.category)) {
         totalFooding += o.amount;
         o.mappedCategory = 'FoodBeverage'; // used in dayByDay generator
@@ -1952,7 +2000,10 @@ function processFullCheckout(checkInId, checkoutData) {
       }
     });
 
-    let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices;
+    // Calculate global Extra Bed total before subtotal
+    let totalExtraBedCalculated = nights * extraPerson * DEFAULT_EXTRA_PERSON_RATE;
+
+    let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountAmount = subtotal * (discountPercent / 100);
     let afterDiscount = subtotal - discountAmount;
 
@@ -1972,6 +2023,9 @@ function processFullCheckout(checkInId, checkoutData) {
 
     let paymentMode = checkoutData.paymentMode || 'Cash';
     let amountPaid = parseFloat(checkoutData.amountPaid) || 0;
+    if (checkoutData.paymentStatus === 'Credit') {
+      amountPaid = 0;
+    }
     let balance = netAmount - amountPaid;
 
     // Generate bill number
@@ -1983,7 +2037,10 @@ function processFullCheckout(checkInId, checkoutData) {
     for (let d = 0; d < nights; d++) {
       let dayDate = new Date(checkInDate);
       dayDate.setDate(dayDate.getDate() + d);
-      let dateStr = dayDate.toISOString().split('T')[0];
+      let y = dayDate.getFullYear();
+      let m = String(dayDate.getMonth() + 1).padStart(2, '0');
+      let dt = String(dayDate.getDate()).padStart(2, '0');
+      let dateStr = y + '-' + m + '-' + dt;
 
       // Find applicable segment rate for this specific day
       let dayRoom = dailyRoomRate; // fallback
@@ -2002,11 +2059,15 @@ function processFullCheckout(checkInId, checkoutData) {
         }
       }
 
-      let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
+      let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
+      
+      let dailyEpCharge = extraPerson * DEFAULT_EXTRA_PERSON_RATE;
+      dayCats.ExtraBed += dailyEpCharge;
 
       foodOrders.forEach(o => {
-        let oDate = o.orderDate.split('T')[0];
-        if (oDate === dateStr && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
+        let oDate = o.orderDate;
+        let isLastNight = (d === nights - 1);
+        if ((oDate === dateStr || (isLastNight && oDate > dateStr)) && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
           dayCats[o.mappedCategory || o.category] += o.amount;
         }
       });
@@ -2020,14 +2081,7 @@ function processFullCheckout(checkInId, checkoutData) {
         rooms: dayRoom,
         extraBed: dayCats.ExtraBed,
         foodBev: dayCats.FoodBeverage,
-        miniBar: dayCats.MiniBar,
-        earlyClean: dayCats.EarlyClean,
-        xerox: dayCats.Xerox,
         laundry: dayCats.Laundry,
-        fax: dayCats.Fax,
-        spbuc: dayCats.SPBUC,
-        travels: dayCats.Travels,
-        misc: dayCats.Misc,
         dayTotal: dayTotal,
         grandTotal: grandRunning
       });
@@ -2068,7 +2122,7 @@ function processFullCheckout(checkInId, checkoutData) {
       invoiceData: {
         billNumber, checkInId,
         hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo, currency: defaultCurrency,
-        guestName, companyName, gstNumber, mobile, email, address,
+        guestName, companyName, gstNumber, mobile, email, address, city, state, pinCode, country,
         checkInDate: checkInDate.toISOString(), checkInTime,
         checkOutDate: actualCheckOutDate.toISOString(), checkOutTime,
         roomNumbers, roomTypes, numberOfRooms: roomNosArr.length,
@@ -2111,7 +2165,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         hotelEmail = (setRow[SET_HOTEL_EMAIL_COL] || '').toString();
         hotelTIN = (setRow[SET_HOTEL_TIN_COL] || '').toString();
         hotelLogo = (setRow[SET_LOGO_URL_COL] || '').toString();
-        defaultCurrency = (setRow[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString();
+        
         gstPercent = parseFloat(setRow[SET_GST_DEFAULT_COL]) || 5;
       }
     } catch (se) { Logger.log("Settings read error: " + se); }
@@ -2139,6 +2193,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     let earliestCheckInDate = null;
     let latestCheckInTime = "14:00";
     let matchedCis = [];
+    let allSegments = [];
 
     // 1. Process Rooms & Rent Math per CheckIn
     for (const [cId, selectedRoomNos] of Object.entries(roomsByCi)) {
@@ -2174,35 +2229,44 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
                 
                 let activeRoomsInSegment = 0;
                 for (let rn of selectedRoomNos) {
-                  if (segRoomsArr.includes(rn)) activeRoomsInSegment++;
+                  if (segRoomsArr.some(sr => sr.toString().trim() === rn.toString().trim())) activeRoomsInSegment++;
+                }
+                
+                let orphanRoomsInSegment = 0;
+                for (let rn of segRoomsArr) {
+                  if (!rNs.some(cr => cr.toString().trim() === rn.toString().trim())) orphanRoomsInSegment++;
                 }
 
-                if (activeRoomsInSegment > 0) {
+                if (activeRoomsInSegment > 0 || orphanRoomsInSegment > 0) {
                   let segStartDateStr = (segmentsData[s][SEG_START_DATE_COL] || '').toString();
                   let segEndDateStr = (segmentsData[s][SEG_END_DATE_COL] || '').toString();
                   let billingEndDate = segEndDateStr ? new Date(segEndDateStr) : actualCheckOutDate;
-
                   let segStartDate = new Date(segStartDateStr);
-                  let segNights = daysBetween(segStartDate, billingEndDate);
+
+                  // Timezone safety formatting
+                  let bY = billingEndDate.getFullYear();
+                  let bM = String(billingEndDate.getMonth() + 1).padStart(2, '0');
+                  let bD = String(billingEndDate.getDate()).padStart(2, '0');
+                  let safeBillingDate = new Date(bY + '-' + bM + '-' + bD + 'T00:00:00');
+
+                  let sY = segStartDate.getFullYear();
+                  let sM = String(segStartDate.getMonth() + 1).padStart(2, '0');
+                  let sD = String(segStartDate.getDate()).padStart(2, '0');
+                  let safeStartDate = new Date(sY + '-' + sM + '-' + sD + 'T00:00:00');
+
+                  let segNights = daysBetween(safeStartDate, safeBillingDate);
                   if (segNights < 0) segNights = 0;
 
                   let segRate = parseFloat(segmentsData[s][SEG_RATE_COL]) || 0;
-                  let proportionedRate = (segRate / segRoomsArr.length) * activeRoomsInSegment;
                   
-                  staySegments.push({ rate: proportionedRate, nights: segNights });
+                  let safeSegLen = segRoomsArr.length || 1;
+                  let checkoutFraction = selectedRoomNos.length / (rNs.length || 1);
+                  let rateForSelected = (segRate / safeSegLen) * activeRoomsInSegment;
+                  let rateForOrphans = (segRate / safeSegLen) * orphanRoomsInSegment * checkoutFraction;
+                  let proportionedRate = rateForSelected + rateForOrphans;
+                  if (isNaN(proportionedRate)) proportionedRate = 0;
                   
-                  // Split segment handling in database
-                  if (!segEndDateStr) {
-                    const remainingRooms = segRoomsArr.filter(r => !selectedRoomNos.includes(r));
-                    if (remainingRooms.length === 0) {
-                       staySegmentsSheet.getRange(s + 1, SEG_END_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
-                    } else {
-                       staySegmentsSheet.getRange(s + 1, SEG_END_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
-                       let newRate = (segRate / segRoomsArr.length) * remainingRooms.length;
-                       const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
-                       staySegmentsSheet.appendRow([newSegmentId, cId, remainingRooms.join(','), newRate, parseInt(segmentsData[s][SEG_PAX_COL]) || 1, actualCheckOutDate.toISOString(), ""]);
-                    }
-                  }
+                  staySegments.push({ rate: proportionedRate, nights: segNights, startDate: segStartDate, endDate: billingEndDate });
                 }
               }
             }
@@ -2215,6 +2279,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           if (staySegments.length > 0) {
              for (let s of staySegments) {
                 totalRoomRent += s.rate * s.nights;
+                allSegments.push(s);
              }
           } else {
              // Fallback legacy calc if no segments
@@ -2234,6 +2299,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
                 }
              }
              totalRoomRent += dailyRoomRate * nights;
+             allSegments.push({ rate: dailyRoomRate, nights: nights, startDate: cidDate, endDate: actualCheckOutDate });
           }
           break;
         }
@@ -2248,9 +2314,15 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       for (let i = 1; i < restData.length; i++) {
         let oId = (restData[i][REST_ORDER_ID_COL] || '').toString();
         if (selectedOrdersFlat.includes(oId) && (restData[i][REST_STATUS_COL] || '').toString() === 'Active') {
+          let oDateObj = new Date(restData[i][REST_ORDER_DATE_COL]);
+          let y = oDateObj.getFullYear();
+          let m = String(oDateObj.getMonth() + 1).padStart(2, '0');
+          let d = String(oDateObj.getDate()).padStart(2, '0');
+          let cleanOrderDate = y + '-' + m + '-' + d;
+
           foodOrders.push({
             rowIndex: i,
-            orderDate: (restData[i][REST_ORDER_DATE_COL] || '').toString(),
+            orderDate: cleanOrderDate,
             category: (restData[i][REST_MEAL_PERIOD_COL] || '').toString(),
             description: (restData[i][REST_ITEM_NAME_COL] || '').toString(),
             amount: parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0
@@ -2275,8 +2347,14 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       }
     });
 
+    // Calculate global Extra Bed total before subtotal
+    if (!earliestCheckInDate) { earliestCheckInDate = actualCheckOutDate; }
+    let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
+    if (combinedNights < 1) combinedNights = 1;
+    let totalExtraBedCalculated = combinedNights * (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
+
     // 3. Billing Math
-    let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices;
+    let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
     let discountAmount = subtotal * (discountPercent / 100);
     let afterDiscount = subtotal - discountAmount;
@@ -2295,6 +2373,9 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
     let paymentMode = checkoutData.paymentMode || 'Cash';
     let amountPaid = parseFloat(checkoutData.amountPaid) || 0;
+    if (checkoutData.paymentStatus === 'Credit') {
+      amountPaid = 0;
+    }
     let balance = netAmount - amountPaid;
 
     let billNumber = generateBillNumber();
@@ -2302,41 +2383,57 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     // 5. Build Synthetic DayByDay for PDF
     let dayByDay = [];
     let grandRunning = 0;
-    if (!earliestCheckInDate) { earliestCheckInDate = actualCheckOutDate; }
-    let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
-    if (combinedNights < 1) combinedNights = 1;
-    let syntheticDailyRoomRate = totalRoomRent / combinedNights;
     
     for (let d = 0; d < combinedNights; d++) {
       let dayDate = new Date(earliestCheckInDate);
       dayDate.setDate(dayDate.getDate() + d);
-      let dateStr = dayDate.toISOString().split('T')[0];
+      let y = dayDate.getFullYear();
+      let m = String(dayDate.getMonth() + 1).padStart(2, '0');
+      let dt = String(dayDate.getDate()).padStart(2, '0');
+      let dateStr = y + '-' + m + '-' + dt;
       
-      let dayCats = { ExtraBed: 0, FoodBeverage: 0, MiniBar: 0, EarlyClean: 0, Xerox: 0, Laundry: 0, Fax: 0, SPBUC: 0, Travels: 0, Misc: 0 };
+      let dayRoom = 0;
+      allSegments.forEach(seg => {
+        let sy = seg.startDate.getFullYear();
+        let sm = String(seg.startDate.getMonth() + 1).padStart(2, '0');
+        let sdt = String(seg.startDate.getDate()).padStart(2, '0');
+        let segStartStr = sy + '-' + sm + '-' + sdt;
+
+        let ey = seg.endDate.getFullYear();
+        let em = String(seg.endDate.getMonth() + 1).padStart(2, '0');
+        let edt = String(seg.endDate.getDate()).padStart(2, '0');
+        let segEndStr = ey + '-' + em + '-' + edt;
+
+        if (dateStr >= segStartStr && dateStr < segEndStr) {
+          dayRoom += seg.rate;
+        } else if (dateStr === segStartStr && seg.nights === 0 && combinedNights === 1) {
+          dayRoom += seg.rate;
+        }
+      });
+      
+      let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
+      
+      let dailyEpCharge = (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
+      dayCats.ExtraBed += dailyEpCharge;
+
       foodOrders.forEach(o => {
-        let oDate = o.orderDate.split('T')[0];
-        if (oDate === dateStr && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
+        let oDate = o.orderDate;
+        let isLastNight = (d === combinedNights - 1);
+        if ((oDate === dateStr || (isLastNight && oDate > dateStr)) && dayCats.hasOwnProperty(o.mappedCategory || o.category)) {
           dayCats[o.mappedCategory || o.category] += o.amount;
         }
       });
       
-      let dayTotal = syntheticDailyRoomRate;
+      let dayTotal = dayRoom;
       Object.values(dayCats).forEach(v => dayTotal += v);
       grandRunning += dayTotal;
       
       dayByDay.push({
         date: dateStr,
-        rooms: syntheticDailyRoomRate,
+        rooms: dayRoom,
         extraBed: dayCats.ExtraBed,
         foodBev: dayCats.FoodBeverage,
-        miniBar: dayCats.MiniBar,
-        earlyClean: dayCats.EarlyClean,
-        xerox: dayCats.Xerox,
         laundry: dayCats.Laundry,
-        fax: dayCats.Fax,
-        spbuc: dayCats.SPBUC,
-        travels: dayCats.Travels,
-        misc: dayCats.Misc,
         dayTotal: dayTotal,
         grandTotal: grandRunning
       });
@@ -2364,35 +2461,61 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           { description: `Combined Room Rent (${allRoomNosArr.length} rooms)`, amount: totalRoomRent },
           { description: `Total POS Orders`, amount: totalFooding + totalExtraBed + totalOtherServices }
         ];
+        
+        if (totalExtraBedCalculated > 0) {
+          invoiceItems.push({ description: 'Extra Bed / Person Charge', amount: totalExtraBedCalculated });
+        }
+
+        const invoiceMeta = {
+          isMeta: true,
+          companyName: primaryGuestData.companyName,
+          address: primaryGuestData.address,
+          city: primaryGuestData.city,
+          state: primaryGuestData.state,
+          pinCode: primaryGuestData.pinCode,
+          country: primaryGuestData.country,
+          checkInDate: earliestCheckInDate ? earliestCheckInDate.toISOString() : '',
+          checkInTime: latestCheckInTime,
+          checkOutDate: actualCheckOutDate.toISOString(),
+          checkOutTime: checkOutTime,
+          roomNumbers: allRoomNosArr.join(', '),
+          roomTypes: combinedRoomTypes.join(', '),
+          numberOfRooms: allRoomNosArr.length,
+          pax: totalPax,
+          extraPerson: primaryGuestData.extraPerson,
+          foodPlan: primaryGuestData.foodPlan,
+          billTo: primaryGuestData.billTo,
+          nights: combinedNights,
+          advancePaid: advanceToApply,
+          paymentMode: paymentMode,
+          amountPaid: amountPaid,
+          balance: balance,
+          dayByDay: dayByDay
+        };
+        invoiceItems.push(invoiceMeta);
 
         const nowStr = new Date().toISOString();
-        const invoiceRow = new Array(25).fill('');
-        invoiceRow[0] = billNumber; 
-        invoiceRow[1] = primaryGuestData.guestName; 
-        invoiceRow[2] = primaryGuestData.mobile; 
-        invoiceRow[3] = primaryGuestData.email; 
-        invoiceRow[4] = primaryGuestData.gstNumber || ""; 
-        invoiceRow[5] = defaultCurrency; 
-        invoiceRow[6] = nowStr; 
-        invoiceRow[7] = nowStr; 
-        invoiceRow[8] = "Paid"; 
-        invoiceRow[9] = JSON.stringify(invoiceItems); 
-        invoiceRow[10] = subtotal; 
-        invoiceRow[11] = true; 
-        invoiceRow[12] = gstPercent; 
-        invoiceRow[13] = sgstAmount + cgstAmount; 
-        invoiceRow[14] = false; 
-        invoiceRow[15] = 0; 
-        invoiceRow[16] = 0; 
-        invoiceRow[17] = 0; 
-        invoiceRow[18] = 0; 
-        invoiceRow[19] = discountAmount; 
-        invoiceRow[20] = billAmount; 
-        invoiceRow[21] = `Merged: ${Object.keys(roomsByCi).join(', ')}`; 
-        invoiceRow[22] = ""; 
-        invoiceRow[23] = ""; 
-        invoiceRow[24] = "System"; 
-        invoiceRow[25] = nowStr; 
+        const invoiceRow = new Array(20).fill('');
+        invoiceRow[0] = billNumber;
+        invoiceRow[1] = primaryGuestData.guestName;
+        invoiceRow[2] = primaryGuestData.mobile;
+        invoiceRow[3] = primaryGuestData.email;
+        invoiceRow[4] = primaryGuestData.gstNumber || "";
+        invoiceRow[5] = defaultCurrency;
+        invoiceRow[6] = nowStr;
+        invoiceRow[7] = nowStr;
+        invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
+        invoiceRow[9] = JSON.stringify(invoiceItems);
+        invoiceRow[10] = subtotal;
+        invoiceRow[11] = true;
+        invoiceRow[12] = gstPercent;
+        invoiceRow[13] = sgstAmount + cgstAmount;
+        invoiceRow[14] = discountAmount;
+        invoiceRow[15] = billAmount;
+        invoiceRow[16] = `Merged: ${Object.keys(roomsByCi).join(', ')}`;
+        invoiceRow[17] = "";
+        invoiceRow[18] = "System";
+        invoiceRow[19] = nowStr;
 
         masterInvSheet.appendRow(invoiceRow);
       }
@@ -2404,16 +2527,35 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         let remainingCiRooms = allCiRoomNumbers.filter(r => !ciRec.selectedRoomNos.includes(r));
         let currentCiAdvance = parseFloat(ciRec.data[CI_ADVANCE_PAID_COL]) || 0;
         
+        // --- Safely close open Stay Segments for this checkout ---
+        if (staySegmentsSheet) {
+          const sData = staySegmentsSheet.getDataRange().getValues();
+          for (let s = 1; s < sData.length; s++) {
+            if ((sData[s][SEG_CHECKIN_ID_COL] || '').toString() === ciRec.id && !(sData[s][SEG_END_DATE_COL] || '').toString()) {
+              if (remainingCiRooms.length === 0) {
+                 staySegmentsSheet.getRange(s + 1, SEG_END_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
+              } else {
+                 staySegmentsSheet.getRange(s + 1, SEG_END_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
+                 let segRate = parseFloat(sData[s][SEG_RATE_COL]) || 0;
+                 let newRate = (segRate / allCiRoomNumbers.length) * remainingCiRooms.length;
+                 const newSegmentId = "SEG-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+                 staySegmentsSheet.appendRow([newSegmentId, ciRec.id, remainingCiRooms.join(','), newRate, parseInt(sData[s][SEG_PAX_COL]) || 1, actualCheckOutDate.toISOString(), ""]);
+              }
+            }
+          }
+        }
+        // ---------------------------------------------------------
+        
         if (remainingCiRooms.length === 0) {
           // Full checkout for this CI
           ciSheet.getRange(ciRec.rowIndex + 1, CI_STATUS_COL + 1).setValue("Checked Out");
           ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_DATE_COL + 1).setValue(actualCheckOutDate.toISOString());
           ciSheet.getRange(ciRec.rowIndex + 1, CI_CHECKOUT_TIME_COL + 1).setValue(checkOutTime);
-          
+
           // Advance is considered fully consumed, deduct it from our pool so we know how much more to drain
           advanceToDeduct = advanceToDeduct - currentCiAdvance;
           if (advanceToDeduct < 0) advanceToDeduct = 0; // Guard
-          
+
           // Mark linked booking as checked out
           if (ciRec.data[CI_LINKED_TICKET_COL]) {
             const bData = bookingsSheet.getDataRange().getValues();
@@ -2428,7 +2570,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           // Partial checkout for this CI - keep active
           ciSheet.getRange(ciRec.rowIndex + 1, CI_ROOM_NUMBERS_COL + 1).setValue(remainingCiRooms.join(', '));
           ciSheet.getRange(ciRec.rowIndex + 1, CI_NUM_ROOMS_COL + 1).setValue(remainingCiRooms.length);
-          
+
           // Proportionately or aggressively deduct used advance from the active sheet
           if (advanceToDeduct > 0) {
              if (currentCiAdvance >= advanceToDeduct) {
@@ -2444,6 +2586,16 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
       SpreadsheetApp.flush();
     }
+
+    try {
+      syncCustomerProfile({
+        phone: primaryGuestData.mobile,
+        name: primaryGuestData.guestName,
+        email: primaryGuestData.email,
+        companyName: primaryGuestData.companyName,
+        gstNumber: primaryGuestData.gstNumber
+      });
+    } catch(e) { Logger.log("Customer Sync AdvCheckout Error: " + e.message); }
 
     return {
       success: true,
@@ -2470,7 +2622,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         foodPlan: "Multiple", 
         billTo: primaryGuestData.billTo,
         nights: combinedNights, 
-        dailyRoomRate: syntheticDailyRoomRate,
+        dailyRoomRate: totalRoomRent > 0 ? (totalRoomRent / combinedNights).toFixed(2) : 0,
         totalRoomRent,
         totalFooding, totalExtraBed, totalOtherServices, categoryTotals,
         subtotal, discountPercent, discountAmount,
@@ -2504,8 +2656,54 @@ function numberToWords(num) {
 /***************************************************
  * DASHBOARD
  ***************************************************/
+
+function autoExtendOverstayingCheckIns() {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return;
+
+    let updated = false;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+    
+    // YYYY-MM-DD local format
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[CI_STATUS_COL] === 'Active') {
+        const coStr = row[CI_CHECKOUT_DATE_COL];
+        if (coStr) {
+          let coDate = new Date(coStr);
+          // if it is a valid date
+          if (!isNaN(coDate.getTime())) {
+            let coDateMidnight = new Date(coDate.getFullYear(), coDate.getMonth(), coDate.getDate());
+            if (coDateMidnight < today) {
+              sheet.getRange(i + 1, CI_CHECKOUT_DATE_COL + 1).setValue(todayStr);
+              updated = true;
+            }
+          }
+        }
+      }
+    }
+    
+    if (updated) {
+      SpreadsheetApp.flush();
+    }
+  } catch (e) {
+    console.error("Error auto-extending overstaying checkins:", e);
+  }
+}
+
 function getDashboardData() {
   try {
+    initDataStructure();
+    autoExtendOverstayingCheckIns();
     const roomsSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(ROOMS_SHEET_NAME);
     const roomsData = roomsSheet.getDataRange().getValues();
     roomsData.shift();
@@ -2518,6 +2716,7 @@ function getDashboardData() {
 
     // Pre-fetch active checkins and bookings to attach guest details to rooms
     let guestMap = {};
+    const now = new Date();
     try {
       const ciSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CHECKIN_SHEET_NAME);
       if (ciSheet) {
@@ -2527,12 +2726,20 @@ function getDashboardData() {
             const rnStr = (ciData[i][CI_ROOM_NUMBERS_COL] || '').toString();
             const rns = rnStr.split(',').map(r => r.trim()).filter(Boolean);
             const gName = (ciData[i][CI_GUEST_NAME_COL] || '').toString();
-            const cin = ciData[i][CI_CHECKIN_DATE_COL] ? new Date(ciData[i][CI_CHECKIN_DATE_COL]).toISOString() : '';
-            const cout = ciData[i][CI_CHECKOUT_DATE_COL] ? new Date(ciData[i][CI_CHECKOUT_DATE_COL]).toISOString() : '';
+            const cinStr = ciData[i][CI_CHECKIN_DATE_COL];
+            const coutStr = ciData[i][CI_CHECKOUT_DATE_COL];
             
-            rns.forEach(rn => {
-              guestMap[rn] = { guestName: gName, checkIn: cin, checkOut: cout };
-            });
+            const cin = cinStr ? new Date(cinStr).toISOString() : '';
+            const cout = coutStr ? new Date(coutStr).toISOString() : '';
+            
+            // An active check-in means the room is currently occupied regardless of the expected checkout date
+            const isCurrentlyOccupying = cinStr && new Date(cinStr) <= now;
+            
+            if (isCurrentlyOccupying) {
+              rns.forEach(rn => {
+                guestMap[rn] = { guestName: gName, checkIn: cin, checkOut: cout, liveStatus: 'CheckedIn' };
+              });
+            }
           }
         }
       }
@@ -2541,19 +2748,27 @@ function getDashboardData() {
       if (bkSheet) {
         const bkData = bkSheet.getDataRange().getValues();
         for (let i = 1; i < bkData.length; i++) {
-          if ((bkData[i][BOOKING_STATUS_COL] || '').toString() === 'Booked') {
+          if ((bkData[i][BOOKING_STATUS_COL] || '').toString() === 'Confirmed' || (bkData[i][BOOKING_STATUS_COL] || '').toString() === 'Booked') {
             const rnStr = (bkData[i][BOOKING_ROOM_NO_COL] || '').toString();
             const rns = rnStr.split(',').map(r => r.trim()).filter(Boolean);
             const gName = (bkData[i][GUEST_NAME_COL] || '').toString();
-            const cin = bkData[i][CHECK_IN_COL] ? new Date(bkData[i][CHECK_IN_COL]).toISOString() : '';
-            const cout = bkData[i][CHECK_OUT_COL] ? new Date(bkData[i][CHECK_OUT_COL]).toISOString() : '';
+            const cinStr = bkData[i][CHECK_IN_COL];
+            const coutStr = bkData[i][CHECK_OUT_COL];
             
-            rns.forEach(rn => {
-              // Only apply if not already claimed by a check-in
-              if (!guestMap[rn]) {
-                guestMap[rn] = { guestName: gName, checkIn: cin, checkOut: cout };
-              }
-            });
+            const cin = cinStr ? new Date(cinStr).toISOString() : '';
+            const cout = coutStr ? new Date(coutStr).toISOString() : '';
+            
+            // Exclude the actual check-out day block
+            const isCurrentlyOccupying = cinStr && coutStr && new Date(cinStr) <= now && now < new Date(new Date(coutStr).getFullYear(), new Date(coutStr).getMonth(), new Date(coutStr).getDate());
+            
+            if (isCurrentlyOccupying) {
+              rns.forEach(rn => {
+                // Only apply if not already claimed by a check-in
+                if (!guestMap[rn]) {
+                  guestMap[rn] = { guestName: gName, checkIn: cin, checkOut: cout, liveStatus: 'Booked' };
+                }
+              });
+            }
           }
         }
       }
@@ -2562,14 +2777,15 @@ function getDashboardData() {
     roomsData.forEach((row, index) => {
       let roomNo = (row[ROOM_NO_COL] || "").toString();
       let type   = (row[ROOM_TYPE_COL] || "").toString();
-      let status = (row[ROOM_STATUS_COL] || "").toString();
+      let dbStatus = (row[ROOM_STATUS_COL] || "").toString();
       
       let guestData = guestMap[roomNo] || {};
+      let finalStatus = guestData.liveStatus ? guestData.liveStatus : dbStatus;
       
       allRoomsDetails.push({ 
         roomNo, 
         type, 
-        status,
+        status: finalStatus,
         roomRate: parseFloat(row[ROOM_RATE_COL]) || 0,
         rowIndex: index + 2,
         guestName: guestData.guestName || '',
@@ -2577,7 +2793,7 @@ function getDashboardData() {
         checkOut: guestData.checkOut || ''
       });
       
-      if (status.toLowerCase() === "booked") {
+      if (finalStatus.toLowerCase() === "booked" || finalStatus.toLowerCase() === "checkedin") {
         bookedCount++;
         bookedRoomsList.push(roomNo);
       } else {
@@ -2596,40 +2812,12 @@ function getDashboardData() {
       roomTypeMap[t] = (roomTypeMap[t] || 0) + 1;
     });
 
-    // Finance Summary
-    let financeSummary = { totalIncome: 0, totalExpenses: 0, netBalance: 0 };
-    let expenseCategories = {};
-    let incomeCategories = {};
-    try {
-      const finSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-      if (finSheet) {
-        const finData = finSheet.getDataRange().getValues();
-        for (let i = 1; i < finData.length; i++) {
-          let type = (finData[i][FIN_TYPE_COL] || "").toString();
-          let amount = parseFloat(finData[i][FIN_AMOUNT_COL]) || 0;
-          let category = (finData[i][FIN_CATEGORY_COL] || "Uncategorized").toString();
-          if (type === "Income") {
-            financeSummary.totalIncome += amount;
-            incomeCategories[category] = (incomeCategories[category] || 0) + amount;
-          } else if (type === "Expense") {
-            financeSummary.totalExpenses += amount;
-            expenseCategories[category] = (expenseCategories[category] || 0) + amount;
-          }
-        }
-        financeSummary.netBalance = financeSummary.totalIncome - financeSummary.totalExpenses;
-      }
-    } catch (finErr) {
-      Logger.log("Could not load finance data: " + finErr);
-    }
-
-
     // Monthly data (last 6 months) - declared outside try so return can access them
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     let monthlyBookings = {};
     let monthlyRevenue = {};
     let monthlyIncome = {};
     let monthlyExpense = {};
-    const now = new Date();
     for (let m = 5; m >= 0; m--) {
       const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
       const key = monthNames[d.getMonth()] + ' ' + d.getFullYear();
@@ -2643,7 +2831,7 @@ function getDashboardData() {
     let bookingRevenue = { totalRevenue: 0, checkedOutCount: 0, activeBookingCount: 0, totalBookings: 0 };
     let recentBookings = [];
     let todaysCheckIns = [];
-    
+
     const today = new Date();
     const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
@@ -2669,7 +2857,7 @@ function getDashboardData() {
             monthlyBookings[mKey]++;
             monthlyRevenue[mKey] += bAmount;
           }
-          
+
           if (bStatusRaw === 'Booked') {
              const ciStr = ciDate.getFullYear() + '-' + String(ciDate.getMonth() + 1).padStart(2, '0') + '-' + String(ciDate.getDate()).padStart(2, '0');
              if (ciStr === todayStr) {
@@ -2692,26 +2880,6 @@ function getDashboardData() {
       }
       recentBookings.reverse();
       recentBookings = recentBookings.slice(0, 8);
-
-      // Monthly income/expense
-      try {
-        const finSheet2 = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-        if (finSheet2) {
-          const finData2 = finSheet2.getDataRange().getValues();
-          for (let i = 1; i < finData2.length; i++) {
-            let fDate = finData2[i][FIN_DATE_COL] ? new Date(finData2[i][FIN_DATE_COL]) : null;
-            let fType = (finData2[i][FIN_TYPE_COL] || "").toString();
-            let fAmt = parseFloat(finData2[i][FIN_AMOUNT_COL]) || 0;
-            if (fDate) {
-              const mKey = monthNames[fDate.getMonth()] + ' ' + fDate.getFullYear();
-              if (monthlyIncome.hasOwnProperty(mKey)) {
-                if (fType === "Income") monthlyIncome[mKey] += fAmt;
-                else if (fType === "Expense") monthlyExpense[mKey] += fAmt;
-              }
-            }
-          }
-        }
-      } catch (e2) { Logger.log("Monthly finance error: " + e2); }
 
     } catch (bookErr) {
       Logger.log("Could not load booking revenue data: " + bookErr);
@@ -2771,9 +2939,52 @@ function getDashboardData() {
     try {
       const setSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(SETTINGS_SHEET_NAME);
       if (setSheet && setSheet.getLastRow() > 1) {
-        settingsDefaultCurrency = (setSheet.getRange(2, SET_DEFAULT_CURRENCY_COL + 1).getValue() || 'MVR').toString();
+        
       }
     } catch (setErr) { Logger.log("Could not load settings currency: " + setErr); }
+
+    // Step 1: Aggregate todays paid sales
+    const todaysPaidSales = [];
+    try {
+      const invoicesSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
+      if (invoicesSheet && invoicesSheet.getLastRow() > 1) {
+        const invData = invoicesSheet.getDataRange().getValues();
+        const localTodayStr = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
+        
+        for (let i = 1; i < invData.length; i++) {
+          const invDateStr = (invData[i][INV_CREATED_DATE_COL] || '').toString();
+          const invStatus = (invData[i][INV_STATUS_COL] || '').toString().trim();
+          
+          if (invDateStr.includes(localTodayStr) && invStatus === 'Paid') {
+            const invoiceId = (invData[i][INV_ID_COL] || '').toString();
+            const guestName = (invData[i][INV_GUEST_NAME_COL] || '').toString();
+            const totalSales = parseFloat(invData[i][INV_NET_AMOUNT_COL]) || 0;
+            const itemsStr = (invData[i][INV_ITEMS_JSON_COL] || '').toString();
+            
+            let roomRent = 0;
+            let foodRevenue = 0;
+            
+            if (itemsStr) {
+              try {
+                const items = JSON.parse(itemsStr);
+                items.forEach(item => {
+                  const desc = (item.description || '').toLowerCase();
+                  const type = (item.type || '').toLowerCase();
+                  const amt = parseFloat(item.amount) || 0;
+                  
+                  if (type === 'room' || desc.includes('room rent')) {
+                    roomRent += amt;
+                  } else {
+                    foodRevenue += amt;
+                  }
+                });
+              } catch(e) {}
+            }
+            todaysPaidSales.push({ invoiceId, guestName, roomRent, foodRevenue, totalSales });
+          }
+        }
+      }
+    } catch (invErr) { Logger.log("Could not aggregate todays sales: " + invErr); }
 
     return {
       totalRooms,
@@ -2785,20 +2996,13 @@ function getDashboardData() {
       bookedRoomNumbers: bookedRoomsList,
       allRoomsDetails,
       roomTypeBreakdown: roomTypeMap,
-      financeSummary,
-      expenseCategories,
-      incomeCategories,
       bookingRevenue,
       recentBookings,
       todaysCheckIns,
       todaysCheckOuts,
       invoiceStats,
-      currentBudget,
-      defaultCurrency: settingsDefaultCurrency,
-      monthlyBookings: monthlyBookings || {},
-      monthlyRevenue: monthlyRevenue || {},
-      monthlyIncome: monthlyIncome || {},
-      monthlyExpense: monthlyExpense || {}
+      todaysPaidSales,
+      defaultCurrency: settingsDefaultCurrency
     };
   } catch (e) {
     Logger.log(`Error in getDashboardData: ${e.toString()}`);
@@ -2997,11 +3201,21 @@ function getAllCustomers() {
         name: (row[CUST_NAME_COL] || '').toString(),
         phone: (row[CUST_PHONE_COL] || '').toString(),
         email: (row[CUST_EMAIL_COL] || '').toString(),
+        address: (row[CUST_ADDRESS_COL] || '').toString(),
         city: (row[CUST_CITY_COL] || '').toString(),
+        state: (row[CUST_STATE_COL] || '').toString(),
+        pinCode: (row[CUST_PINCODE_COL] || '').toString(),
+        country: (row[CUST_COUNTRY_COL] || '').toString(),
+        dob: (row[CUST_DOB_COL] || '').toString(),
+        anniversary: (row[CUST_ANNIV_COL] || '').toString(),
+        gender: (row[CUST_GENDER_COL] || '').toString(),
         maritalStatus: (row[CUST_MARITAL_COL] || '').toString(),
+        identityProof: (row[CUST_IDENTITY_COL] || '').toString(),
         notes: (row[CUST_NOTES_COL] || '').toString(),
         createdAt: (row[CUST_CREATED_AT_COL] || '').toString(),
-        linkedUsername: (row[CUST_LINKED_USER_COL] || '').toString()
+        linkedUsername: (row[CUST_LINKED_USER_COL] || '').toString(),
+        companyName: (row[CUST_COMPANY_COL] || '').toString(),
+        gstNumber: (row[CUST_GST_COL] || '').toString()
       });
     }
     return customers;
@@ -3018,8 +3232,8 @@ function addCustomer(customerData) {
     let sheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(CUSTOMERS_SHEET_NAME);
-      sheet.appendRow(["CustomerID", "Name", "Phone", "Email", "City", "MaritalStatus", "Notes", "CreatedAt", "LinkedUsername"]);
-      const headerRange = sheet.getRange(1, 1, 1, 9);
+      sheet.appendRow(["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date", "Company Name", "GST Number"]);
+      const headerRange = sheet.getRange(1, 1, 1, 19);
       headerRange.setFontWeight("bold");
       headerRange.setBackground("#001f3f");
       headerRange.setFontColor("#ffffff");
@@ -3055,6 +3269,88 @@ function addCustomer(customerData) {
   }
 }
 
+function syncCustomerProfile(guestData) {
+  try {
+    if (!guestData || !guestData.phone) return; // phone is our key identifier
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
+    if (!sheet) return;
+    
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let existingRow = null;
+    
+    // Find matching phone
+    const incomingPhone = String(guestData.phone).trim();
+    for (let i = 1; i < data.length; i++) {
+      let existingPhone = String(data[i][CUST_PHONE_COL] || '').trim();
+      if (existingPhone === incomingPhone) {
+        rowIndex = i + 1;
+        existingRow = data[i];
+        break;
+      }
+    }
+    
+    if (rowIndex > -1) {
+      // Update existing blanks or newly provided values
+      if (!(existingRow[CUST_NAME_COL] || '').toString().trim() && guestData.name) {
+        sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(guestData.name);
+      }
+      if (!(existingRow[CUST_EMAIL_COL] || '').toString().trim() && guestData.email) {
+        sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
+      }
+      if (guestData.companyName && !(existingRow[CUST_COMPANY_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
+      }
+      if (guestData.gstNumber && !(existingRow[CUST_GST_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
+      }
+      if (guestData.address && !(existingRow[CUST_ADDRESS_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(guestData.address);
+      }
+      if (guestData.city && !(existingRow[CUST_CITY_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(guestData.city);
+      }
+      if (guestData.state && !(existingRow[CUST_STATE_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(guestData.state);
+      }
+      if (guestData.pinCode && !(existingRow[CUST_PINCODE_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(guestData.pinCode);
+      }
+      if (guestData.country && !(existingRow[CUST_COUNTRY_COL] || '').toString().trim()) {
+        sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(guestData.country);
+      }
+    } else {
+      // Append new
+      const newId = generateCustomerId();
+      const row = new Array(19).fill(''); // 19 headers per schema
+      row[CUST_ID_COL] = newId;
+      row[CUST_NAME_COL] = guestData.name || '';
+      row[CUST_PHONE_COL] = guestData.phone || '';
+      row[CUST_EMAIL_COL] = guestData.email || '';
+      row[CUST_ADDRESS_COL] = guestData.address || '';
+      row[CUST_CITY_COL] = guestData.city || '';
+      row[CUST_STATE_COL] = guestData.state || '';
+      row[CUST_COUNTRY_COL] = guestData.country || '';
+      row[CUST_PINCODE_COL] = guestData.pinCode || '';
+      row[CUST_DOB_COL] = ''; 
+      row[CUST_ANNIV_COL] = '';
+      row[CUST_GENDER_COL] = '';
+      row[CUST_MARITAL_COL] = '';
+      row[CUST_IDENTITY_COL] = guestData.identityProof || '';
+      row[CUST_LINKED_USER_COL] = '';
+      row[CUST_NOTES_COL] = '';
+      row[CUST_CREATED_AT_COL] = new Date().toISOString();
+      row[CUST_COMPANY_COL] = guestData.companyName || '';
+      row[CUST_GST_COL] = guestData.gstNumber || '';
+      
+      sheet.appendRow(row);
+    }
+  } catch (e) {
+    Logger.log("Customer Sync Error: " + e.message);
+  }
+}
+
 function updateCustomer(rowIndex, customerData) {
   try {
     const ss = SpreadsheetApp.openById(SS_ID);
@@ -3065,9 +3361,19 @@ function updateCustomer(rowIndex, customerData) {
     if (customerData.name !== undefined) sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(customerData.name);
     if (customerData.phone !== undefined) sheet.getRange(rowIndex, CUST_PHONE_COL + 1).setValue(customerData.phone);
     if (customerData.email !== undefined) sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(customerData.email);
+    if (customerData.address !== undefined) sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(customerData.address);
     if (customerData.city !== undefined) sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(customerData.city);
+    if (customerData.state !== undefined) sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(customerData.state);
+    if (customerData.pinCode !== undefined) sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(customerData.pinCode);
+    if (customerData.country !== undefined) sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(customerData.country);
+    if (customerData.dob !== undefined) sheet.getRange(rowIndex, CUST_DOB_COL + 1).setValue(customerData.dob);
+    if (customerData.anniversary !== undefined) sheet.getRange(rowIndex, CUST_ANNIV_COL + 1).setValue(customerData.anniversary);
+    if (customerData.gender !== undefined) sheet.getRange(rowIndex, CUST_GENDER_COL + 1).setValue(customerData.gender);
     if (customerData.maritalStatus !== undefined) sheet.getRange(rowIndex, CUST_MARITAL_COL + 1).setValue(customerData.maritalStatus);
+    if (customerData.identityProof !== undefined) sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(customerData.identityProof);
     if (customerData.notes !== undefined) sheet.getRange(rowIndex, CUST_NOTES_COL + 1).setValue(customerData.notes);
+    if (customerData.companyName !== undefined) sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(customerData.companyName);
+    if (customerData.gstNumber !== undefined) sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(customerData.gstNumber);
 
     return { success: true, message: "Customer updated successfully." };
   } catch (err) {
@@ -3193,197 +3499,6 @@ function deleteRoom(rowIndex) {
 }
 
 /***************************************************
- * FINANCE MANAGEMENT
- ***************************************************/
-function recalculateBalances() {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Finance sheet not found." };
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return { success: true, message: "No records to recalculate." };
-
-    let runningBalance = 0;
-    let balanceArray = [];
-
-    for (let i = 1; i < data.length; i++) {
-      let type = (data[i][FIN_TYPE_COL] || "").toString();
-      let amount = parseFloat(data[i][FIN_AMOUNT_COL]) || 0;
-      if (type === "Income") {
-        runningBalance += amount;
-      } else if (type === "Expense") {
-        runningBalance -= amount;
-      }
-      balanceArray.push([runningBalance]);
-    }
-
-    sheet.getRange(2, FIN_BALANCE_COL + 1, balanceArray.length, 1).setValues(balanceArray);
-    SpreadsheetApp.flush();
-    return { success: true, message: "Balances recalculated." };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function getAllFinanceRecords() {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) return [];
-    const data = sheet.getDataRange().getValues();
-    let records = [];
-    for (let i = 1; i < data.length; i++) {
-      let row = data[i];
-      records.push({
-        rowIndex: i + 1,
-        id: (row[FIN_ID_COL] || "").toString(),
-        date: (row[FIN_DATE_COL] || "").toString(),
-        type: (row[FIN_TYPE_COL] || "").toString(),
-        description: (row[FIN_DESC_COL] || "").toString(),
-        shopSource: (row[FIN_SHOP_COL] || "").toString(),
-        amount: parseFloat(row[FIN_AMOUNT_COL]) || 0,
-        balance: parseFloat(row[FIN_BALANCE_COL]) || 0,
-        enteredBy: (row[FIN_ENTERED_BY_COL] || "").toString(),
-        createdAt: (row[FIN_CREATED_AT_COL] || "").toString(),
-        category: (row[FIN_CATEGORY_COL] || '').toString(),
-        currency: (row[FIN_CURRENCY_COL] || 'MVR').toString(),
-        linkedInvoiceId: (row[FIN_LINKED_INV_COL] || '').toString()
-      });
-    }
-    return records;
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-function addFinanceRecord(recordData) {
-  try {
-    if (!recordData.date || !recordData.type || !recordData.description) {
-      return { success: false, message: "Date, type, and description are required." };
-    }
-    if (recordData.type !== "Income" && recordData.type !== "Expense") {
-      return { success: false, message: "Type must be 'Income' or 'Expense'." };
-    }
-    let amount = parseFloat(recordData.amount);
-    if (isNaN(amount) || amount <= 0) {
-      return { success: false, message: "Amount must be a positive number." };
-    }
-
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) {
-      return { success: false, message: "Finance sheet not found. Please create it first." };
-    }
-
-    const id = generateFinanceId();
-    const createdAt = new Date().toISOString();
-
-    // Calculate new balance
-    const data = sheet.getDataRange().getValues();
-    let previousBalance = 0;
-    if (data.length > 1) {
-      previousBalance = parseFloat(data[data.length - 1][FIN_BALANCE_COL]) || 0;
-    }
-    let newBalance = recordData.type === "Income" ? previousBalance + amount : previousBalance - amount;
-
-    sheet.appendRow([
-      id,
-      recordData.date,
-      recordData.type,
-      recordData.description.trim(),
-      (recordData.shopSource || "").trim(),
-      amount,
-      newBalance,
-      (recordData.enteredBy || "").trim(),
-      createdAt,
-      (recordData.category || '').trim(),
-      (recordData.currency || 'MVR').trim(),
-      (recordData.linkedInvoiceId || '').trim()
-    ]);
-
-    // Recalculate budget for this month if expense
-    if (recordData.type === 'Expense') {
-      const d = new Date(recordData.date);
-      getBudgetForMonth(d.getMonth() + 1, d.getFullYear());
-    }
-
-    return { success: true, message: "Finance record added successfully!" };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function updateFinanceRecord(rowIndex, recordData) {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Finance sheet not found." };
-    if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
-
-    if (recordData.date !== undefined) sheet.getRange(rowIndex, FIN_DATE_COL + 1).setValue(recordData.date);
-    if (recordData.type !== undefined) {
-      if (recordData.type !== "Income" && recordData.type !== "Expense") {
-        return { success: false, message: "Type must be 'Income' or 'Expense'." };
-      }
-      sheet.getRange(rowIndex, FIN_TYPE_COL + 1).setValue(recordData.type);
-    }
-    if (recordData.description !== undefined) sheet.getRange(rowIndex, FIN_DESC_COL + 1).setValue(recordData.description);
-    if (recordData.shopSource !== undefined) sheet.getRange(rowIndex, FIN_SHOP_COL + 1).setValue(recordData.shopSource);
-    if (recordData.amount !== undefined) {
-      let amount = parseFloat(recordData.amount);
-      if (isNaN(amount) || amount <= 0) {
-        return { success: false, message: "Amount must be a positive number." };
-      }
-      sheet.getRange(rowIndex, FIN_AMOUNT_COL + 1).setValue(amount);
-    }
-    if (recordData.category !== undefined) sheet.getRange(rowIndex, FIN_CATEGORY_COL + 1).setValue(recordData.category);
-    if (recordData.currency !== undefined) sheet.getRange(rowIndex, FIN_CURRENCY_COL + 1).setValue(recordData.currency);
-
-    // Recalculate all balances after edit
-    recalculateBalances();
-
-    return { success: true, message: "Finance record updated successfully." };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function deleteFinanceRecord(rowIndex) {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Finance sheet not found." };
-    if (rowIndex <= 1) {
-      return { success: false, message: "Cannot delete header row." };
-    }
-    sheet.deleteRow(rowIndex);
-
-    // Recalculate all balances after deletion
-    recalculateBalances();
-
-    return { success: true, message: "Finance record deleted successfully." };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function getFinanceSummary() {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet) return { totalIncome: 0, totalExpenses: 0, netBalance: 0 };
-    const data = sheet.getDataRange().getValues();
-    let totalIncome = 0;
-    let totalExpenses = 0;
-
-    for (let i = 1; i < data.length; i++) {
-      let type = (data[i][FIN_TYPE_COL] || "").toString();
-      let amount = parseFloat(data[i][FIN_AMOUNT_COL]) || 0;
-      if (type === "Income") totalIncome += amount;
-      else if (type === "Expense") totalExpenses += amount;
-    }
-
-    return { totalIncome, totalExpenses, netBalance: totalIncome - totalExpenses };
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-/***************************************************
  * SETTINGS MANAGEMENT
  ***************************************************/
 function getSettings() {
@@ -3394,7 +3509,7 @@ function getSettings() {
       return { success: true, data: {
         hotelName: 'Hill View Eco Retreat', hotelAddress: '', hotelPhone: '', hotelEmail: '', hotelTIN: '',
         logoFileId: '', logoUrl: '', defaultCurrency: 'MVR', gstDefaultPercent: 16,
-        greenTaxDefaultRate: 6, nextInvoiceNum: 1, nextQuoteNum: 1, pdfFolderId: '', logoFolderId: ''
+        nextInvoiceNum: 1, nextQuoteNum: 1, pdfFolderId: '', logoFolderId: ''
       }};
     }
     const row = sheet.getRange(2, 1, 1, 13).getValues()[0];
@@ -3406,9 +3521,7 @@ function getSettings() {
       hotelTIN: (row[SET_HOTEL_TIN_COL] || '').toString(),
       logoFileId: (row[SET_LOGO_FILE_ID_COL] || '').toString(),
       logoUrl: (row[SET_LOGO_URL_COL] || '').toString(),
-      defaultCurrency: (row[SET_DEFAULT_CURRENCY_COL] || 'MVR').toString(),
       gstDefaultPercent: parseFloat(row[SET_GST_DEFAULT_COL]) || 16,
-      greenTaxDefaultRate: parseFloat(row[SET_GREENTAX_DEFAULT_COL]) || 6,
       nextInvoiceNum: parseInt(row[SET_NEXT_INVOICE_COL]) || 1,
       pdfFolderId: (row[SET_PDF_FOLDER_ID_COL] || '').toString(),
       logoFolderId: (row[SET_LOGO_FOLDER_ID_COL] || '').toString()
@@ -3429,7 +3542,7 @@ function updateSettings(settingsData) {
     let currentPdfFolderId = settingsData.pdfFolderId || '';
     let currentLogoFolderId = settingsData.logoFolderId || '';
     if (sheet.getLastRow() >= 2) {
-      const existing = sheet.getRange(2, 1, 1, 13).getValues()[0];
+      const existing = sheet.getRange(2, 1, 1, 11).getValues()[0];
       currentInvoiceNum = parseInt(existing[SET_NEXT_INVOICE_COL]) || 1;
       currentPdfFolderId = (existing[SET_PDF_FOLDER_ID_COL] || '').toString() || currentPdfFolderId;
       currentLogoFolderId = (existing[SET_LOGO_FOLDER_ID_COL] || '').toString() || currentLogoFolderId;
@@ -3443,9 +3556,7 @@ function updateSettings(settingsData) {
       settingsData.hotelTIN || '',
       settingsData.logoFileId || '',
       settingsData.logoUrl || '',
-      settingsData.defaultCurrency || 'MVR',
       parseFloat(settingsData.gstDefaultPercent) || 16,
-      parseFloat(settingsData.greenTaxDefaultRate) || 6,
       currentInvoiceNum,
       currentPdfFolderId,
       currentLogoFolderId
@@ -3454,7 +3565,7 @@ function updateSettings(settingsData) {
     if (sheet.getLastRow() < 2) {
       sheet.appendRow(row);
     } else {
-      sheet.getRange(2, 1, 1, 13).setValues([row]);
+      sheet.getRange(2, 1, 1, 11).setValues([row]);
     }
 
     return { success: true, message: "Settings updated successfully!" };
@@ -3516,11 +3627,11 @@ function getAllInvoices() {
         gstEnabled: row[INV_GST_ENABLED_COL] === true || row[INV_GST_ENABLED_COL] === 'true',
         gstPercent: parseFloat(row[INV_GST_PERCENT_COL]) || 0,
         gstAmount: parseFloat(row[INV_GST_AMOUNT_COL]) || 0,
-        greenTaxEnabled: row[INV_GREENTAX_ENABLED_COL] === true || row[INV_GREENTAX_ENABLED_COL] === 'true',
-        greenTaxPerNight: parseFloat(row[INV_GREENTAX_RATE_COL]) || 0,
-        greenTaxPax: parseFloat(row[INV_GREENTAX_PAX_COL]) || 0,
-        greenTaxNights: parseFloat(row[INV_GREENTAX_NIGHTS_COL]) || 0,
-        greenTaxAmount: parseFloat(row[INV_GREENTAX_AMOUNT_COL]) || 0,
+        greenTaxEnabled: false, // DEPRECATED
+        greenTaxPerNight: 0, // DEPRECATED
+        greenTaxPax: 0, // DEPRECATED
+        greenTaxNights: 0, // DEPRECATED
+        greenTaxAmount: 0, // DEPRECATED
         discount: parseFloat(row[INV_DISCOUNT_COL]) || 0,
         totalAmount: parseFloat(row[INV_TOTAL_COL]) || 0,
         notes: (row[INV_NOTES_COL] || '').toString(),
@@ -3563,12 +3674,7 @@ function addInvoice(invoiceData) {
     const gstEnabled = invoiceData.gstEnabled === true;
     const gstPercent = parseFloat(invoiceData.gstPercent) || 0;
     const gstAmount = gstEnabled ? (subTotal - discount) * (gstPercent / 100) : 0;
-    const greenTaxEnabled = invoiceData.greenTaxEnabled === true;
-    const greenTaxRate = parseFloat(invoiceData.greenTaxPerNight) || 0;
-    const greenTaxPax = parseFloat(invoiceData.greenTaxPax) || 0;
-    const greenTaxNights = parseFloat(invoiceData.greenTaxNights) || 0;
-    const greenTaxAmount = greenTaxEnabled ? greenTaxRate * greenTaxPax * greenTaxNights : 0;
-    const totalAmount = subTotal - discount + gstAmount + greenTaxAmount;
+    const totalAmount = subTotal - discount + gstAmount;
 
     sheet.appendRow([
       id,
@@ -3585,11 +3691,6 @@ function addInvoice(invoiceData) {
       gstEnabled,
       gstPercent,
       Math.round(gstAmount * 100) / 100,
-      greenTaxEnabled,
-      greenTaxRate,
-      greenTaxPax,
-      greenTaxNights,
-      Math.round(greenTaxAmount * 100) / 100,
       discount,
       Math.round(totalAmount * 100) / 100,
       (invoiceData.notes || '').trim(),
@@ -3616,12 +3717,7 @@ function updateInvoice(rowIndex, invoiceData) {
     const gstEnabled = invoiceData.gstEnabled === true;
     const gstPercent = parseFloat(invoiceData.gstPercent) || 0;
     const gstAmount = gstEnabled ? (subTotal - discount) * (gstPercent / 100) : 0;
-    const greenTaxEnabled = invoiceData.greenTaxEnabled === true;
-    const greenTaxRate = parseFloat(invoiceData.greenTaxPerNight) || 0;
-    const greenTaxPax = parseFloat(invoiceData.greenTaxPax) || 0;
-    const greenTaxNights = parseFloat(invoiceData.greenTaxNights) || 0;
-    const greenTaxAmount = greenTaxEnabled ? greenTaxRate * greenTaxPax * greenTaxNights : 0;
-    const totalAmount = subTotal - discount + gstAmount + greenTaxAmount;
+    const totalAmount = subTotal - discount + gstAmount;
 
     // Read old status before overwriting
     const oldStatus = (sheet.getRange(rowIndex, INV_STATUS_COL + 1).getValue() || '').toString();
@@ -3647,11 +3743,6 @@ function updateInvoice(rowIndex, invoiceData) {
       gstEnabled,
       gstPercent,
       Math.round(gstAmount * 100) / 100,
-      greenTaxEnabled,
-      greenTaxRate,
-      greenTaxPax,
-      greenTaxNights,
-      Math.round(greenTaxAmount * 100) / 100,
       discount,
       Math.round(totalAmount * 100) / 100,
       (invoiceData.notes || '').trim(),
@@ -3660,45 +3751,9 @@ function updateInvoice(rowIndex, invoiceData) {
       now
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 25).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 20).setValues([row]);
 
-    // Auto-record payment when status changes to Paid
-    const newStatus = (invoiceData.status || 'Draft').toString();
-    let paymentRecorded = false;
-    if (newStatus === 'Paid' && oldStatus !== 'Paid') {
-      try {
-        const finSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-        if (finSheet) {
-          const finData = finSheet.getDataRange().getValues();
-          let alreadyRecorded = false;
-          for (let f = 1; f < finData.length; f++) {
-            if ((finData[f][FIN_LINKED_INV_COL] || '').toString() === existingId.toString()) {
-              alreadyRecorded = true;
-              break;
-            }
-          }
-          if (!alreadyRecorded) {
-            addFinanceRecord({
-              date: new Date().toISOString().slice(0, 10),
-              type: 'Income',
-              description: 'Payment for ' + existingId,
-              shopSource: 'Invoice Payment',
-              amount: Math.round(totalAmount * 100) / 100,
-              enteredBy: invoiceData.createdBy || existingCreatedBy || '',
-              category: 'Invoice Payment',
-              currency: invoiceData.currency || 'MVR',
-              linkedInvoiceId: existingId.toString()
-            });
-            recalculateBalances();
-            paymentRecorded = true;
-          }
-        }
-      } catch (finErr) {
-        Logger.log("Auto-payment error: " + finErr.message);
-      }
-    }
-
-    return { success: true, message: "Invoice updated successfully!", paymentRecorded: paymentRecorded };
+    return { success: true, message: "Invoice updated successfully!" };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -3782,34 +3837,48 @@ function generateDocumentEmailHtml(type, data, settings) {
 
   let items = [];
   try { items = JSON.parse(typeof data.items === 'string' ? data.items : '[]'); } catch (e) { items = []; }
-  const roomItems = items.filter(i => i.type === 'room');
-  const actItems = items.filter(i => i.type === 'activity');
-  const svcItems = items.filter(i => i.type === 'service');
 
-  let itemRows = '';
-  roomItems.forEach(it => {
-    itemRows += '<tr><td>' + (it.roomType || 'Room') + '</td><td>' + (it.quantity || 1) + ' room(s) x ' + (it.nights || 0) + ' night(s) x ' + cur + ' ' + (parseFloat(it.rate) || 0).toFixed(2) + '</td><td class="right">' + cur + ' ' + (parseFloat(it.amount) || 0).toFixed(2) + '</td></tr>';
-  });
-  actItems.forEach(it => {
-    itemRows += '<tr><td>' + (it.description || 'Activity') + '</td><td>' + (it.pax || 1) + ' pax x ' + cur + ' ' + (parseFloat(it.rate) || 0).toFixed(2) + '</td><td class="right">' + cur + ' ' + (parseFloat(it.amount) || 0).toFixed(2) + '</td></tr>';
-  });
-  svcItems.forEach(it => {
-    itemRows += '<tr><td>' + (it.description || 'Service') + '</td><td>-</td><td class="right">' + cur + ' ' + (parseFloat(it.amount) || 0).toFixed(2) + '</td></tr>';
+  // Re-run the global categorization math matching the frontend converter
+  let roomsAmt = 0;
+  let extraBedAmt = 0;
+  let foodBevAmt = 0;
+  let laundryAmt = 0;
+
+  items.forEach(it => {
+     let desc = (it.description || '').toLowerCase();
+     let type = (it.type || '').toLowerCase();
+     
+     if (type === 'room' || desc.includes('room rent') || desc.includes('combined room')) {
+       roomsAmt += parseFloat(it.amount) || 0;
+     } else if (desc.includes('extra bed') || type === 'extrabed') {
+       extraBedAmt += parseFloat(it.amount) || 0;
+     } else if (desc.includes('laundry')) {
+       laundryAmt += parseFloat(it.amount) || 0;
+     } else {
+       foodBevAmt += parseFloat(it.amount) || 0;
+     }
   });
 
   const subTotal = parseFloat(data.subTotal) || 0;
-  const discount = parseFloat(data.discount) || 0;
+  const discountAmount = parseFloat(data.discount) || 0;
   const gstAmount = parseFloat(data.gstAmount) || 0;
-  const greenTaxAmount = parseFloat(data.greenTaxAmount) || 0;
-  const totalAmount = parseFloat(data.totalAmount) || 0;
+  const billAmount = parseFloat(data.totalAmount) || 0;
 
-  let totalsRows = '<tr><td colspan="2"><strong>Subtotal</strong></td><td class="right"><strong>' + cur + ' ' + subTotal.toFixed(2) + '</strong></td></tr>';
-  if (discount > 0) totalsRows += '<tr><td colspan="2">Discount</td><td class="right">- ' + cur + ' ' + discount.toFixed(2) + '</td></tr>';
-  if (data.gstEnabled) totalsRows += '<tr><td colspan="2">GST (' + (data.gstPercent || 0) + '%)</td><td class="right">' + cur + ' ' + gstAmount.toFixed(2) + '</td></tr>';
-  if (data.greenTaxEnabled) totalsRows += '<tr><td colspan="2">Green Tax</td><td class="right">' + cur + ' ' + greenTaxAmount.toFixed(2) + '</td></tr>';
-  totalsRows += '<tr class="total"><td colspan="2"><strong>TOTAL</strong></td><td class="right"><strong>' + cur + ' ' + totalAmount.toFixed(2) + '</strong></td></tr>';
+  let totalsRows = '<tr><td><strong>Subtotal</strong></td><td class="right"><strong>' + cur + ' ' + subTotal.toFixed(2) + '</strong></td></tr>';
+  if (discountAmount > 0) totalsRows += '<tr><td>Discount</td><td class="right">- ' + cur + ' ' + discountAmount.toFixed(2) + '</td></tr>';
+  
+  if (data.gstEnabled && gstAmount > 0) {
+      let halfGst = (gstAmount / 2).toFixed(2);
+      let halfPercent = ((parseFloat(data.gstPercent) || 0) / 2).toFixed(2);
+      totalsRows += '<tr><td>SGST (' + halfPercent + '%)</td><td class="right">' + cur + ' ' + halfGst + '</td></tr>';
+      totalsRows += '<tr><td>CGST (' + halfPercent + '%)</td><td class="right">' + cur + ' ' + halfGst + '</td></tr>';
+  } else if (data.gstEnabled) {
+      totalsRows += '<tr><td>GST (' + (data.gstPercent || 0) + '%)</td><td class="right">' + cur + ' ' + gstAmount.toFixed(2) + '</td></tr>';
+  }
 
-    let dateInfo = '<p><strong>Date:</strong> ' + (data.createdDate || '') + '</p><p><strong>Due Date:</strong> ' + (data.dueDate || '') + '</p><p><strong>Status:</strong> ' + (data.status || '') + '</p>';
+  totalsRows += '<tr class="total"><td><strong>Bill Amount</strong></td><td class="right"><strong>' + cur + ' ' + billAmount.toFixed(2) + '</strong></td></tr>';
+
+  let dateInfo = '<p><strong>Date:</strong> ' + (data.createdDate || '').split('T')[0] + '</p><p><strong>Status:</strong> ' + (data.status || '') + '</p>';
 
   return '<html><head><style>body{font-family:Arial,sans-serif;margin:20px;color:#333}' +
     '.doc-container{max-width:650px;margin:auto;border:1px solid #ddd;padding:30px;border-radius:4px}' +
@@ -3830,10 +3899,13 @@ function generateDocumentEmailHtml(type, data, settings) {
     '<p><strong>Guest:</strong> ' + (data.guestName || '') + '</p>' +
     '<p><strong>Email:</strong> ' + (data.email || '') + '</p>' +
     (data.phone ? '<p><strong>Phone:</strong> ' + data.phone + '</p>' : '') +
-    (data.customerTIN ? '<p><strong>Customer TIN:</strong> ' + data.customerTIN + '</p>' : '') +
     dateInfo +
-    '<table><tr><th>Description</th><th>Details</th><th class="right">Amount (' + cur + ')</th></tr>' +
-    itemRows + totalsRows + '</table>' +
+    '<table><tr><th>Category</th><th class="right">Amount (' + cur + ')</th></tr>' +
+    (roomsAmt > 0 ? '<tr><td>Room Rent</td><td class="right">' + cur + ' ' + roomsAmt.toFixed(2) + '</td></tr>' : '') +
+    (extraBedAmt > 0 ? '<tr><td>Extra Bed</td><td class="right">' + cur + ' ' + extraBedAmt.toFixed(2) + '</td></tr>' : '') +
+    (foodBevAmt > 0 ? '<tr><td>Food & Beverage</td><td class="right">' + cur + ' ' + foodBevAmt.toFixed(2) + '</td></tr>' : '') +
+    (laundryAmt > 0 ? '<tr><td>Laundry</td><td class="right">' + cur + ' ' + laundryAmt.toFixed(2) + '</td></tr>' : '') +
+    totalsRows + '</table>' +
     (data.notes ? '<p style="font-style:italic;color:#666">Notes: ' + data.notes + '</p>' : '') +
     '<div class="footer"><p>Thank you for choosing ' + hotelName + '!</p></div>' +
     '</div></body></html>';
@@ -3907,274 +3979,6 @@ function savePdfToDrive(base64PdfData, fileName, recordId, type) {
   }
 }
 
-/***************************************************
- * BUDGET MANAGEMENT
- ***************************************************/
-function getAllBudgets() {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(BUDGETS_SHEET_NAME);
-    if (!sheet || sheet.getLastRow() <= 1) return [];
-    const data = sheet.getDataRange().getValues();
-    let records = [];
-    for (let i = 1; i < data.length; i++) {
-      let row = data[i];
-      records.push({
-        rowIndex: i + 1,
-        budgetId: (row[BDG_ID_COL] || '').toString(),
-        month: parseInt(row[BDG_MONTH_COL]) || 0,
-        year: parseInt(row[BDG_YEAR_COL]) || 0,
-        budgetAmount: parseFloat(row[BDG_AMOUNT_COL]) || 0,
-        totalSpent: parseFloat(row[BDG_SPENT_COL]) || 0,
-        remaining: parseFloat(row[BDG_REMAINING_COL]) || 0,
-        setBy: (row[BDG_SET_BY_COL] || '').toString(),
-        createdAt: (row[BDG_CREATED_AT_COL] || '').toString(),
-        updatedAt: (row[BDG_UPDATED_AT_COL] || '').toString()
-      });
-    }
-    return records;
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-function setBudget(month, year, budgetAmount, user) {
-  try {
-    month = parseInt(month);
-    year = parseInt(year);
-    budgetAmount = parseFloat(budgetAmount);
-    if (!month || !year || isNaN(budgetAmount) || budgetAmount < 0) {
-      return { success: false, message: "Valid month, year, and budget amount are required." };
-    }
-
-    const ss = SpreadsheetApp.openById(SS_ID);
-    const sheet = ss.getSheetByName(BUDGETS_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Budgets sheet not found." };
-
-    const now = new Date().toISOString();
-    const budgetId = 'BDG-' + year + '-' + String(month).padStart(2, '0');
-    const spent = calculateMonthlyExpenses(month, year);
-    const remaining = budgetAmount - spent;
-
-    // Check if budget already exists for this month/year
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (parseInt(data[i][BDG_MONTH_COL]) === month && parseInt(data[i][BDG_YEAR_COL]) === year) {
-        sheet.getRange(i + 1, 1, 1, 9).setValues([[
-          budgetId, month, year, budgetAmount, spent, remaining, user || '', data[i][BDG_CREATED_AT_COL], now
-        ]]);
-        return { success: true, message: "Budget updated for " + month + "/" + year + "!" };
-      }
-    }
-
-    // Create new budget
-    sheet.appendRow([budgetId, month, year, budgetAmount, spent, remaining, user || '', now, now]);
-    return { success: true, message: "Budget set for " + month + "/" + year + "!" };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function getBudgetForMonth(month, year) {
-  try {
-    month = parseInt(month);
-    year = parseInt(year);
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(BUDGETS_SHEET_NAME);
-    if (!sheet || sheet.getLastRow() <= 1) return null;
-
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (parseInt(data[i][BDG_MONTH_COL]) === month && parseInt(data[i][BDG_YEAR_COL]) === year) {
-        // Recalculate spent
-        const spent = calculateMonthlyExpenses(month, year);
-        const budgetAmount = parseFloat(data[i][BDG_AMOUNT_COL]) || 0;
-        const remaining = budgetAmount - spent;
-
-        // Update spent/remaining in sheet
-        sheet.getRange(i + 1, BDG_SPENT_COL + 1).setValue(spent);
-        sheet.getRange(i + 1, BDG_REMAINING_COL + 1).setValue(remaining);
-        sheet.getRange(i + 1, BDG_UPDATED_AT_COL + 1).setValue(new Date().toISOString());
-
-        return {
-          budgetId: (data[i][BDG_ID_COL] || '').toString(),
-          month: month, year: year,
-          budgetAmount: budgetAmount,
-          totalSpent: spent,
-          remaining: remaining
-        };
-      }
-    }
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
-
-function calculateMonthlyExpenses(month, year) {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!sheet || sheet.getLastRow() <= 1) return 0;
-    const data = sheet.getDataRange().getValues();
-    let total = 0;
-    for (let i = 1; i < data.length; i++) {
-      const type = (data[i][FIN_TYPE_COL] || '').toString();
-      if (type !== 'Expense') continue;
-      const dateStr = (data[i][FIN_DATE_COL] || '').toString();
-      if (!dateStr) continue;
-      const d = new Date(dateStr);
-      if ((d.getMonth() + 1) === month && d.getFullYear() === year) {
-        total += parseFloat(data[i][FIN_AMOUNT_COL]) || 0;
-      }
-    }
-    return Math.round(total * 100) / 100;
-  } catch (err) {
-    return 0;
-  }
-}
-
-/***************************************************
- * CATEGORIES MANAGEMENT
- ***************************************************/
-function getAllCategories() {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CATEGORIES_SHEET_NAME);
-    if (!sheet || sheet.getLastRow() <= 1) return [];
-    const data = sheet.getDataRange().getValues();
-    let records = [];
-    for (let i = 1; i < data.length; i++) {
-      let row = data[i];
-      records.push({
-        rowIndex: i + 1,
-        categoryId: (row[CAT_ID_COL] || '').toString(),
-        name: (row[CAT_NAME_COL] || '').toString(),
-        type: (row[CAT_TYPE_COL] || '').toString(),
-        isDefault: row[CAT_IS_DEFAULT_COL] === true || row[CAT_IS_DEFAULT_COL] === 'true',
-        createdBy: (row[CAT_CREATED_BY_COL] || '').toString(),
-        createdAt: (row[CAT_CREATED_AT_COL] || '').toString()
-      });
-    }
-    return records;
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-function addCategory(name, type, user) {
-  try {
-    if (!name || !type) return { success: false, message: "Category name and type are required." };
-    if (type !== 'Income' && type !== 'Expense') return { success: false, message: "Type must be 'Income' or 'Expense'." };
-
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CATEGORIES_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Categories sheet not found." };
-
-    // Check for duplicate
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if ((data[i][CAT_NAME_COL] || '').toString().toLowerCase() === name.toLowerCase() &&
-          (data[i][CAT_TYPE_COL] || '').toString() === type) {
-        return { success: false, message: "Category '" + name + "' already exists for " + type + "." };
-      }
-    }
-
-    const id = 'CAT-' + new Date().getTime();
-    sheet.appendRow([id, name.trim(), type, false, user || '', new Date().toISOString()]);
-    return { success: true, message: "Category '" + name + "' added successfully!" };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-function deleteCategory(rowIndex) {
-  try {
-    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CATEGORIES_SHEET_NAME);
-    if (!sheet) return { success: false, message: "Categories sheet not found." };
-    if (rowIndex <= 1) return { success: false, message: "Cannot delete header row." };
-
-    const isDefault = sheet.getRange(rowIndex, CAT_IS_DEFAULT_COL + 1).getValue();
-    if (isDefault === true || isDefault === 'true') {
-      return { success: false, message: "Cannot delete default categories." };
-    }
-
-    sheet.deleteRow(rowIndex);
-    return { success: true, message: "Category deleted successfully." };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
-/***************************************************
- * MONTHLY REPORTS
- ***************************************************/
-function getMonthlyReport(month, year, reportType) {
-  try {
-    month = parseInt(month);
-    year = parseInt(year);
-    if (!month || !year) return { success: false, message: "Month and year are required." };
-
-    const finSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(FINANCE_SHEET_NAME);
-    if (!finSheet || finSheet.getLastRow() <= 1) {
-      return { success: true, data: { records: [], categoryTotals: {}, totalIncome: 0, totalExpenses: 0, net: 0, budget: null } };
-    }
-
-    const finData = finSheet.getDataRange().getValues();
-    let records = [];
-    let categoryTotals = {};
-    let totalIncome = 0;
-    let totalExpenses = 0;
-
-    for (let i = 1; i < finData.length; i++) {
-      const dateStr = (finData[i][FIN_DATE_COL] || '').toString();
-      if (!dateStr) continue;
-      const d = new Date(dateStr);
-      if ((d.getMonth() + 1) !== month || d.getFullYear() !== year) continue;
-
-      const type = (finData[i][FIN_TYPE_COL] || '').toString();
-      const amount = parseFloat(finData[i][FIN_AMOUNT_COL]) || 0;
-      const category = (finData[i][FIN_CATEGORY_COL] || 'Uncategorized').toString();
-
-      // Filter by report type
-      if (reportType === 'income' && type !== 'Income') continue;
-      if (reportType === 'expense' && type !== 'Expense') continue;
-
-      if (type === 'Income') totalIncome += amount;
-      if (type === 'Expense') totalExpenses += amount;
-
-      // Category totals
-      const catKey = type + ':' + category;
-      if (!categoryTotals[catKey]) categoryTotals[catKey] = { category: category, type: type, total: 0 };
-      categoryTotals[catKey].total += amount;
-
-      records.push({
-        id: (finData[i][FIN_ID_COL] || '').toString(),
-        date: dateStr,
-        type: type,
-        description: (finData[i][FIN_DESC_COL] || '').toString(),
-        shopSource: (finData[i][FIN_SHOP_COL] || '').toString(),
-        amount: amount,
-        category: category,
-        currency: (finData[i][FIN_CURRENCY_COL] || 'MVR').toString(),
-        enteredBy: (finData[i][FIN_ENTERED_BY_COL] || '').toString()
-      });
-    }
-
-    // Get budget for this month
-    const budget = getBudgetForMonth(month, year);
-
-    return {
-      success: true,
-      data: {
-        records: records,
-        categoryTotals: Object.values(categoryTotals),
-        totalIncome: Math.round(totalIncome * 100) / 100,
-        totalExpenses: Math.round(totalExpenses * 100) / 100,
-        net: Math.round((totalIncome - totalExpenses) * 100) / 100,
-        budget: budget
-      }
-    };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
-}
-
 
 /***************************************************
  * SETUP DEMO DATA
@@ -4210,39 +4014,27 @@ function manageSheetsDataStructure(configArray) {
 
     // Set/Update headers
     if (config.headers && config.headers.length > 0) {
-      const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 1).getValues()[0];
+      // Clear the entire first row to strictly synchronize headers
+      const maxCols = sheet.getMaxColumns();
+      if (maxCols > 0) {
+        sheet.getRange(1, 1, 1, maxCols).clearContent();
+      }
+      
+      // Write the exact config.headers array into row 1
       const newHeaders = [...config.headers];
       
-      // If the sheet is empty, just append the headers
-      if (sheet.getLastRow() === 0) {
-        sheet.appendRow(newHeaders);
-      } else {
-        // Find missing headers and append them to the right
-        let colsToAdd = [];
-        for (let i = 0; i < newHeaders.length; i++) {
-          if (currentHeaders.indexOf(newHeaders[i]) === -1) {
-            colsToAdd.push(newHeaders[i]);
-          }
-        }
-        if (colsToAdd.length > 0) {
-          const startCol = currentHeaders.length + 1;
-          // Clean up empty strings from currentHeaders length if they exist
-          let actualStartCol = 1;
-          for(let k=currentHeaders.length-1; k>=0; k--) {
-            if(currentHeaders[k] !== "") {
-              actualStartCol = k + 2;
-              break;
-            }
-          }
-          // Ensure the sheet has enough columns
-          const requiredColumns = actualStartCol + colsToAdd.length - 1;
-          if (sheet.getMaxColumns() < requiredColumns) {
-            sheet.insertColumnsAfter(sheet.getMaxColumns(), requiredColumns - sheet.getMaxColumns());
-          }
-          sheet.getRange(1, actualStartCol, 1, colsToAdd.length).setValues([colsToAdd]);
-        }
+      // Ensure the sheet has enough columns for the new headers
+      if (maxCols < newHeaders.length) {
+        sheet.insertColumnsAfter(maxCols, newHeaders.length - maxCols);
       }
-      sheet.getRange(1, 1, 1, sheet.getLastColumn()).setFontWeight("bold");
+      
+      const headerRange = sheet.getRange(1, 1, 1, newHeaders.length);
+      headerRange.setValues([newHeaders]);
+      
+      // Re-apply formatting
+      headerRange.setFontWeight("bold");
+      headerRange.setFontColor("#ffffff");
+      headerRange.setBackground("#001f3f");
     }
   }
 }
@@ -4252,10 +4044,10 @@ function initDataStructure() {
     { sheetName: LOGIN_SHEET_NAME, headers: ["Username", "Password", "Role"] },
     { sheetName: ROOMS_SHEET_NAME, headers: ["Room No", "Room Type", "Room Rate", "Room Status"] },
     { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Extra Person", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount", "Discount Percent"] },
-    { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "GreenTaxEnabled", "GreenTaxPerNight", "GreenTaxPax", "GreenTaxNights", "GreenTaxAmount", "Discount", "TotalAmount", "Notes", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
-    { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "DefaultCurrency", "GSTDefaultPercent", "GreenTaxDefaultRate", "NextInvoiceNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
-    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date"] },
-    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Address", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Advance Paid", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
+    { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "Discount", "TotalAmount", "Notes", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
+    { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "GSTDefaultPercent", "NextInvoiceNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
+    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date", "Company Name", "GST Number"] },
+    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Room Pax Breakdown", "Advance Paid", "Payment Method", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
     { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "MealPeriod", "ItemName", "Quantity", "Rate", "TotalAmount", "Status", "BilledCheckInID", "AddedBy"] },
     { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] },
     { sheetName: MENU_SHEET_NAME, headers: ["ItemName", "FoodCategory", "DefaultPrice"] }
@@ -4263,240 +4055,97 @@ function initDataStructure() {
   manageSheetsDataStructure(config);
 }
 
-function setupDemoData() {
-  const ss = SpreadsheetApp.openById(SS_ID);
-  const sheetNames = [LOGIN_SHEET_NAME, ROOMS_SHEET_NAME, BOOKINGS_SHEET_NAME, FINANCE_SHEET_NAME, INVOICES_SHEET_NAME, SETTINGS_SHEET_NAME, BUDGETS_SHEET_NAME, CATEGORIES_SHEET_NAME, CUSTOMERS_SHEET_NAME, CHECKIN_SHEET_NAME, RESTAURANT_SHEET_NAME, STAY_SEGMENTS_SHEET_NAME, MENU_SHEET_NAME];
-
-  // --- 1. Delete all existing sheets ---
-  let tempSheet = ss.insertSheet("_TEMP_SETUP_");
-  const allSheets = ss.getSheets();
-  for (let i = 0; i < allSheets.length; i++) {
-    if (allSheets[i].getName() !== "_TEMP_SETUP_") {
-      ss.deleteSheet(allSheets[i]);
-    }
-  }
-
-  // --- 2. Create all sheets with headers via new manager function ---
-  initDataStructure();
-
-  const loginSheet = ss.getSheetByName(LOGIN_SHEET_NAME);
-  const roomsSheet = ss.getSheetByName(ROOMS_SHEET_NAME);
-  const bookingsSheet = ss.getSheetByName(BOOKINGS_SHEET_NAME);
-  const financeSheet = ss.getSheetByName(FINANCE_SHEET_NAME);
-  const invoicesSheet = ss.getSheetByName(INVOICES_SHEET_NAME);
-  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
-  const budgetsSheet = ss.getSheetByName(BUDGETS_SHEET_NAME);
-  const categoriesSheet = ss.getSheetByName(CATEGORIES_SHEET_NAME);
-  const customersSheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
-  const checkinSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
-  const restaurantSheet = ss.getSheetByName(RESTAURANT_SHEET_NAME);
-  const staySegmentsSheet = ss.getSheetByName(STAY_SEGMENTS_SHEET_NAME);
-  const menuSheet = ss.getSheetByName(MENU_SHEET_NAME);
-
-  // SETTINGS (1 data row after headers)
-  settingsSheet.appendRow(["Demo Hotel", "Demo Location, Maldives", "+960-0000000", "info@demo.com", "", "", "", "MVR", 5, 6, 5, "", "", 4, 1]);
-
-  // Delete temp sheet
-  ss.deleteSheet(tempSheet);
-
-  // --- 3. Populate demo data ---
-
-  // ===== LOGIN (3 users) =====
-  loginSheet.appendRow(["admin@demo.com", "admin123", "admin"]);
-  loginSheet.appendRow(["user1@demo.com", "user123", "user"]);
-  loginSheet.appendRow(["user2@demo.com", "user123", "user"]);
-  loginSheet.appendRow(["client1@demo.com", "client123", "user"]);
-  loginSheet.appendRow(["client2@demo.com", "client123", "user"]);
-
-  // ===== ROOMS (10 rooms) =====
-  const roomsData = [
-    ["101", "Standard", 800,  "Available"],
-    ["102", "Standard", 800,  "Booked"],
-    ["103", "Deluxe",   1200, "Available"],
-    ["104", "Deluxe",   1200, "Booked"],
-    ["105", "Suite",    2500, "Available"],
-    ["106", "Suite",    2500, "Booked"],
-    ["107", "Family",   1800, "Booked"],
-    ["108", "Single",   500,  "Reserved"],
-    ["109", "Double",   1000, "Maintenance"],
-    ["110", "Family",   1800, "Booked"]
-  ];
-  roomsSheet.getRange(2, 1, roomsData.length, 4).setValues(roomsData);
-
-  // ===== BOOKINGS (9 bookings - varied dates/statuses for calendar testing, 25 columns) =====
-  const bookingsData = [
-    ["TKT-20260201-001", "104", "Demo Guest 1", "+960-1000001", "user1@demo.com",   "2026-02-01T14:00:00Z", "2026-02-04T12:00:00Z", "Checked In",  1200, 0,   60,  "Cash",        3660,  "Unpaid",  0,    "14:00", "12:00", "Including Breakfast", 0, 1, "CHK-0001"],
-    ["TKT-20260203-002", "107", "Demo Guest 2", "+960-1000002", "user2@demo.com",   "2026-02-03T14:00:00Z", "2026-02-06T12:00:00Z", "Booked",      1800, 100, 85,  "Card",        5385,  "Partial", 3000, "14:00", "12:00", "Including Breakfast and Dinner", 3000, 1, ""],
-    ["TKT-20260110-003", "101", "Demo Guest 3", "+960-1000003", "guest3@demo.com",  "2026-01-10T14:00:00Z", "2026-01-12T12:00:00Z", "Checked Out", 800,  0,   32,  "Cash",        1632,  "Paid",    1632, "14:00", "12:00", "None", 0, 1, ""],
-    ["TKT-20260115-004", "103", "Demo Guest 4", "+960-1000004", "guest4@demo.com",  "2026-01-15T14:00:00Z", "2026-01-18T12:00:00Z", "Checked Out", 1200, 50,  71,  "Bank Transfer", 3621,  "Paid",    3621, "14:00", "12:00", "Including Breakfast", 1000, 1, ""],
-    ["TKT-20260120-005", "105", "Demo Guest 5", "+960-1000005", "guest5@demo.com",  "2026-01-20T14:00:00Z", "2026-01-23T12:00:00Z", "Checked Out", 2500, 200, 145, "Cash",        7445,  "Paid",    7445, "14:00", "12:00", "None", 2000, 1, ""],
-    ["TKT-20260210-006", "108", "Demo Guest 6", "+960-1000006", "user1@demo.com",   "2026-02-10T14:00:00Z", "2026-02-13T12:00:00Z", "Booked",      500,  0,   25,  "Card",        1525,  "Unpaid",  0,    "14:00", "12:00", "None", 0, 1, ""],
-    ["TKT-20260215-007", "106", "Demo Guest 7", "+960-1000007", "user2@demo.com",   "2026-02-15T14:00:00Z", "2026-02-18T12:00:00Z", "Booked",      2500, 0,   125, "Card",        7625,  "Paid",    7625, "14:00", "12:00", "Including Breakfast", 5000, 1, ""],
-    ["TKT-20260220-008", "110", "Demo Guest 8", "+960-1000008", "guest8@demo.com",  "2026-02-20T14:00:00Z", "2026-02-25T12:00:00Z", "Checked In",  1800, 200, 80,  "Bank Transfer", 8880,  "Unpaid",  0,    "14:00", "12:00", "Including Breakfast and Dinner", 0, 1, "CHK-0002"],
-    ["TKT-20260225-009", "102", "Demo Guest 9", "+960-1000009", "guest9@demo.com",  "2026-02-25T14:00:00Z", "2026-02-28T12:00:00Z", "Checked In",  800,  0,   48,  "Cash",        2448,  "Unpaid",  0,    "14:00", "12:00", "None", 0, 1, "CHK-0003"]
-  ];
-  bookingsSheet.getRange(2, 1, bookingsData.length, 25).setValues(bookingsData);
-
-  // ===== INVOICES (3 invoices) =====
-  const invItems1 = JSON.stringify([
-    { type: "room", roomType: "Deluxe", quantity: 2, nights: 3, rate: 1200, amount: 7200 },
-    { type: "activity", description: "Snorkeling Trip", pax: 4, rate: 150, amount: 600 },
-    { type: "service", description: "Airport Transfer", amount: 150 }
-  ]);
-  const invItems2 = JSON.stringify([
-    { type: "room", roomType: "Suite", quantity: 1, nights: 5, rate: 2500, amount: 12500 },
-    { type: "service", description: "Spa Package", amount: 500 }
-  ]);
-  const invItems3 = JSON.stringify([
-    { type: "room", roomType: "Standard", quantity: 1, nights: 2, rate: 800, amount: 1600 },
-    { type: "service", description: "Laundry", amount: 50 }
-  ]);
-
-  const invItems4 = JSON.stringify([
-    { type: "room", roomType: "Family", quantity: 1, nights: 4, rate: 1800, amount: 7200 },
-    { type: "service", description: "Airport Transfer", amount: 150 }
-  ]);
-
-  const invoicesData = [
-    ["INV-0001", "Demo Guest 1", "+960-1000001", "user1@demo.com", "TIN-00001", "MVR", "2026-02-01T10:00:00Z", "2026-03-01T23:59:59Z", "Paid", invItems1, 7950, true, 16, 1272, true, 6, 4, 3, 72, 0, 9294, "Deluxe demo package", "", "", "admin@demo.com", "2026-02-01T10:00:00Z"],
-    ["INV-0002", "Demo Guest 2", "+960-1000002", "user2@demo.com", "", "USD", "2026-02-05T11:00:00Z", "2026-02-15T23:59:59Z", "Sent", invItems2, 13000, true, 16, 2000, false, 6, 0, 0, 0, 500, 14500, "Demo suite package", "", "", "admin@demo.com", "2026-02-05T11:00:00Z"],
-    ["INV-0003", "Demo Guest 3", "+960-1000003", "guest3@demo.com", "TIN-00003", "MVR", "2026-02-10T09:00:00Z", "2026-03-10T23:59:59Z", "Draft", invItems3, 1650, true, 16, 264, true, 6, 1, 2, 12, 0, 1926, "Demo standard booking", "", "", "admin@demo.com", "2026-02-10T09:00:00Z"],
-    ["INV-0004", "Demo Guest 4", "+960-1000004", "guest4@demo.com", "", "MVR", "2026-01-20T10:00:00Z", "2026-02-01T23:59:59Z", "Sent", invItems4, 7350, true, 16, 1176, false, 6, 0, 0, 0, 0, 8526, "Demo overdue test", "", "", "admin@demo.com", "2026-01-20T10:00:00Z"]
-  ];
-  invoicesSheet.getRange(2, 1, invoicesData.length, 25).setValues(invoicesData);
-
-  // ===== FINANCE (13 records, 12 columns — includes linked invoice payment) =====
-  const financeData = [
-    ["FIN-20260101-001", "2026-01-12T10:00:00Z", "Income",  "Room Checkout - Demo Guest 3",  "Room 101",            1632,  1632,   "admin@demo.com", "2026-01-12T12:05:00Z", "Room Checkout",    "MVR", ""],
-    ["FIN-20260102-002", "2026-01-15T09:00:00Z", "Expense", "Electricity Bill - January",    "Demo Utility Co",     2800,  -1168,  "admin@demo.com", "2026-01-15T09:30:00Z", "Utilities",        "MVR", ""],
-    ["FIN-20260103-003", "2026-01-18T11:00:00Z", "Income",  "Room Checkout - Demo Guest 4",  "Room 103",            3621,  2453,   "admin@demo.com", "2026-01-18T12:00:00Z", "Room Checkout",    "MVR", ""],
-    ["FIN-20260104-004", "2026-01-20T14:00:00Z", "Expense", "Kitchen Supplies Restock",      "Demo Supplier A",     1500,  953,    "admin@demo.com", "2026-01-20T14:30:00Z", "Kitchen Supplies", "MVR", ""],
-    ["FIN-20260105-005", "2026-01-23T10:00:00Z", "Income",  "Room Checkout - Demo Guest 5",  "Room 105",            7445,  8398,   "admin@demo.com", "2026-01-23T10:15:00Z", "Room Checkout",    "MVR", ""],
-    ["FIN-20260106-006", "2026-01-25T08:00:00Z", "Expense", "Staff Salaries - January",      "Demo Payroll",        5000,  3398,   "admin@demo.com", "2026-01-25T08:00:00Z", "Staff Salaries",   "MVR", ""],
-    ["FIN-20260107-007", "2026-01-28T16:00:00Z", "Income",  "Restaurant Sales - Week 4",     "Demo Restaurant",     3200,  6598,   "admin@demo.com", "2026-01-28T16:00:00Z", "Restaurant",       "MVR", ""],
-    ["FIN-20260108-008", "2026-02-01T09:00:00Z", "Expense", "Water Bill - January",          "Demo Utility Co",     950,   5648,   "admin@demo.com", "2026-02-01T09:00:00Z", "Utilities",        "MVR", ""],
-    ["FIN-20260113-013", "2026-02-01T10:00:00Z", "Income",  "Payment for INV-0001",          "Demo Invoice Payment", 9294, 14942,  "admin@demo.com", "2026-02-01T10:05:00Z", "Invoice Payment",  "MVR", "INV-0001"],
-    ["FIN-20260109-009", "2026-02-03T11:00:00Z", "Income",  "Event Booking - Demo Conference","Demo Events Hall",    4500,  19442,  "admin@demo.com", "2026-02-03T11:00:00Z", "Events",           "MVR", ""],
-    ["FIN-20260110-010", "2026-02-05T14:00:00Z", "Expense", "Laundry Service Supplies",      "Demo Supplier B",     800,   18642,  "admin@demo.com", "2026-02-05T14:30:00Z", "Laundry",          "MVR", ""],
-    ["FIN-20260111-011", "2026-02-08T10:00:00Z", "Income",  "Spa Services - Week 1 Feb",     "Demo Spa",            2100,  20742,  "admin@demo.com", "2026-02-08T10:00:00Z", "Spa",              "MVR", ""],
-    ["FIN-20260112-012", "2026-02-10T13:00:00Z", "Expense", "Maintenance - AC Repair",       "Demo Maintenance Co", 1350,  19392,  "admin@demo.com", "2026-02-10T13:00:00Z", "Maintenance",      "MVR", ""]
-  ];
-  financeSheet.getRange(2, 1, financeData.length, 12).setValues(financeData);
-
-  // ===== CATEGORIES (default categories) =====
-  const now = new Date().toISOString();
-  const defaultCategories = [
-    ["CAT-EXP-001", "Utilities",        "Expense", true, "system", now],
-    ["CAT-EXP-002", "Kitchen Supplies",  "Expense", true, "system", now],
-    ["CAT-EXP-003", "Staff Salaries",    "Expense", true, "system", now],
-    ["CAT-EXP-004", "Maintenance",       "Expense", true, "system", now],
-    ["CAT-EXP-005", "Laundry",           "Expense", true, "system", now],
-    ["CAT-EXP-006", "Marketing",         "Expense", true, "system", now],
-    ["CAT-EXP-007", "Miscellaneous",     "Expense", true, "system", now],
-    ["CAT-INC-001", "Room Checkout",     "Income",  true, "system", now],
-    ["CAT-INC-002", "Restaurant",        "Income",  true, "system", now],
-    ["CAT-INC-003", "Events",            "Income",  true, "system", now],
-    ["CAT-INC-004", "Spa",               "Income",  true, "system", now],
-    ["CAT-INC-005", "Excursions",        "Income",  true, "system", now],
-    ["CAT-INC-006", "Fishing Trips",     "Income",  true, "system", now],
-    ["CAT-INC-007", "Other Income",      "Income",  true, "system", now],
-    ["CAT-INC-008", "Invoice Payment",   "Income",  true, "system", now]
-  ];
-  categoriesSheet.getRange(2, 1, defaultCategories.length, 6).setValues(defaultCategories);
-
-  // ===== BUDGETS (current month) =====
-  const nowDate = new Date();
-  budgetsSheet.appendRow([
-    "BDG-" + nowDate.getFullYear() + "-" + String(nowDate.getMonth() + 1).padStart(2, '0'),
-    nowDate.getMonth() + 1,
-    nowDate.getFullYear(),
-    50000,
-    3100,
-    46900,
-    "admin@demo.com",
-    now,
-    now
-  ]);
-
-  // ===== CUSTOMERS (6 demo customers) =====
-  const customersData = [
-    ["CUST-000001", "Demo Guest 1",  "+960-1000001", "user1@demo.com",    "Demo City A", "Single",  "VIP guest",        now, "user1@demo.com"],
-    ["CUST-000002", "Demo Guest 2",  "+960-1000002", "user2@demo.com",    "Demo City B", "Married", "Family traveller", now, "user2@demo.com"],
-    ["CUST-000003", "Demo Guest 3",  "+960-1000003", "guest3@demo.com",   "Demo City C", "Single",  "Regular customer", now, "guest3@demo.com"],
-    ["CUST-000004", "Demo Client 1", "+960-2000001", "client1@demo.com",  "Demo City D", "Married", "Corporate client", now, "client1@demo.com"],
-    ["CUST-000005", "Demo Client 2", "+960-2000002", "client2@demo.com",  "Demo City E", "Single",  "Travel agency",    now, "client2@demo.com"],
-    ["CUST-000006", "Walk-in Guest", "+960-3000001", "",                  "Demo City F", "Single",  "Walk-in",          now, ""]
-  ];
-  customersSheet.getRange(2, 1, customersData.length, 9).setValues(customersData);
-
-  // ===== CHECKIN (3 active check-ins linked to demo bookings) =====
-  const demoNow = new Date().toISOString();
-  const checkinData = [
-    ["CHK-0001", "TKT-20260201-001", "Demo Guest 1", "", "", "", "+960-1000001", "user1@demo.com",  "Demo City A", "Leisure",  "2026-02-01T14:00:00Z", "14:00", "2026-02-04T12:00:00Z", "12:00", "104", "Deluxe",   1, 2, 0, 0, "Including Breakfast",           "Excluding", "No", 0, "Individual", 0, "Active", demoNow],
-    ["CHK-0002", "TKT-20260220-008", "Demo Guest 8", "", "", "", "+960-1000008", "guest8@demo.com", "Demo City A", "Leisure",  "2026-02-20T14:00:00Z", "14:00", "2026-02-25T12:00:00Z", "12:00", "110", "Family",   1, 4, 0, 2, "Including Breakfast and Dinner", "Excluding", "No", 0, "Individual", 0, "Active", demoNow],
-    ["CHK-0003", "TKT-20260225-009", "Demo Guest 9", "", "", "", "+960-1000009", "guest9@demo.com", "Demo City C", "Business", "2026-02-25T14:00:00Z", "14:00", "2026-02-28T12:00:00Z", "12:00", "102", "Standard", 1, 1, 0, 0, "None",                          "Excluding", "No", 0, "Individual", 0, "Active", demoNow]
-  ];
-  checkinSheet.getRange(2, 1, checkinData.length, 28).setValues(checkinData);
-
-  // ===== RESTAURANT (4 demo orders for active check-in rooms) =====
-  const restaurantData = [
-    ["ORD-0001", "104", "CHK-0001", "2026-02-01", "FoodBeverage", "Lunch for 2",         250, "Active", demoNow],
-    ["ORD-0002", "104", "CHK-0001", "2026-02-02", "Laundry",      "2 shirts, 1 trouser", 150, "Active", demoNow],
-    ["ORD-0003", "110", "CHK-0002", "2026-02-21", "FoodBeverage", "Dinner for 4",        600, "Active", demoNow],
-    ["ORD-0004", "110", "CHK-0002", "2026-02-22", "ExtraBed",     "Extra mattress",      500, "Active", demoNow]
-  ];
-  restaurantSheet.getRange(2, 1, restaurantData.length, 9).setValues(restaurantData);
-
-  // ===== MENU (5 demo items) =====
-  const menuData = [
-    ["Paneer Tikka", "Starter", 150],
-    ["Butter Naan", "Roti/Rice", 40],
-    ["Mix Veg Curry", "Veg", 220],
-    ["Chicken Masala", "Non Veg", 350],
-    ["Tandoori Chicken", "Tandoori", 450]
-  ];
-  menuSheet.getRange(2, 1, menuData.length, 3).setValues(menuData);
-
-  // --- 4. Format header rows ---
-  [loginSheet, roomsSheet, bookingsSheet, financeSheet, invoicesSheet, settingsSheet, budgetsSheet, categoriesSheet, customersSheet, checkinSheet, restaurantSheet, staySegmentsSheet, menuSheet].forEach(function(sheet) {
-    const lastCol = sheet.getLastColumn();
-    if (lastCol > 0) {
-      const headerRange = sheet.getRange(1, 1, 1, lastCol);
-      headerRange.setFontWeight("bold");
-      headerRange.setBackground("#001f3f");
-      headerRange.setFontColor("#ffffff");
-      sheet.setFrozenRows(1);
-    }
-  });
-
-  SpreadsheetApp.getUi().alert("Demo data setup complete!\n\nLogin credentials:\n• admin@demo.com / admin123 (Admin)\n• user1@demo.com / user123 (User)\n• user2@demo.com / user123 (User)\n• client1@demo.com / client123 (Client)\n• client2@demo.com / client123 (Client)\n\nSheets created: " + sheetNames.join(", ") + "\n\nNew sheets added: CheckIn, Restaurant");
-}
-
 function getAllMenuItems() {
   try {
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(MENU_SHEET_NAME);
     if (!sheet || sheet.getLastRow() < 2) return [];
-    
+
     const data = sheet.getDataRange().getValues();
     const items = [];
-    
+
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       const itemName = (row[MENU_ITEM_NAME_COL] || "").toString().trim();
       if (itemName) {
         items.push({
+          rowIndex: i + 1,
           itemName: itemName,
           foodCategory: (row[MENU_CATEGORY_COL] || "").toString().trim(),
           defaultPrice: parseFloat(row[MENU_PRICE_COL]) || 0
         });
       }
     }
-    
+
     return items;
   } catch (e) {
     Logger.log("Error in getAllMenuItems: " + e.toString());
     return [];
+  }
+}
+
+function addMenuItem(itemName, category, price) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Menu sheet not found." };
+    
+    const data = sheet.getDataRange().getValues();
+    const cleanName = itemName.toString().trim();
+    for (let i = 1; i < data.length; i++) {
+      if ((data[i][MENU_ITEM_NAME_COL] || "").toString().trim().toLowerCase() === cleanName.toLowerCase()) {
+        return { success: false, message: "A menu item with this name already exists." };
+      }
+    }
+    
+    sheet.appendRow([cleanName, category || 'Lunch', parseFloat(price) || 0]);
+    SpreadsheetApp.flush();
+    return { success: true, message: "Menu item added successfully." };
+  } catch (e) {
+    Logger.log("Error in addMenuItem: " + e.toString());
+    return { success: false, message: e.message };
+  }
+}
+
+function updateMenuItem(rowIndex, itemName, category, price) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Menu sheet not found." };
+    if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
+    
+    const data = sheet.getDataRange().getValues();
+    const cleanName = itemName.toString().trim();
+    
+    // Check duplicates, excluding the current row
+    for (let i = 1; i < data.length; i++) {
+      if ((i + 1) !== rowIndex && (data[i][MENU_ITEM_NAME_COL] || "").toString().trim().toLowerCase() === cleanName.toLowerCase()) {
+        return { success: false, message: "Another menu item with this name already exists." };
+      }
+    }
+    
+    sheet.getRange(rowIndex, 1, 1, 3).setValues([[cleanName, category || 'Lunch', parseFloat(price) || 0]]);
+    SpreadsheetApp.flush();
+    return { success: true, message: "Menu item updated successfully." };
+  } catch (e) {
+    Logger.log("Error in updateMenuItem: " + e.toString());
+    return { success: false, message: e.message };
+  }
+}
+
+function deleteMenuItem(rowIndex) {
+  try {
+    const ss = SpreadsheetApp.openById(SS_ID);
+    const sheet = ss.getSheetByName(MENU_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Menu sheet not found." };
+    if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
+    
+    sheet.deleteRow(rowIndex);
+    SpreadsheetApp.flush();
+    return { success: true, message: "Menu item deleted successfully." };
+  } catch (e) {
+    Logger.log("Error in deleteMenuItem: " + e.toString());
+    return { success: false, message: e.message };
   }
 }
 
@@ -4505,14 +4154,14 @@ function addMidStayAdvance(checkInId, additionalAmount, paymentMode, user) {
     const ss = SpreadsheetApp.openById(SS_ID);
     const ciSheet = ss.getSheetByName(CHECKIN_SHEET_NAME);
     if (!ciSheet) return { success: false, message: "Check-In sheet not found." };
-    
+
     const amt = parseFloat(additionalAmount);
     if (isNaN(amt) || amt <= 0) return { success: false, message: "Invalid amount." };
 
     const data = ciSheet.getDataRange().getValues();
     let rowIndex = -1;
     let currentAdvance = 0;
-    
+
     for (let i = 1; i < data.length; i++) {
       if ((data[i][CI_ID_COL] || '').toString() === checkInId.toString()) {
         rowIndex = i + 1;
@@ -4520,27 +4169,13 @@ function addMidStayAdvance(checkInId, additionalAmount, paymentMode, user) {
         break;
       }
     }
-    
+
     if (rowIndex === -1) return { success: false, message: "Check-in ID not found." };
-    
+
     const newTotal = currentAdvance + amt;
     ciSheet.getRange(rowIndex, CI_ADVANCE_PAID_COL + 1).setValue(newTotal);
     SpreadsheetApp.flush();
-    
-    // Log to Finance
-    const financePayload = {
-      date: new Date().toISOString().slice(0, 10),
-      type: 'Income',
-      description: 'Mid-Stay Advance for ' + checkInId,
-      shopSource: 'Front Desk',
-      amount: amt,
-      category: 'Other Income',
-      currency: 'MVR', // Defaulting, you could pull from settings
-      enteredBy: user || 'System'
-    };
-    
-    addFinanceRecord(financePayload);
-    
+
     return { success: true, message: "Advance added successfully.", newTotal: newTotal };
   } catch (e) {
     Logger.log("Error in addMidStayAdvance: " + e.toString());
@@ -4588,7 +4223,7 @@ function updateStaySegment(checkInId, newRoomNos, newRate, newPax, switchDateTim
       checkInId,
       newRoomNos,
       parseFloat(newRate) || 0,
-      parseInt(newPax) || 1,
+      newPax.paxTotal || parseInt(newPax) || 1,
       now,
       ""
     ]);
@@ -4600,7 +4235,8 @@ function updateStaySegment(checkInId, newRoomNos, newRate, newPax, switchDateTim
       if ((checkInData[i][CI_ID_COL] || '').toString() === checkInId.toString()) {
         ciRowIndex = i + 1;
         checkInSheet.getRange(ciRowIndex, CI_ROOM_NUMBERS_COL + 1).setValue(newRoomNos);
-        checkInSheet.getRange(ciRowIndex, CI_PAX_COL + 1).setValue(newPax);
+        checkInSheet.getRange(ciRowIndex, CI_PAX_COL + 1).setValue(newPax.paxTotal || parseInt(newPax) || 1);
+        checkInSheet.getRange(ciRowIndex, CI_ROOM_PAX_BREAKDOWN_COL + 1).setValue(newPax.roomPaxBreakdown || '');
         // Also update number of rooms to reflect the new state
         const newRoomsArr = newRoomNos.split(',').map(r => r.trim()).filter(r => r);
         checkInSheet.getRange(ciRowIndex, CI_NUM_ROOMS_COL + 1).setValue(newRoomsArr.length);
