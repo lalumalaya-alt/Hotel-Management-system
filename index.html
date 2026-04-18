@@ -334,31 +334,11 @@
     .totals-section { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; }
     .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 15px; }
     .totals-row.grand-total { font-weight: 700; font-size: 18px; color: var(--navy-primary); border-top: 2px solid var(--navy-primary); padding-top: 12px; margin-top: 5px; }
-    .finance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-    .about-section { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .about-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, var(--navy-primary), var(--navy-light)); border-radius: 4px; color: white; }
-    .about-logo img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); object-fit: cover; }
-    .about-title h1 { font-size: 24px; margin-bottom: 8px; font-weight: 700; }
-    .about-dev { font-size: 14px; opacity: 0.9; }
-    .about-card { background: white; border-radius: 4px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid var(--navy-primary); }
-    .about-card h2 { color: var(--navy-primary); font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-    .about-card p { color: #555; line-height: 1.7; font-size: 15px; }
-    .about-features { list-style: none; padding: 0; }
-    .about-features li { padding: 12px 0; border-bottom: 1px solid #eee; color: #555; font-size: 15px; display: flex; align-items: flex-start; gap: 12px; }
-    .about-features li:last-child { border-bottom: none; }
-    .about-features li i { color: var(--success); margin-top: 3px; flex-shrink: 0; }
-    .about-table-wrapper { overflow-x: auto; margin: 15px 0; }
-    .about-roles-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .about-roles-table th, .about-roles-table td { padding: 12px 15px; text-align: center; border: 1px solid #e0e0e0; }
-    .about-roles-table th { background: var(--navy-primary); color: white; }
-    .about-roles-table th:first-child, .about-roles-table td:first-child { text-align: left; }
-    .about-roles-table td:first-child { font-weight: 500; background: #f8f9fa; }
     .role-badge { display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 12px; font-weight: 600; }
     .role-admin { background: #d4edda; color: #155724; }
     .role-user { background: #cce5ff; color: #004085; }
     .text-success { color: var(--success); }
     .text-danger { color: var(--danger); }
-    .about-developer { border-left-color: var(--navy-accent); }
     .developer-info { display: flex; gap: 20px; align-items: flex-start; }
     .developer-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--navy-primary); flex-shrink: 0; }
     .developer-details h3 { color: var(--navy-primary); font-size: 20px; margin-bottom: 5px; }
@@ -370,8 +350,6 @@
     .dev-link.whatsapp:hover { background: #128C7E; transform: translateY(-2px); }
     .dev-link.youtube { background: #FF0000; color: white; }
     .dev-link.youtube:hover { background: #CC0000; transform: translateY(-2px); }
-    .about-footer { text-align: center; padding: 25px; color: #666; font-size: 14px; }
-    .about-version { font-size: 12px; color: #999; margin-top: 5px; }
     .sidebar-overlay { display: none; }
     /* Bottom Nav Bar */
     .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy-primary); z-index: 997; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); padding: 0; }
@@ -398,7 +376,7 @@
       .dashboard-grid-9 .stat-card-value { font-size: 20px; }
       .dashboard-grid-4 { grid-template-columns: repeat(2, 1fr); }
       .dashboard-grid-3 { grid-template-columns: repeat(2, 1fr); }
-      .dashboard-grid-2, .finance-summary { grid-template-columns: 1fr; }
+      .dashboard-grid-2 { grid-template-columns: 1fr; }
       .modal { width: 95%; max-height: 85vh; margin-bottom: 65px; }
       .modal-body { padding: 20px; }
       .filters-grid { grid-template-columns: 1fr 1fr; }
@@ -412,7 +390,6 @@
       .line-item-row.activity-item > div:first-child { grid-column: 1 / -1; }
       .line-item-row.activity-item > button { grid-column: 1 / -1; justify-self: end; }
       .report-summary { grid-template-columns: repeat(2, 1fr); }
-      .about-header { flex-direction: column; text-align: center; }
       .developer-info { flex-direction: column; align-items: center; text-align: center; }
       .developer-links { justify-content: center; }
       .invoice-detail-grid { grid-template-columns: 1fr; }
@@ -621,88 +598,207 @@
     const statusCls = (s) => { if(!s) return ''; const m = {available:'status-available',booked:'status-booked',checkedout:'status-checkedout',maintenance:'status-maintenance',draft:'status-draft',sent:'status-sent',accepted:'status-accepted',expired:'status-expired',income:'status-income',expense:'status-expense',paid:'status-paid',partial:'status-partial',unpaid:'status-unpaid',overdue:'status-overdue',cancelled:'status-cancelled',converted:'status-converted',reserved:'status-reserved'}; return m[s.toLowerCase().replace(/\s+/g,'')] || ''; };
     const CURRENCIES = ['MVR','USD','EUR','GBP','AED','SAR','INR','PKR','LKR','BDT','JPY','CNY','AUD','CAD','SGD','MYR','THB','IDR','PHP','VND','KRW','TWD','HKD','NZD','CHF','SEK','NOK','DKK','PLN','CZK','HUF','RON','BGN','HRK','RUB','UAH','TRY','ZAR','EGP','NGN','KES','GHS','TZS','UGX','MAD','TND','QAR','KWD','BHD','OMR','JOD','ILS','BRL','ARS','CLP','COP','PEN','MXN','UYU','DOP','CRC','GTQ','PYG','BOB','VES','TTD','JMD','BBD','BZD','BMD','BSD','KYD','XCD','FJD','PGK','WST','TOP','VUV','SBD','MWK','ZMW','BWP','MUR','SCR','NPR','BTN','MMK','KHR','LAK','MNT','KZT','UZS','GEL','AMD','AZN','AFN','IQD','IRR','SYP','LBP','YER','ETB','RWF','BIF','DJF','ERN','SOS','SDG','LSL','SZL','NAD','GMD','SLL','GNF','LRD','CVE','STN','XOF','XAF','XPF','CDF','AOA','MZN','MDL','ALL','MKD','BAM','RSD','ISK','GIP','FKP','SHP','HTG','NIO','HNL','PAB','CUP'];
 
-    const downloadInvoicePdf = (inv) => {
-      const cur = inv.currency || APP_CURRENCY;
-      const fc = (a) => fmtCur(a, cur);
+    const convertInvoiceToHotelData = (inv, settings) => {
       const items = (() => { try { return JSON.parse(typeof inv.items === 'string' ? inv.items : '[]'); } catch(e) { return []; } })();
-      const roomItems = items.filter(i=>i.type==='room');
-      const actItems = items.filter(i=>i.type==='activity');
-      const svcItems = items.filter(i=>i.type==='service');
-      const tBody = [];
-      if(roomItems.length>0){
-        tBody.push([{text:'Room Type',style:'th'},{text:'Qty',style:'th',alignment:'center'},{text:'Nights',style:'th',alignment:'center'},{text:'Rate',style:'th',alignment:'right'},{text:'Amount ('+cur+')',style:'th',alignment:'right'}]);
-        roomItems.forEach(it=>{const qty=it.quantity||1;tBody.push([it.roomType||'Room',{text:String(qty),alignment:'center'},{text:String(it.nights),alignment:'center'},{text:fc(it.rate),alignment:'right'},{text:fc(it.amount),alignment:'right'}]);});
+      
+      const meta = items.find(i => i.isMeta) || {};
+      
+      let roomsAmt = 0;
+      let extraBedAmt = 0;
+      let foodBevAmt = 0;
+      let laundryAmt = 0;
+
+      items.forEach(it => {
+         if (it.isMeta) return; // Skip metadata block in itemization loops
+         let desc = (it.description || '').toLowerCase();
+         let type = (it.type || '').toLowerCase();
+         
+         if (type === 'room' || desc.includes('room rent') || desc.includes('combined room')) {
+           roomsAmt += parseFloat(it.amount) || 0;
+         } else if (desc.includes('extra bed') || type === 'extrabed') {
+           extraBedAmt += parseFloat(it.amount) || 0;
+         } else if (desc.includes('laundry')) {
+           laundryAmt += parseFloat(it.amount) || 0;
+         } else {
+           foodBevAmt += parseFloat(it.amount) || 0;
+         }
+      });
+
+      const dayTotal = roomsAmt + extraBedAmt + foodBevAmt + laundryAmt;
+      const subtotal = parseFloat(inv.subTotal) || 0;
+      const discountAmount = parseFloat(inv.discount) || 0;
+      const discountPercent = subtotal > 0 ? (discountAmount / subtotal) * 100 : 0;
+      const gstAmount = parseFloat(inv.gstAmount) || 0;
+      const gstPercent = parseFloat(inv.gstPercent) || 0;
+      
+      let gstType = 'None';
+      let sgstPercent = 0;
+      let cgstPercent = 0;
+      if (inv.gstEnabled && gstAmount > 0) {
+          gstType = 'Excluding';
+          sgstPercent = gstPercent / 2;
+          cgstPercent = gstPercent / 2;
+      } else if (inv.gstEnabled) {
+          gstType = 'Including';
       }
-      if(actItems.length>0){
-        if(tBody.length>0)tBody.push([{text:'',colSpan:5,border:[false,false,false,false]},{},{},{},{}]);
-        tBody.push([{text:'Activity',style:'th',colSpan:2},{},{text:'Pax',style:'th',alignment:'center'},{text:'Rate',style:'th',alignment:'right'},{text:'Amount ('+cur+')',style:'th',alignment:'right'}]);
-        actItems.forEach(it=>tBody.push([{text:it.description||'Activity',colSpan:2},{},{text:String(it.pax||1),alignment:'center'},{text:fc(it.rate),alignment:'right'},{text:fc(it.amount),alignment:'right'}]));
+
+      const syntheticDayByDay = [{
+         date: (inv.createdDate || new Date().toISOString()).split('T')[0],
+         rooms: roomsAmt,
+         extraBed: extraBedAmt,
+         foodBev: foodBevAmt,
+         laundry: laundryAmt,
+         dayTotal: dayTotal,
+         grandTotal: dayTotal
+      }];
+
+      return {
+         billNumber: inv.invoiceId,
+         checkInId: '',
+         hotelName: settings?.hotelName || 'Hill View Eco Retreat',
+         hotelAddress: settings?.hotelAddress || '',
+         hotelPhone: settings?.hotelPhone || '',
+         hotelEmail: settings?.hotelEmail || '',
+         hotelTIN: settings?.hotelTIN || '',
+         hotelLogo: settings?.logoUrl || '',
+         currency: inv.currency || 'MVR',
+         guestName: inv.guestName || '',
+         companyName: meta.companyName || '',
+         gstNumber: inv.customerTIN || '',
+         mobile: inv.phone || '',
+         email: inv.email || '',
+         address: meta.address || '',
+         city: meta.city || '',
+         state: meta.state || '',
+         pinCode: meta.pinCode || '',
+         country: meta.country || '',
+         checkInDate: meta.checkInDate || inv.createdDate || '',
+         checkInTime: meta.checkInTime || '',
+         checkOutDate: meta.checkOutDate || inv.dueDate || '',
+         checkOutTime: meta.checkOutTime || '',
+         roomNumbers: meta.roomNumbers || items.filter(i => i.type === 'room').map(i => i.roomType || 'Room').join(', '),
+         roomTypes: meta.roomTypes || '',
+         numberOfRooms: meta.numberOfRooms || items.filter(i => i.type === 'room').reduce((acc, it) => acc + (parseInt(it.quantity) || 1), 0),
+         pax: meta.pax || 1,
+         extraPerson: meta.extraPerson || 0,
+         foodPlan: meta.foodPlan || 'None',
+         billTo: meta.billTo || 'Individual',
+         nights: meta.nights || items.filter(i => i.type === 'room').reduce((acc, it) => acc + (parseInt(it.nights) || 0), 0) || 1,
+         dailyRoomRate: roomsAmt,
+         totalRoomRent: roomsAmt,
+         subtotal: subtotal,
+         discountPercent: discountPercent,
+         discountAmount: discountAmount,
+         gstType: gstType,
+         sgstPercent: sgstPercent,
+         cgstPercent: cgstPercent,
+         sgstAmount: gstAmount / 2,
+         cgstAmount: gstAmount / 2,
+         billAmount: parseFloat(inv.totalAmount) || 0,
+         advancePaid: meta.advancePaid || 0,
+         netAmount: parseFloat(inv.totalAmount) || 0,
+         paymentMode: meta.paymentMode || 'Cash',
+         amountPaid: meta.amountPaid || 0,
+         balance: meta.balance || parseFloat(inv.totalAmount) || 0,
+         dayByDay: meta.dayByDay || syntheticDayByDay,
+         notes: inv.notes || ''
+      };
+    };
+
+    const planLabel=(fp)=>{if(!fp||fp==='None')return'EP';if(fp.indexOf('Dinner')!==-1)return'MAP';return'CP';};
+    const numToWords=(num)=>{
+      if(!num||num===0)return'Zero';
+      const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+      const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+      num=Math.round(Math.abs(num));
+      const w=(n)=>{if(n<20)return ones[n];if(n<100)return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:'');if(n<1000)return ones[Math.floor(n/100)]+' Hundred'+(n%100?' '+w(n%100):'');if(n<100000)return w(Math.floor(n/1000))+' Thousand'+(n%1000?' '+w(n%1000):'');if(n<10000000)return w(Math.floor(n/100000))+' Lakh'+(n%100000?' '+w(n%100000):'');return w(Math.floor(n/10000000))+' Crore'+(n%10000000?' '+w(n%10000000):'');};
+      return'Rupees '+w(num)+' Only';
+    };
+
+    const downloadInvoicePdf = (inv) => {
+      const d = convertInvoiceToHotelData(inv, {});
+      const fmtD=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});};
+      const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
+      const n2=(v)=>(parseFloat(v)||0).toFixed(2);
+      
+      const cats=['extraBed','foodBev','laundry'];
+      const activeDayByDay = (d.dayByDay||[]);
+      const colTotals={}; cats.forEach(c=>colTotals[c]=0); let totalRoomsCol=0;
+      activeDayByDay.forEach(row=>{totalRoomsCol+=row.rooms||0;cats.forEach(c=>colTotals[c]+=row[c]||0);});
+
+      const liveSubtotal = activeDayByDay.reduce((sum, row) => sum + row.dayTotal, 0);
+      const liveDiscount = liveSubtotal * ((parseFloat(d.discountPercent)||0) / 100);
+      const afterDiscount = liveSubtotal - liveDiscount;
+      let liveSgst = 0, liveCgst = 0;
+      if (d.gstType === 'Excluding') {
+         liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
+         liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
       }
-      if(svcItems.length>0){
-        if(tBody.length>0)tBody.push([{text:'',colSpan:5,border:[false,false,false,false]},{},{},{},{}]);
-        tBody.push([{text:'Service',style:'th',colSpan:4},{},{},{},{text:'Amount ('+cur+')',style:'th',alignment:'right'}]);
-        svcItems.forEach(it=>tBody.push([{text:it.description||'Service',colSpan:4},{},{},{},{text:fc(it.amount),alignment:'right'}]));
-      }
-      tBody.push([{text:'Subtotal',bold:true,colSpan:4},{},{},{},{text:fc(inv.subTotal),alignment:'right',bold:true}]);
-      if(inv.discount>0)tBody.push([{text:'Discount',colSpan:4},{},{},{},{text:'- '+fc(inv.discount),alignment:'right'}]);
-      if(inv.gstEnabled)tBody.push([{text:'GST ('+inv.gstPercent+'%)',colSpan:4},{},{},{},{text:fc(inv.gstAmount),alignment:'right'}]);
-      if(inv.greenTaxEnabled)tBody.push([{text:'Green Tax ('+cur+' '+inv.greenTaxPerNight+' x '+inv.greenTaxPax+' pax x '+inv.greenTaxNights+' nights)',colSpan:4},{},{},{},{text:fc(inv.greenTaxAmount),alignment:'right'}]);
-      tBody.push([{text:'TOTAL',bold:true,fillColor:'#f0f0f0',colSpan:4},{},{},{},{text:fc(inv.totalAmount),bold:true,alignment:'right',fillColor:'#f0f0f0'}]);
-      const guestInfo = [{text:'Bill To:\n',bold:true,fontSize:13},(inv.guestName||'')+'\n',{text:'Phone: ',bold:true},(inv.phone||'-')+'\n',{text:'Email: ',bold:true},(inv.email||'-')+'\n'];
-      if(inv.customerTIN)guestInfo.push({text:'TIN: ',bold:true},inv.customerTIN+'\n');
-      const doc = {content:[{text:inv.hotelName + ' - INVOICE',style:'hdr',alignment:'center'},{text:'Invoice #'+(inv.invoiceId||'')+'  |  Currency: '+cur,alignment:'center',color:'#666',margin:[0,0,0,15]},
-        {columns:[{text:guestInfo},{text:[{text:'Invoice Date: ',bold:true},fmtDate(inv.createdDate)+'\n',{text:'Due Date: ',bold:true},fmtDate(inv.dueDate)+'\n',{text:'Status: ',bold:true},(inv.status||'Draft')+'\n']}]},
-        {text:'\n'},{table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:tBody}},
-        inv.notes?{text:'\nNotes: '+inv.notes,margin:[0,10,0,0],italics:true}:{text:''},
-                {text:'\nThank you for your business!',alignment:'center',margin:[0,20,0,0],italics:true}],
-        styles:{hdr:{fontSize:22,bold:true,color:'#001f3f'},th:{bold:true,fontSize:12,color:'white',fillColor:'#001f3f'}},defaultStyle:{fontSize:11}};
-      pdfMake.createPdf(doc).download('Invoice-'+(inv.invoiceId||'new')+'.pdf');
+      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
+      const liveAdvance = (parseFloat(d.advancePaid)||0);
+      const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
+
+      const dayRows=(activeDayByDay||[]).map(row=>[fmtDShort(row.date),n2(row.rooms),n2(row.extraBed),n2(row.foodBev),n2(row.laundry),n2(row.dayTotal),'']);
+      const totRow=['Totals',n2(totalRoomsCol),...cats.map(c=>n2(colTotals[c])),n2(liveSubtotal),''];
+      
+      const doc={pageSize:'A4',pageOrientation:'landscape',pageMargins:[20,20,20,20],content:[
+        {text:d.hotelName||'Hill View Eco Retreat',style:'hdr',alignment:'center'},{text:(d.hotelAddress||'')+' | '+(d.hotelPhone||'')+' | '+(d.hotelEmail||''),alignment:'center',fontSize:9,margin:[0,0,0,5]},
+        d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
+        {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
+        {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
+        {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],['SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],['CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
+        {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
+        {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
+      ],styles:{hdr:{fontSize:18,bold:true,color:'#001f3f'},th:{bold:true,fontSize:8,color:'white',fillColor:'#001f3f',alignment:'center'}},defaultStyle:{fontSize:10}};
+      pdfMake.createPdf(doc).download('Invoice-'+(d.billNumber||d.checkInId)+'.pdf');
     };
 
     const savePdfToDriveHelper = (record) => {
-      const cur = record.currency || APP_CURRENCY;
-      const fc = (a) => fmtCur(a, cur);
-      const items = (() => { try { return JSON.parse(typeof record.items === 'string' ? record.items : '[]'); } catch(e) { return []; } })();
-      const roomItems = items.filter(i=>i.type==='room');
-      const actItems = items.filter(i=>i.type==='activity');
-      const svcItems = items.filter(i=>i.type==='service');
-      const tBody = [];
-      if(roomItems.length>0){
-        tBody.push([{text:'Room Type',style:'th'},{text:'Qty',style:'th',alignment:'center'},{text:'Nights',style:'th',alignment:'center'},{text:'Rate',style:'th',alignment:'right'},{text:'Amount',style:'th',alignment:'right'}]);
-        roomItems.forEach(it=>tBody.push([it.roomType||'Room',{text:String(it.quantity||1),alignment:'center'},{text:String(it.nights),alignment:'center'},{text:fc(it.rate),alignment:'right'},{text:fc(it.amount),alignment:'right'}]));
+      const d = convertInvoiceToHotelData(record, {});
+      const fmtD=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});};
+      const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
+      const n2=(v)=>(parseFloat(v)||0).toFixed(2);
+      
+      const cats=['extraBed','foodBev','laundry'];
+      const activeDayByDay = (d.dayByDay||[]);
+      const colTotals={}; cats.forEach(c=>colTotals[c]=0); let totalRoomsCol=0;
+      activeDayByDay.forEach(row=>{totalRoomsCol+=row.rooms||0;cats.forEach(c=>colTotals[c]+=row[c]||0);});
+
+      const liveSubtotal = activeDayByDay.reduce((sum, row) => sum + row.dayTotal, 0);
+      const liveDiscount = liveSubtotal * ((parseFloat(d.discountPercent)||0) / 100);
+      const afterDiscount = liveSubtotal - liveDiscount;
+      let liveSgst = 0, liveCgst = 0;
+      if (d.gstType === 'Excluding') {
+         liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
+         liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
       }
-      if(actItems.length>0){
-        if(tBody.length>0)tBody.push([{text:'',colSpan:5,border:[false,false,false,false]},{},{},{},{}]);
-        tBody.push([{text:'Activity',style:'th',colSpan:2},{},{text:'Pax',style:'th',alignment:'center'},{text:'Rate',style:'th',alignment:'right'},{text:'Amount',style:'th',alignment:'right'}]);
-        actItems.forEach(it=>tBody.push([{text:it.description||'Activity',colSpan:2},{},{text:String(it.pax||1),alignment:'center'},{text:fc(it.rate),alignment:'right'},{text:fc(it.amount),alignment:'right'}]));
-      }
-      if(svcItems.length>0){
-        if(tBody.length>0)tBody.push([{text:'',colSpan:5,border:[false,false,false,false]},{},{},{},{}]);
-        tBody.push([{text:'Service',style:'th',colSpan:4},{},{},{},{text:'Amount',style:'th',alignment:'right'}]);
-        svcItems.forEach(it=>tBody.push([{text:it.description||'Service',colSpan:4},{},{},{},{text:fc(it.amount),alignment:'right'}]));
-      }
-      tBody.push([{text:'Subtotal',bold:true,colSpan:4},{},{},{},{text:fc(record.subTotal),alignment:'right',bold:true}]);
-      if(record.discount>0)tBody.push([{text:'Discount',colSpan:4},{},{},{},{text:'- '+fc(record.discount),alignment:'right'}]);
-      if(record.gstEnabled)tBody.push([{text:'GST ('+record.gstPercent+'%)',colSpan:4},{},{},{},{text:fc(record.gstAmount),alignment:'right'}]);
-      if(record.greenTaxEnabled)tBody.push([{text:'Green Tax',colSpan:4},{},{},{},{text:fc(record.greenTaxAmount),alignment:'right'}]);
-      tBody.push([{text:'TOTAL',bold:true,fillColor:'#f0f0f0',colSpan:4},{},{},{},{text:fc(record.totalAmount),bold:true,alignment:'right',fillColor:'#f0f0f0'}]);
-      const id = record.invoiceId;
-      const title = 'INVOICE';
-      const doc = {content:[{text:record.hotelName + ' - '+title,style:'hdr',alignment:'center'},{text:'#'+id,alignment:'center',color:'#666',margin:[0,0,0,15]},
-        {columns:[{text:[{text:'Guest: ',bold:true},(record.guestName||'')+'\n',{text:'Phone: ',bold:true},(record.phone||'-')+'\n',{text:'Email: ',bold:true},(record.email||'-')]},{text:[{text:'Date: ',bold:true},fmtDate(record.createdDate)+'\n',{text:'Status: ',bold:true},(record.status||'Draft')]}]},
-        {text:'\n'},{table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:tBody}},
-        record.notes?{text:'\nNotes: '+record.notes,margin:[0,10,0,0],italics:true}:{text:''}],
-        styles:{hdr:{fontSize:22,bold:true,color:'#001f3f'},th:{bold:true,fontSize:12,color:'white',fillColor:'#001f3f'}},defaultStyle:{fontSize:11}};
+      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
+      const liveAdvance = (parseFloat(d.advancePaid)||0);
+      const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
+
+      const dayRows=(activeDayByDay||[]).map(row=>[fmtDShort(row.date),n2(row.rooms),n2(row.extraBed),n2(row.foodBev),n2(row.laundry),n2(row.dayTotal),'']);
+      const totRow=['Totals',n2(totalRoomsCol),...cats.map(c=>n2(colTotals[c])),n2(liveSubtotal),''];
+      
+      const doc={pageSize:'A4',pageOrientation:'landscape',pageMargins:[20,20,20,20],content:[
+        {text:d.hotelName||'Hill View Eco Retreat',style:'hdr',alignment:'center'},{text:(d.hotelAddress||'')+' | '+(d.hotelPhone||'')+' | '+(d.hotelEmail||''),alignment:'center',fontSize:9,margin:[0,0,0,5]},
+        d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
+        {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
+        {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
+        {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],['SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],['CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
+        {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
+        {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
+      ],styles:{hdr:{fontSize:18,bold:true,color:'#001f3f'},th:{bold:true,fontSize:8,color:'white',fillColor:'#001f3f',alignment:'center'}},defaultStyle:{fontSize:10}};
+      
       Swal.fire({title:'Saving to Drive...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
       pdfMake.createPdf(doc).getBase64((base64)=>{
-        const fileName = title+'-'+id+'.pdf';
+        const fileName = 'Invoice-'+(d.billNumber||d.checkInId)+'.pdf';
+        const id = d.billNumber||d.checkInId;
         google.script.run.withSuccessHandler((r)=>{Swal.close();if(r.success)Swal.fire({icon:'success',title:'Saved!',text:'PDF saved to Google Drive.',timer:2000,showConfirmButton:false});else Swal.fire({icon:'error',title:'Error',text:r.message});}).withFailureHandler((e)=>{Swal.close();Swal.fire({icon:'error',title:'Error',text:e.message});}).savePdfToDrive(base64,fileName,id,'invoice');
       });
     };
 
     function TableSkeleton({rows=5,columns=6}){return(<div className="skeleton-table"><div className="skeleton-table-row">{[...Array(columns)].map((_,i)=><div key={i} className="skeleton skeleton-table-cell" style={{flex:1}}></div>)}</div>{[...Array(rows)].map((_,r)=><div key={r} className="skeleton-table-row">{[...Array(columns)].map((_,c)=><div key={c} className="skeleton skeleton-table-cell" style={{flex:1}}></div>)}</div>)}</div>);}
     function DashboardCardSkeleton(){return(<div className="skeleton-card"><div className="skeleton skeleton-icon"></div><div className="skeleton skeleton-text-large" style={{width:'60%'}}></div><div className="skeleton skeleton-text" style={{width:'80%'}}></div></div>);}
-    function ChartSkeleton(){return <div className="chart-card"><div className="skeleton skeleton-chart"></div></div>;}
 
     function SearchableSelect({ value, onChange, options, placeholder, className, required, disabled }) {
       const [isOpen, setIsOpen] = useState(false);
@@ -775,7 +871,7 @@
 
     function Sidebar({activeMenu,setActiveMenu,role,user,onLogout,isOpen,setIsOpen}){
       const adm=role==='admin';
-      const items=[{k:'dashboard',i:'fa-chart-line',l:'Dashboard',a:true},{k:'bookings',i:'fa-calendar-check',l:'Bookings',a:false},{k:'calendar',i:'fa-calendar-alt',l:'Calendar',a:false},{k:'checkin',i:'fa-door-open',l:'Check-In',a:true},{k:'checkout',i:'fa-sign-out-alt',l:'Checkout',a:true},{k:'restaurant',i:'fa-utensils',l:'Restaurant',a:true},{k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices',a:true},{k:'finance',i:'fa-coins',l:'Finance',a:true},{k:'reports',i:'fa-chart-bar',l:'Reports',a:true},{k:'users',i:'fa-users',l:'Users',a:true},{k:'customers',i:'fa-address-book',l:'Customers',a:true},{k:'settings',i:'fa-cog',l:'Settings',a:true},{k:'account',i:'fa-user-circle',l:'My Account',a:false},{k:'about',i:'fa-info-circle',l:'About App',a:false}];
+      const items=[{k:'dashboard',i:'fa-chart-line',l:'Dashboard',a:true},{k:'bookings',i:'fa-calendar-check',l:'Bookings',a:false},{k:'calendar',i:'fa-calendar-alt',l:'Calendar',a:false},{k:'checkin',i:'fa-door-open',l:'Check-In',a:true},{k:'checkout',i:'fa-sign-out-alt',l:'Checkout',a:true},{k:'restaurant',i:'fa-utensils',l:'Restaurant',a:true},{k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices',a:true},{k:'customers',i:'fa-address-book',l:'Customers',a:true},{k:'settings',i:'fa-cog',l:'Settings',a:false}];
       const click=(k)=>{setActiveMenu(k);setIsOpen(false);};
       return(<><div className={`sidebar-overlay ${isOpen?'open':''}`} onClick={()=>setIsOpen(false)}></div><div className={`sidebar ${isOpen?'open':''}`}><div style={{padding:'24px',borderBottom:'1px solid rgba(255,255,255,0.1)',textAlign:'center'}}><div style={{color:'white',fontSize:'20px',fontWeight:'700'}}><i className="fas fa-hotel"></i> Hill View Eco Retreat</div></div><div className="sidebar-user-info"><div className="sidebar-user-name">{user}</div><div className="sidebar-user-role">{role}</div></div><div className="sidebar-menu-section"><div className="sidebar-menu-title">Navigation</div><ul className="sidebar-menu">{items.filter(m=>adm||!m.a).map(m=>(<li key={m.k}><button className={activeMenu===m.k?'active':''} onClick={()=>click(m.k)}><i className={`fas ${m.i}`}></i><span>{m.l}</span></button></li>))}</ul></div><div className="sidebar-logout"><button onClick={onLogout}><i className="fas fa-sign-out-alt"></i><span>Logout</span></button></div></div></>);
     }
@@ -793,13 +889,13 @@
             setShowRoomModal(false);
             setEditRoom(null);
             Swal.fire({icon:'success',text:r.message,timer:1500,showConfirmButton:false});
-            
+
             // Refresh dashboard data silently
             google.script.run.withSuccessHandler((refreshData)=>{
               if(refreshData.defaultCurrency)APP_CURRENCY=refreshData.defaultCurrency;
               setSt(refreshData);
             }).getDashboardData();
-            
+
           } else {
             Swal.fire({icon:'error',text:r.message});
           }
@@ -811,14 +907,15 @@
 
       const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
       useEffect(()=>{google.script.run.withSuccessHandler((r)=>{setLd(false);if(r.error){Swal.fire({icon:'error',title:'Error',text:r.error});return;}if(r.defaultCurrency)APP_CURRENCY=r.defaultCurrency;setSt(r);}).withFailureHandler((e)=>{setLd(false);Swal.fire({icon:'error',title:'Error',text:e.message});}).getDashboardData();},[]);
-      
-      if(ld)return(<div><div className="dashboard-split"><ChartSkeleton/><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div></div></div>);
-      
-      const f=st?.financeSummary||{};const b=st?.bookingRevenue||{};const inv=st?.invoiceStats||{};const bdg=st?.currentBudget||null;const rb=st?.recentBookings||[];
+
+      if(ld)return(<div><div className="dashboard-split"><div className="skeleton" style={{height:'380px',borderRadius:'4px'}}></div></div></div>);
+
+      const rb=st?.recentBookings||[];
       const todaysCheckIns=st?.todaysCheckIns||[];
       const todaysCheckOuts=st?.todaysCheckOuts||[];
+      const todaysPaidSales=st?.todaysPaidSales||[];
       const occRate=st?.totalRooms>0?Math.round((st?.bookedRooms/st?.totalRooms)*100):0;
-      
+
       return(<div>
         {/* Room Block View & Recent Bookings */}
         <div className="dashboard-split" style={{gridTemplateColumns:'2fr 1fr'}}>
@@ -827,18 +924,24 @@
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(110px, 1fr))',gap:'10px'}}>
               {(st?.allRoomsDetails||[]).map(rm => {
                 let bg = '#34a853'; // Available
-                if(rm.status==='Booked') bg = '#0074D9';
-                if(rm.status==='Maintenance') bg = '#fbbc04';
-                if(rm.status==='Reserved') bg = '#6f42c1';
+                if(rm.status==='CheckedIn') bg = '#dc3545'; // Red for Checked In
+                else if(rm.status==='Booked') bg = '#0074D9'; // Blue for Booked
+                else if(rm.status==='Maintenance') bg = '#fbbc04';
+                else if(rm.status==='Reserved') bg = '#6f42c1';
+                
+                let tooltipText = `Status: ${rm.status}`;
+                if (rm.guestName) {
+                  tooltipText += ` | Guest: ${rm.guestName}`;
+                }
                 
                 return (
-                  <div key={rm.roomNo} onClick={() => { setEditRoom({roomNo: rm.roomNo, roomType: rm.type, roomStatus: rm.status, roomRate: rm.roomRate, rowIndex: rm.rowIndex}); setShowRoomModal(true); }} style={{background:bg,color:'#fff',padding:'12px 8px',borderRadius:'8px',textAlign:'center',boxShadow:'0 2px 4px rgba(0,0,0,0.1)',display:'flex',flexDirection:'column',justifyContent:'center',minHeight:'90px', gap:'4px', cursor: 'pointer'}}>
+                  <div key={rm.roomNo} title={tooltipText} onClick={() => { setEditRoom({roomNo: rm.roomNo, roomType: rm.type, roomStatus: rm.status, roomRate: rm.roomRate, rowIndex: rm.rowIndex}); setShowRoomModal(true); }} style={{background:bg,color:'#fff',padding:'12px 8px',borderRadius:'8px',textAlign:'center',boxShadow:'0 2px 4px rgba(0,0,0,0.1)',display:'flex',flexDirection:'column',justifyContent:'center',minHeight:'90px', gap:'4px', cursor: 'pointer'}}>
                     <div style={{fontSize:'18px',fontWeight:'bold'}}>{rm.roomNo}</div>
                     {rm.guestName ? (
                       <>
-                        <div style={{fontSize:'12px',fontWeight:'bold',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis', maxWidth:'100%'}} title={rm.guestName}>{rm.guestName}</div>
+                        <div style={{fontSize:'12px',fontWeight:'bold',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis', maxWidth:'100%'}}>{rm.guestName}</div>
                         {rm.checkIn && rm.checkOut && (
-                           <div style={{fontSize:'10px',opacity:0.9,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}} title={`${fmtDShort(rm.checkIn)} - ${fmtDShort(rm.checkOut)}`}>
+                           <div style={{fontSize:'10px',opacity:0.9,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                              {fmtDShort(rm.checkIn)} - {fmtDShort(rm.checkOut)}
                            </div>
                         )}
@@ -852,7 +955,8 @@
             </div>
             <div style={{marginTop:'20px',display:'flex',gap:'15px',fontSize:'12px',color:'#666'}}>
               <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#34a853',borderRadius:'2px'}}></span> Available</span>
-              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#0074D9',borderRadius:'2px'}}></span> Booked / Checked In</span>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#dc3545',borderRadius:'2px'}}></span> Checked In</span>
+              <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#0074D9',borderRadius:'2px'}}></span> Booked</span>
               <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#6f42c1',borderRadius:'2px'}}></span> Reserved</span>
               <span style={{display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'12px',height:'12px',background:'#fbbc04',borderRadius:'2px'}}></span> Maintenance</span>
             </div>
@@ -876,7 +980,7 @@
               }):<tr><td colSpan="3" style={{textAlign:'center',color:'#999',padding:'30px'}}><i className="fas fa-inbox" style={{fontSize:'24px',display:'block',marginBottom:'8px',color:'#ccc'}}></i>No check-ins today</td></tr>}
             </tbody></table></div>
           </div>
-          
+
           <div className="dash-table-card">
             <h3><i className="fas fa-sign-out-alt"></i> Today's Expected Check-Outs</h3>
             <div style={{overflowX:'auto',flex:1}}><table className="dash-table"><thead><tr><th>Guest</th><th>Room</th><th>ID</th></tr></thead><tbody>
@@ -886,6 +990,53 @@
                 return(<tr key={i}><td style={{fontWeight:600,color:'#333'}}><div style={{display:'flex',alignItems:'center'}}><span className="guest-avatar" style={{background:avatarColors[i%avatarColors.length]}}>{initials}</span>{r.guestName}</div></td><td><span className="room-badge">#{r.roomNo}</span></td><td style={{fontWeight:600,color:'var(--navy-primary)'}}>{r.checkInId}</td></tr>);
               }):<tr><td colSpan="3" style={{textAlign:'center',color:'#999',padding:'30px'}}><i className="fas fa-inbox" style={{fontSize:'24px',display:'block',marginBottom:'8px',color:'#ccc'}}></i>No check-outs today</td></tr>}
             </tbody></table></div>
+          </div>
+        </div>
+
+        <div style={{width:'100%', marginBottom:'30px'}}>
+          <div className="dash-table-card">
+            <h3><i className="fas fa-file-invoice-dollar"></i> Today's Daily Sales (Paid Invoices)</h3>
+            <div style={{overflowX:'auto'}}>
+              <table className="dash-table" style={{width:'100%'}}>
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Guest</th>
+                    <th style={{textAlign:'right'}}>Room Rent</th>
+                    <th style={{textAlign:'right'}}>Food &amp; Services</th>
+                    <th style={{textAlign:'right'}}>Total Sales</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todaysPaidSales.length > 0 ? todaysPaidSales.map((r, i) => (
+                    <tr key={i}>
+                      <td>{r.invoiceId}</td>
+                      <td style={{fontWeight:600}}>{r.guestName}</td>
+                      <td style={{textAlign:'right'}}>{fmtCur(r.roomRent)}</td>
+                      <td style={{textAlign:'right'}}>{fmtCur(r.foodRevenue)}</td>
+                      <td style={{textAlign:'right', fontWeight:600, color:'var(--navy-primary)'}}>{fmtCur(r.totalSales)}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="5" style={{textAlign:'center', color:'#999', padding:'30px'}}>
+                        <i className="fas fa-inbox" style={{fontSize:'24px', display:'block', marginBottom:'8px', color:'#ccc'}}></i>
+                        No paid invoices today
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {todaysPaidSales.length > 0 && (
+                  <tfoot>
+                    <tr style={{background:'#f8f9fa', fontWeight:'bold', borderTop:'2px solid #ddd'}}>
+                      <td colSpan="2" style={{textAlign:'right'}}>Grand Total:</td>
+                      <td style={{textAlign:'right'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.roomRent, 0))}</td>
+                      <td style={{textAlign:'right'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.foodRevenue, 0))}</td>
+                      <td style={{textAlign:'right', color:'var(--navy-primary)'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.totalSales, 0))}</td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
           </div>
         </div>
         {showRoomModal && <RoomModal room={editRoom} onClose={() => {setShowRoomModal(false); setEditRoom(null);}} onSave={saveRoom} />}
@@ -900,14 +1051,18 @@
 
     function CustomerModal({customer,onClose,onSave}){
       const isEdit=!!customer;
-      const [fd,setFd]=useState({name:customer?.name||'',phone:customer?.phone||'',email:customer?.email||'',city:customer?.city||'',maritalStatus:customer?.maritalStatus||'',notes:customer?.notes||''});
+      const [fd,setFd]=useState({name:customer?.name||'',phone:customer?.phone||'',email:customer?.email||'',address:customer?.address||'',city:customer?.city||'',state:customer?.state||'',pinCode:customer?.pinCode||'',country:customer?.country||'',maritalStatus:customer?.maritalStatus||'',notes:customer?.notes||''});
       const [sv,setSv]=useState(false);
       return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-user-plus"></i> {isEdit?'Edit':'Add'} Customer</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body"><form onSubmit={e=>{e.preventDefault();setSv(true);onSave(fd);}}>
         <div className="form-grid">
           <div className="form-group"><label>Name *</label><input value={fd.name} onChange={e=>setFd({...fd,name:e.target.value})} required/></div>
           <div className="form-group"><label>Phone</label><input value={fd.phone} onChange={e=>setFd({...fd,phone:e.target.value})}/></div>
           <div className="form-group"><label>Email</label><input type="email" value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
+          <div className="form-group"><label>Village/Street</label><input value={fd.address} onChange={e=>setFd({...fd,address:e.target.value})}/></div>
           <div className="form-group"><label>City</label><input value={fd.city} onChange={e=>setFd({...fd,city:e.target.value})}/></div>
+          <div className="form-group"><label>State</label><input value={fd.state} onChange={e=>setFd({...fd,state:e.target.value})}/></div>
+          <div className="form-group"><label>Pin Code</label><input value={fd.pinCode} onChange={e=>setFd({...fd,pinCode:e.target.value})}/></div>
+          <div className="form-group"><label>Country</label><input value={fd.country} onChange={e=>setFd({...fd,country:e.target.value})}/></div>
           <div className="form-group"><label>Marital Status</label><select value={fd.maritalStatus} onChange={e=>setFd({...fd,maritalStatus:e.target.value})}><option value="">--</option><option>Single</option><option>Married</option></select></div>
           <div className="form-group full-width"><label>Notes</label><textarea value={fd.notes} onChange={e=>setFd({...fd,notes:e.target.value})} rows="2"></textarea></div>
         </div>
@@ -918,21 +1073,13 @@
 
     function CustomersView({user}){
       const [ld,setLd]=useState(true);const [show,setShow]=useState(false);const [edit,setEdit]=useState(null);const tRef=useRef(null);
-      const [filters,setFilters]=useState({city:'',maritalStatus:''});
-      const [cities,setCities]=useState([]);
       useEffect(()=>{load();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[]);
-      useEffect(()=>{if(!tRef.current)return;if(filters.city)tRef.current.column(4).search('^'+filters.city+'$',true,false);else tRef.current.column(4).search('');if(filters.maritalStatus)tRef.current.column(5).search('^'+filters.maritalStatus+'$',true,false);else tRef.current.column(5).search('');tRef.current.draw();},[filters]);
-      const clearF=()=>{setFilters({city:'',maritalStatus:''});if(tRef.current){tRef.current.columns().search('').draw();}};
-      const load=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);if(r&&r.error){Swal.fire({icon:'error',text:r.error});return;}const arr=Array.isArray(r)?r:[];const uCities=[...new Set(arr.map(c=>c.city).filter(Boolean))].sort();setCities(uCities);initT(arr);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCustomers();};
+      const load=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);if(r&&r.error){Swal.fire({icon:'error',text:r.error});return;}const arr=Array.isArray(r)?r:[];initT(arr);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllCustomers();};
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#custT').empty();}catch(e){}}
-        setTimeout(()=>{try{const t=$('#custT').DataTable({data,destroy:true,columns:[{data:'customerId',title:'ID'},{data:'name',title:'Name'},{data:'phone',title:'Phone'},{data:'email',title:'Email'},{data:'city',title:'City'},{data:'maritalStatus',title:'Status'},{data:'linkedUsername',title:'Account',render:d=>d?'<span style="color:var(--success)"><i class="fas fa-check-circle"></i> '+d+'</span>':'<span style="color:#999">-</span>'},{data:null,title:'Actions',orderable:false,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[{extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},{extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},{extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}],order:[[0,'desc']]});$('#custT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEdit(rd);setShow(true);}else delCust(rd);});tRef.current=t;}catch(e){Swal.fire({icon:'error',text:e.message});}},150);};
+        setTimeout(()=>{try{const t=$('#custT').DataTable({data,destroy:true,columns:[{data:'customerId',title:'ID'},{data:'name',title:'Name'},{data:'phone',title:'Phone'},{data:'email',title:'Email'},{data:null,title:'Location',render:(d,tp,row)=>[row.city,row.state,row.country].filter(Boolean).join(', ')||'-'},{data:'maritalStatus',title:'Status'},{data:'linkedUsername',title:'Account',render:d=>d?'<span style="color:var(--success)"><i class="fas fa-check-circle"></i> '+d+'</span>':'<span style="color:#999">-</span>'},{data:null,title:'Actions',orderable:false,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}],pageLength:10,responsive:true,dom:'Blrtip',buttons:[{extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},{extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},{extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}],order:[[0,'desc']]});$('#custT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEdit(rd);setShow(true);}else delCust(rd);});tRef.current=t;}catch(e){Swal.fire({icon:'error',text:e.message});}},150);};
       const delCust=(c)=>{Swal.fire({icon:'warning',title:'Delete Customer?',text:'Delete '+c.name+'?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});setShow(false);setEdit(null);setTimeout(load,100);}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteCustomer(c.rowIndex);});};
       const save=(d)=>{if(edit){google.script.run.withSuccessHandler(r=>{if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});setShow(false);setEdit(null);setTimeout(load,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).updateCustomer(edit.rowIndex,d);}else{google.script.run.withSuccessHandler(r=>{if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});setShow(false);setTimeout(load,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).addCustomer(d);}};
       return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-address-book"></i> Customers</h2><button className="btn btn-success" onClick={()=>{setEdit(null);setShow(true);}}><i className="fas fa-plus"></i> Add Customer</button></div>
-        {!ld&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear All</button></div><div className="filters-grid">
-          <div className="filter-group"><label><i className="fas fa-city"></i> City</label><select className="filter-input" value={filters.city} onChange={e=>setFilters({...filters,city:e.target.value})}><option value="">All Cities</option>{cities.map(c=><option key={c}>{c}</option>)}</select></div>
-          <div className="filter-group"><label><i className="fas fa-heart"></i> Marital Status</label><select className="filter-input" value={filters.maritalStatus} onChange={e=>setFilters({...filters,maritalStatus:e.target.value})}><option value="">All</option><option>Single</option><option>Married</option></select></div>
-        </div></div>}
         {ld&&<TableSkeleton rows={6} columns={7}/>}<div style={{display:ld?'none':'block'}}><table id="custT" className="display" style={{width:'100%'}}></table></div>{show&&<CustomerModal customer={edit} onClose={()=>{setShow(false);setEdit(null);}} onSave={save}/>}</div>);
     }
 
@@ -1003,10 +1150,21 @@
         
         // 3. Count active check-ins (since they hold physical rooms)
         const overlappingCis = allCheckIns.filter(c => {
-          if (c.status !== 'Active') return false;
-          const cCi = new Date(c.checkInDate); const cCo = new Date(c.checkOutDate);
-          return (ci < cCo && co > cCi);
-        });
+if (c.status !== 'Active') return false;
+const cCi = new Date(c.checkInDate); 
+let cCo = new Date(c.checkOutDate);
+
+// Fix overstaying guests: if expected checkout date is in the past, push it to tomorrow
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0);
+if (cCo <= todayMidnight) {
+  const tomorrow = new Date(todayMidnight);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  cCo = tomorrow;
+}
+
+return (ci < cCo && co > cCi);
+});
 
         overlappingCis.forEach(c => {
           const rNos = (c.roomNumbers||'').split(',').map(r=>r.trim()).filter(r=>r);
@@ -1055,7 +1213,7 @@
         const payload={...fd, roomNos:roomNosStr, roomRate:(combinedRate/selectedCount), totalAmount:calcTotals?.total||0, tax:calcTotals?.tax||0};
         if(isEdit){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).updateBooking(booking.rowIndex,payload);}
         else{google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).bookRoom(payload);}};
-      const calcTotal=()=>{if(!fd.checkIn||!fd.checkOut)return null;const ci=new Date(fd.checkIn);const co=new Date(fd.checkOut);if(isNaN(ci)||isNaN(co)||co<=ci)return null;let n=Math.ceil((co-ci)/(1000*3600*24));if(n<1)n=1;const base=combinedRate*n;const d=(parseFloat(fd.discountPercent)||0)*base/100;const sub=base-d;let t=0;if(fd.gstType==='Including'){t=sub-(sub/(1+0.16));}else if(fd.gstType==='Excluding'){t=sub*0.16;}return{nights:n,base,disc:d,tax:t,total:fd.gstType==='Excluding'?sub+t:sub};};
+      const calcTotal=()=>{if(!fd.checkIn||!fd.checkOut)return null;const ci=new Date(fd.checkIn);const co=new Date(fd.checkOut);if(isNaN(ci)||isNaN(co)||co<=ci)return null;let n=Math.ceil((co-ci)/(1000*3600*24));if(n<1)n=1;const epCharge = (parseInt(fd.extraPerson) || 0) * 500 * n;const base=(combinedRate*n) + epCharge;const d=(parseFloat(fd.discountPercent)||0)*base/100;const sub=base-d;let t=0;if(fd.gstType==='Including'){t=sub-(sub/(1+0.16));}else if(fd.gstType==='Excluding'){t=sub*0.16;}return{nights:n,base,epCharge,disc:d,tax:t,total:fd.gstType==='Excluding'?sub+t:sub};};
       const ct=calcTotal();
       return(<div className="modal-overlay" onClick={onClose}><div className="modal modal-wide" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className={`fas ${isEdit?'fa-edit':'fa-calendar-plus'}`}></i> {isEdit?'Edit':'New Advance'} Booking</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body"><form onSubmit={submit}>
         <div className="form-grid">
@@ -1079,7 +1237,7 @@
           <div className="form-group"><label>Discount (%)</label><input type="number" step="0.01" min="0" max="100" value={fd.discountPercent} onChange={e=>setFd({...fd,discountPercent:e.target.value})}/></div>
           <div className="form-group"><label>GST Type</label><select value={fd.gstType} onChange={e=>setFd({...fd,gstType:e.target.value})}><option>Excluding</option><option>Including</option><option>None</option></select></div>
         </div>
-        {ct&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Combined Room Rate x {ct.nights} night(s)</span><span>{fmtCur(ct.base)}</span></div>{ct.disc>0&&<div className="totals-row"><span>Discount ({fd.discountPercent}%)</span><span style={{color:'var(--danger)'}}>- {fmtCur(ct.disc)}</span></div>}{ct.tax>0&&<div className="totals-row"><span>GST (16%) {fd.gstType==='Including'?'(Incl)':''}</span><span>{fmtCur(ct.tax)}</span></div>}<div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(ct.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
+        {ct&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Combined Room Rate x {ct.nights} night(s)</span><span>{fmtCur(ct.base - (ct.epCharge || 0))}</span></div>{(ct.epCharge > 0) && <div className="totals-row"><span>Extra Person Charge</span><span>{fmtCur(ct.epCharge)}</span></div>}{ct.disc>0&&<div className="totals-row"><span>Discount ({fd.discountPercent}%)</span><span style={{color:'var(--danger)'}}>- {fmtCur(ct.disc)}</span></div>}{ct.tax>0&&<div className="totals-row"><span>GST (16%) {fd.gstType==='Including'?'(Incl)':''}</span><span>{fmtCur(ct.tax)}</span></div>}<div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(ct.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
         <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> {isEdit?'Updating...':'Booking...'}</>:<><i className={`fas ${isEdit?'fa-save':'fa-check'}`}></i> {isEdit?'Update Booking':'Book Room(s)'}</>}</button><button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button></div>
       </form></div></div></div>);
     }
@@ -1133,7 +1291,7 @@
       const [saving,setSaving]=useState(false);
       const tRef=useRef(null);
       const [updateRec,setUpdateRec]=useState(null);
-      const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});
+      const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});
       const [activeCis, setActiveCis] = useState([]);
       const [showModal, setShowModal] = useState(false);
 
@@ -1159,7 +1317,6 @@
           {data:'checkOutDate',title:'Expected Out',render:d=>d?fmtDate(d):'-'},
           {data:'pax',title:'Pax'},
           {data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase().replace(/\s+/g,'-')+'">'+d+'</span>'},
-          {data:null,title:'Live Billing',render:(d,tp,row)=>`<div style="font-size:13px;white-space:nowrap"><span style="color:#2c3e50">Rent: ${fmtCur(row.liveRoomRent||0)}</span> | <span style="color:#e67e22">Food: ${fmtCur(row.liveFoodBill||0)}</span></div><div style="font-size:13px;white-space:nowrap;margin-top:3px"><span style="color:#27ae60">Adv: ${fmtCur(row.advancePaid||0)}</span> | <strong style="color:${(row.liveBalance||0)>0?'#c0392b':'#27ae60'}">Bal: ${fmtCur(row.liveBalance||0)}</strong></div>`},
           {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:(d,tp,row)=>{let html='';if(row.status==='Active'){html+='<button class="action-icon edit-icon" data-action="switch" title="Switch Room / Update Pax"><i class="fas fa-exchange-alt"></i></button>';html+='<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button>';html+='<button class="action-icon" data-action="add_advance" style="color:#27ae60" title="Add Mid-Stay Advance"><i class="fas fa-hand-holding-usd"></i></button>';}return html||'-';}}
         ],pageLength:10,responsive:true,dom:'Blrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
@@ -1191,7 +1348,18 @@
 
       const toggleRoom=(rn)=>{
         setSelectedRooms(prev => {
-          if (prev.includes(rn)) return prev.filter(r => r !== rn);
+          if (prev.includes(rn)) {
+            const nextRooms = prev.filter(r => r !== rn);
+            // Clean up the room breakdown when a room is toggled off
+            let breakdown = {};
+            try { breakdown = fd.roomPaxBreakdown ? JSON.parse(fd.roomPaxBreakdown) : {}; } catch(e){}
+            if (breakdown[rn]) {
+              delete breakdown[rn];
+              const totalPax = Object.values(breakdown).reduce((sum, p) => sum + p, 0) || 1;
+              setFd(f => ({ ...f, roomPaxBreakdown: JSON.stringify(breakdown), pax: totalPax }));
+            }
+            return nextRooms;
+          }
           
           // Before adding, check if there are enough free rooms of this type remaining
           // to satisfy other pending advance bookings.
@@ -1223,6 +1391,16 @@
                }
              }
           }
+
+          // Set initial pax breakdown to 1 for this new room if it didn't exist
+          let breakdown = {};
+          try { breakdown = fd.roomPaxBreakdown ? JSON.parse(fd.roomPaxBreakdown) : {}; } catch(e){}
+          if (!breakdown[rn]) {
+            breakdown[rn] = 1;
+            const totalPax = Object.values(breakdown).reduce((sum, p) => sum + p, 0);
+            setFd(f => ({ ...f, roomPaxBreakdown: JSON.stringify(breakdown), pax: totalPax }));
+          }
+
           return [...prev, rn];
         });
       };
@@ -1251,8 +1429,20 @@
           activeCis.forEach(ci => {
             if (editRowIndex && ci.rowIndex === editRowIndex) return; // Skip the one we are editing
             const ciIn = new Date(ci.checkInDate);
-            const ciOut = new Date(ci.checkOutDate);
-            if (cIn < ciOut && cOut > ciIn) {
+let ciOut = new Date(ci.checkOutDate);
+
+// Fix overstaying guests: if expected checkout date is in the past, push it to tomorrow
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0);
+if (ciOut <= todayMidnight) {
+  const tomorrow = new Date(todayMidnight);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  ciOut = tomorrow;
+}
+
+// Exclude the actual check-out day block
+const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.getDate());
+            if (cIn < actualCiOutStart && cOut > ciIn) {
               const ciRooms = (ci.roomNumbers || '').split(',').map(r => r.trim()).filter(Boolean);
               ciRooms.forEach(rn => {
                 if (states[rn]) {
@@ -1271,7 +1461,8 @@
                 const bIn = new Date(bk.checkIn);
                 const bOut = new Date(bk.checkOut);
                 
-                if (cIn < bOut && cOut > bIn) {
+                const actualBOutStart = new Date(bOut.getFullYear(), bOut.getMonth(), bOut.getDate());
+                if (cIn < actualBOutStart && cOut > bIn) {
                   const roomNosArr = bk.roomNo.split(',').map(r => r.trim()).filter(Boolean);
                   roomNosArr.forEach(r => {
                     const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
@@ -1372,6 +1563,10 @@
           // Check if booking already specifies physical rooms instead of types
           const isPhys = bk.roomNo && !bk.roomNo.match(/\(\d+\)/);
           setSelectedRooms(isPhys ? bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r) : []);
+          let initialBreakdown = {};
+          let initialRooms = isPhys ? bk.roomNo.split(',').map(r=>r.trim()).filter(r=>r) : [];
+          initialRooms.forEach(rn => initialBreakdown[rn] = 1);
+
           setFd(p => ({
             ...p, 
             guestName: bk.guestName || '', 
@@ -1385,7 +1580,9 @@
             advancePaid: bk.advancePaid || 0,
             gstType: bk.tax > 0 ? 'Including' : 'Excluding', // Infer from old or explicit new
             fixRoomRentAmount: bk.fixRoomRentAmount || '', // Sync fixed rent if present
-            discountPercent: bk.discount || 0
+            discountPercent: bk.discount || 0,
+            roomPaxBreakdown: JSON.stringify(initialBreakdown),
+            pax: initialRooms.length || 1
           }));
         } else {
           resetForm();
@@ -1394,14 +1591,14 @@
 
       const [editRowIndex, setEditRowIndex] = useState(null);
 
-      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,advancePaid:0,extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);};
+      const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);};
 
-      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
+      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0,city:ci.city||'',state:ci.state||'',pinCode:ci.pinCode||'',country:ci.country||'',roomPaxBreakdown:ci.roomPaxBreakdown||'',paymentMethod:ci.paymentMethod||''});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
+
 
       const submit=(e)=>{e.preventDefault();
         if(!fd.guestName.trim()){Swal.fire({icon:'warning',text:'Guest Name is required.'});return;}
         if(selectedRooms.length===0){Swal.fire({icon:'warning',text:'Select at least one room.'});return;}
-        if(needsRoomSelection){Swal.fire({icon:'warning',text:'Please allocate the exact number of physical rooms required by the advance booking.'});return;}
         if(!fd.checkInDate){Swal.fire({icon:'warning',text:'Check-in date is required.'});return;}
         
         // Before sending, verify room statuses again on the frontend if walk-in and not editing
@@ -1418,7 +1615,7 @@
         setSaving(true);Swal.fire({title:'Processing Check-In...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
         
         const payload = {
-          linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,advancePaid:fd.advancePaid,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRentAmount?'Yes':'No',fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent
+          linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,city:fd.city,state:fd.state,pinCode:fd.pinCode,country:fd.country,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,roomPaxBreakdown:fd.roomPaxBreakdown,advancePaid:fd.advancePaid,paymentMethod:fd.paymentMethod,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRentAmount?'Yes':'No',fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent
         };
 
         if (editRowIndex) {
@@ -1463,17 +1660,15 @@
             </div>
             
             {linkedBooking && dynRooms.length > 0 && (
-              <div style={{ marginTop: '15px', padding: '15px', background: '#fff', border: '1px solid #c3e6cb', borderRadius: '4px' }}>
-                <h5 style={{ margin: '0 0 10px 0', color: '#155724' }}><i className="fas fa-info-circle"></i> Booking Requirements</h5>
+              <div style={{ marginTop: '15px', padding: '15px', background: '#fff', border: '1px solid #dee2e6', borderRadius: '4px' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: 'var(--navy-primary)' }}><i className="fas fa-info-circle"></i> Original Booking Request</h5>
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
-                  Please select physical rooms from the grid below to fulfill this booking:
+                  The guest originally requested the following. You may assign different rooms, types, or quantities below based on their current needs:
                 </p>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {dynRooms.map((dr, i) => (
-                    <div key={i} style={{ padding: '8px 12px', background: dr.fulfilled ? '#d4edda' : dr.over ? '#f8d7da' : '#fff3cd', border: `1px solid ${dr.fulfilled ? '#c3e6cb' : dr.over ? '#f5c6cb' : '#ffeeba'}`, borderRadius: '4px', fontSize: '13px', color: dr.fulfilled ? '#155724' : dr.over ? '#721c24' : '#856404' }}>
+                    <div key={i} style={{ padding: '8px 12px', background: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '13px', color: '#495057' }}>
                       <strong>{dr.type}</strong>: {dr.selQty} / {dr.reqQty} selected
-                      {dr.fulfilled && <i className="fas fa-check ml-2"></i>}
-                      {dr.over && <i className="fas fa-exclamation-triangle ml-2" title="Too many selected"></i>}
                     </div>
                   ))}
                 </div>
@@ -1515,11 +1710,53 @@
             <div className="form-group"><label>Identity Proof</label><input value={fd.identityProof} onChange={e=>setFd({...fd,identityProof:e.target.value})} placeholder="Aadhar/Passport No."/></div>
             <div className="form-group"><label>Mobile</label><input value={fd.mobile} onChange={e=>setFd({...fd,mobile:e.target.value})}/></div>
             <div className="form-group"><label>Email</label><input type="email" value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
-            <div className="form-group" style={{gridColumn:'1/-1'}}><label>Address</label><input value={fd.address} onChange={e=>setFd({...fd,address:e.target.value})}/></div>
+            <div className="form-group"><label>Village / Street</label><input value={fd.address} onChange={e=>setFd({...fd,address:e.target.value})}/></div>
+            <div className="form-group"><label>City</label><input value={fd.city} onChange={e=>setFd({...fd,city:e.target.value})}/></div>
+            <div className="form-group"><label>State</label><input value={fd.state} onChange={e=>setFd({...fd,state:e.target.value})}/></div>
+            <div className="form-group"><label>Pin Code</label><input value={fd.pinCode} onChange={e=>setFd({...fd,pinCode:e.target.value})}/></div>
+            <div className="form-group"><label>Country</label><input value={fd.country} onChange={e=>setFd({...fd,country:e.target.value})}/></div>
             <div className="form-group"><label>Purpose of Visit</label><input value={fd.purposeOfVisit} onChange={e=>setFd({...fd,purposeOfVisit:e.target.value})}/></div>
-            <div className="form-group"><label>Pax</label><input type="number" min="1" value={fd.pax} onChange={e=>setFd({...fd,pax:e.target.value})}/></div>
+            {selectedRooms.length > 0 && (
+              <div className="form-group" style={{ gridColumn: '1 / -1', background: '#f8f9fa', padding: '15px', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+                <label style={{ display: 'block', marginBottom: '10px', color: 'var(--navy-primary)' }}>Pax Breakdown per Room</label>
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                  {selectedRooms.map(rmNo => {
+                    let breakdown = {};
+                    try { breakdown = fd.roomPaxBreakdown ? JSON.parse(fd.roomPaxBreakdown) : {}; } catch(e){}
+                    return (
+                      <div key={rmNo} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'white', padding: '5px 10px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                        <span style={{ fontWeight: 'bold' }}>Room {rmNo}:</span>
+                        <input type="number" min="1" style={{ width: '60px', padding: '4px' }} 
+                          value={breakdown[rmNo] || 1} 
+                          onChange={e => {
+                            const val = parseInt(e.target.value) || 1;
+                            const newBreakdown = { ...breakdown, [rmNo]: val };
+                            const totalPax = Object.values(newBreakdown).reduce((sum, p) => sum + p, 0);
+                            setFd({ ...fd, roomPaxBreakdown: JSON.stringify(newBreakdown), pax: totalPax });
+                          }} 
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: '10px', fontSize: '13px', color: '#555' }}>
+                  <strong>Total Pax:</strong> {fd.pax}
+                </div>
+              </div>
+            )}
             <div className="form-group"><label>Extra Person</label><input type="number" min="0" value={fd.extraPerson} onChange={e=>setFd({...fd,extraPerson:e.target.value})}/></div>
             <div className="form-group"><label>Advance Paid ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={fd.advancePaid} onChange={e=>setFd({...fd,advancePaid:e.target.value})}/></div>
+            <div className="form-group">
+              <label>Mode of Payment</label>
+              <select value={fd.paymentMethod} onChange={e=>setFd({...fd, paymentMethod: e.target.value})}>
+                <option value="">Please Select</option>
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Online">Online</option>
+                <option value="UPI">UPI</option>
+              </select>
+            </div>
             <div className="form-group"><label>Food Plan</label><select value={fd.foodPlan} onChange={e=>setFd({...fd,foodPlan:e.target.value})}><option value="None">None</option><option value="Including Breakfast">Including Breakfast</option><option value="Including Breakfast and Dinner">Including Breakfast and Dinner</option></select></div>
             <div className="form-group"><label>GST</label><select value={fd.gstType} onChange={e=>setFd({...fd,gstType:e.target.value})}><option value="Excluding">Excluding GST</option><option value="Including">Including GST</option></select></div>
             <div className="form-group"><label>Bill To</label><select value={fd.billTo} onChange={e=>setFd({...fd,billTo:e.target.value})}><option value="Individual">Individual</option><option value="Company">Company</option><option value="Agent">Agent</option></select></div>
@@ -1543,7 +1780,7 @@
 
     function UpdateStayModal({rec, onClose, onRefresh, allRooms, advBks, activeCis}){
       const [roomIds, setRoomIds]=useState([]);
-      const [pax, setPax]=useState(1);
+      const [roomPax, setRoomPax]=useState({});
       const [newRate, setNewRate]=useState(0);
       const [sv, setSv]=useState(false);
       const [roomStates, setRoomStates]=useState({});
@@ -1554,18 +1791,32 @@
         if(rec && allRooms){
           const cIn = new Date();
           const cOut = new Date(rec.checkOutDate || rec.checkOut);
-          
+
           let states = {};
           let typeBookings = {};
           allRooms.forEach(r => { states[r.roomNo] = { status: r.roomStatus, type: r.roomType }; });
 
           // Block occupied rooms (except our own)
-          if(activeCis && activeCis.length > 0){
-             activeCis.forEach(ci => {
-                if(ci.checkInId !== rec.checkInId && ci.status === 'Active'){
-                   (ci.roomNumbers||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(r => {
-                      if(states[r]) states[r].status = 'occupied';
-                   });
+if(activeCis && activeCis.length > 0){
+activeCis.forEach(ci => {
+if(ci.checkInId !== rec.checkInId && ci.status === 'Active'){
+let ciOut = new Date(ci.checkOutDate);
+
+// Fix overstaying guests: if expected checkout date is in the past, push it to tomorrow
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0);
+if (ciOut <= todayMidnight) {
+  const tomorrow = new Date(todayMidnight);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  ciOut = tomorrow;
+}
+
+const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.getDate());
+if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
+                     (ci.roomNumbers||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(r => {
+                        if(states[r]) states[r].status = 'occupied';
+                     });
+                   }
                 }
              });
           }
@@ -1576,7 +1827,8 @@
               if (bk.status === 'Booked' && bk.roomNo) {
                 const bIn = new Date(bk.checkIn);
                 const bOut = new Date(bk.checkOut);
-                if (cIn < bOut && cOut > bIn) {
+                const actualBOutStart = new Date(bOut.getFullYear(), bOut.getMonth(), bOut.getDate());
+                if (cIn < actualBOutStart && cOut > bIn) {
                   const roomNosArr = bk.roomNo.split(',').map(r => r.trim()).filter(Boolean);
                   roomNosArr.forEach(r => {
                     const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
@@ -1600,7 +1852,11 @@
       useEffect(()=>{
         if(rec){
           setRoomIds((rec.roomNumbers||'').split(',').map(s=>s.trim()).filter(s=>s));
-          setPax(parseInt(rec.pax)||1);
+          let parsedBreakdown = {};
+          try {
+            parsedBreakdown = rec.roomPaxBreakdown ? JSON.parse(rec.roomPaxBreakdown) : {};
+          } catch(e) {}
+          setRoomPax(parsedBreakdown);
         }
       }, [rec]);
 
@@ -1622,12 +1878,25 @@
         e.preventDefault();
         if(roomIds.length===0){ Swal.fire({icon:'warning',text:'Select at least one room.'}); return; }
         setSv(true);
-        
+
         let switchDateTime = null;
         if(switchDate && switchTime){
           switchDateTime = new Date(switchDate + 'T' + switchTime).toISOString();
         }
-        
+
+        const finalBreakdown = {};
+        let totalPax = 0;
+        roomIds.forEach(rn => {
+          const p = roomPax[rn] || 1;
+          finalBreakdown[rn] = p;
+          totalPax += p;
+        });
+
+        const paxPayload = {
+          paxTotal: totalPax,
+          roomPaxBreakdown: JSON.stringify(finalBreakdown)
+        };
+
         google.script.run.withSuccessHandler(r=>{
           setSv(false);
           if(r.success){
@@ -1637,7 +1906,7 @@
           } else { Swal.fire({icon:'error',text:r.message}); }
         }).withFailureHandler(err=>{
           setSv(false); Swal.fire({icon:'error',text:err.message});
-        }).updateStaySegment(rec.checkInId, roomIds.join(','), newRate, pax, switchDateTime);
+        }).updateStaySegment(rec.checkInId, roomIds.join(','), newRate, paxPayload, switchDateTime);
       };
 
       return(
@@ -1658,14 +1927,22 @@
                       const isAssigned = currentAssigned.includes(rm.roomNo.toString());
                       const stateInfo = roomStates[rm.roomNo] || {};
                       const isAvailable = stateInfo.status === 'Available' || isAssigned;
-                      
+
                       const toggleRoom = () => {
                         if (!isAvailable) return;
                         const rmNoStr = rm.roomNo.toString();
-                        
+
                         setRoomIds(prev => {
-                          if (prev.includes(rmNoStr)) return prev.filter(x => x !== rmNoStr);
-                          
+                          if (prev.includes(rmNoStr)) {
+                            const nextRooms = prev.filter(x => x !== rmNoStr);
+                            setRoomPax(p => {
+                              const newP = { ...p };
+                              delete newP[rmNoStr];
+                              return newP;
+                            });
+                            return nextRooms;
+                          }
+
                           // Before adding, enforce advance booking constraints
                           if (roomStates && roomStates._typeBookings) {
                             const type = rm.roomType;
@@ -1691,14 +1968,22 @@
                               }
                             }
                           }
+
+                          setRoomPax(p => {
+                            if (!p[rmNoStr]) {
+                              return { ...p, [rmNoStr]: 1 };
+                            }
+                            return p;
+                          });
+
                           return [...prev, rmNoStr];
                         });
                       };
 
                       return (
-                        <button key={rm.roomNo} type="button" 
+                        <button key={rm.roomNo} type="button"
                           onClick={toggleRoom}
-                          className={`btn ${roomIds.includes(rm.roomNo.toString())?'btn-primary':'btn-secondary'}`} 
+                          className={`btn ${roomIds.includes(rm.roomNo.toString())?'btn-primary':'btn-secondary'}`}
                           style={{padding:'6px 12px',fontSize:'13px',borderRadius:'4px', opacity: isAvailable ? 1 : 0.5, cursor: isAvailable ? 'pointer' : 'not-allowed'}}
                           disabled={!isAvailable}>
                           #{rm.roomNo} ({rm.roomType})
@@ -1718,6 +2003,27 @@
                     })}
                   </div>
                 </div>
+
+                {roomIds.length > 0 && (
+                  <div className="form-group" style={{ background: '#f8f9fa', padding: '15px', borderRadius: '4px', border: '1px solid #dee2e6', marginTop: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', color: 'var(--navy-primary)' }}>Pax Breakdown per Room *</label>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      {roomIds.map(rmNo => (
+                        <div key={rmNo} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'white', padding: '5px 10px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                          <span style={{ fontWeight: 'bold' }}>Room {rmNo}:</span>
+                          <input type="number" min="1" style={{ width: '60px', padding: '4px' }} 
+                            value={roomPax[rmNo] || 1} 
+                            onChange={e => {
+                              const val = parseInt(e.target.value) || 1;
+                              setRoomPax(p => ({ ...p, [rmNo]: val }));
+                            }} 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-grid" style={{marginTop:'15px'}}>
                   <div className="form-group">
                     <label>Switch Date *</label>
@@ -1726,10 +2032,6 @@
                   <div className="form-group">
                     <label>Switch Time *</label>
                     <input type="time" value={switchTime} onChange={e=>setSwitchTime(e.target.value)} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Pax *</label>
-                    <input type="number" min="1" value={pax} onChange={e=>setPax(e.target.value)} required />
                   </div>
                   <div className="form-group">
                     <label>New Daily Rate ({APP_CURRENCY}) *</label>
@@ -1762,20 +2064,13 @@
       const CAT_LABELS={Breakfast:'Breakfast',Lunch:'Lunch',Dinner:'Dinner',Snacks:'Snacks',FoodBeverage:'Other Food & Beverage'};
       const [fd,setFd]=useState({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});
       const [menuItems,setMenuItems]=useState([]);
-      const [selFoodCat,setSelFoodCat]=useState('');
       const [orderItems,setOrderItems]=useState([]);
-      
+      const [selMenuItem,setSelMenuItem]=useState('');
+      const [selMenuQty,setSelMenuQty]=useState(1);
+
       const [allOrders,setAllOrders]=useState([]);
       const [showWalkinBill,setShowWalkinBill]=useState(false);
       const [inv,setInv]=useState(null);
-
-      const dynamicFoodCategories = [...new Set(menuItems.map(item => item.foodCategory).filter(Boolean))];
-
-      useEffect(()=>{
-        if (dynamicFoodCategories.length > 0 && (!selFoodCat || !dynamicFoodCategories.includes(selFoodCat))) {
-          setSelFoodCat(dynamicFoodCategories[0]);
-        }
-      }, [menuItems, selFoodCat]);
 
       useEffect(()=>{
         google.script.run.withSuccessHandler(r=>{setActiveRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getActiveCheckInRooms();
@@ -1785,6 +2080,44 @@
       },[]);
 
       const loadOrders=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);const arr = Array.isArray(r)?r:[];setAllOrders(arr);initT(arr);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllFoodOrders();};
+
+      const handleManualAdd = () => {
+        if (!selMenuItem) { Swal.fire({icon:'warning',text:'Select a menu item first.'}); return; }
+        const qty = parseInt(selMenuQty) || 1;
+        if (qty < 1) { Swal.fire({icon:'warning',text:'Quantity must be at least 1.'}); return; }
+        
+        const mItem = menuItems.find(m => m.itemName === selMenuItem);
+        if (!mItem) return;
+
+        setOrderItems(prev => {
+          const ex = prev.findIndex(p => p.itemName === mItem.itemName);
+          if (ex >= 0) {
+            const up = [...prev];
+            up[ex].quantity += qty;
+            up[ex].totalAmount = up[ex].quantity * up[ex].defaultPrice;
+            return up;
+          } else {
+            return [...prev, {
+              itemName: mItem.itemName,
+              quantity: qty,
+              defaultPrice: parseFloat(mItem.defaultPrice)||0,
+              totalAmount: (parseFloat(mItem.defaultPrice)||0) * qty
+            }];
+          }
+        });
+        setSelMenuItem('');
+        setSelMenuQty(1);
+      };
+
+      const updateItemQty = (index, newQtyStr) => {
+        const newQty = parseInt(newQtyStr) || 0;
+        setOrderItems(prev => {
+          const up = [...prev];
+          up[index].quantity = newQty;
+          up[index].totalAmount = newQty * up[index].defaultPrice;
+          return up;
+        });
+      };
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#restT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#restT').DataTable({data,destroy:true,columns:[
@@ -1877,13 +2210,6 @@
 
       const resetOrderForm=()=>{setEditOrder(null);setOrderType('checkin');setWalkinName('');setOrderItems([]);setSelRooms([]);setSelCheckIn('');setSelGuestName('');setFd({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});};
 
-      const addItemToOrder = (item) => {
-          setOrderItems(prev => {
-              const existing = prev.find(i => i.itemName === item.itemName);
-              if(existing) return prev.map(i => i.itemName === item.itemName ? {...i, quantity: i.quantity + 1, totalAmount: (i.quantity + 1) * i.defaultPrice} : i);
-              return [...prev, {...item, quantity: 1, totalAmount: item.defaultPrice}];
-          });
-      };
       const removeItem = (idx) => { setOrderItems(prev => prev.filter((_, i) => i !== idx)); };
 
       const grandTotal = orderItems.reduce((acc, curr) => acc + curr.totalAmount, 0);
@@ -1896,7 +2222,7 @@
             <button className="btn btn-primary" onClick={()=>{loadOrders();google.script.run.withSuccessHandler(r=>{setActiveRooms(Array.isArray(r)?r:[]);}).getActiveCheckInRooms();}}><i className="fas fa-sync"></i> Refresh</button>
           </div>
         </div>
-        
+
         <div style={{background:'#f8f9fa',padding:'20px',borderRadius:'4px',border:'1px solid #dee2e6',marginBottom:'20px'}}>
           <h4 style={{color:'var(--navy-primary)',marginBottom:'15px'}}><i className="fas fa-plus-circle"></i> {editOrder?'Edit':'Add New'} Order</h4>
           <form onSubmit={submit}>
@@ -1935,10 +2261,10 @@
                         {group.rooms.map(rm => (
                           <label key={rm.roomNo} style={{display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', margin: '0', fontSize: '14px'}}>
                             <input 
-                              type="checkbox" 
+                              type="checkbox"
                               value={rm.roomNo} 
-                              checked={selRooms.includes(rm.roomNo)} 
-                              onChange={() => toggleRoom(rm.roomNo, ciId, group.guestName)} 
+                              checked={selRooms.includes(rm.roomNo)}
+                              onChange={() => toggleRoom(rm.roomNo, ciId, group.guestName)}
                               style={{cursor: 'pointer', margin: '0'}}
                             />
                             <span>#{rm.roomNo}</span>
@@ -1951,45 +2277,66 @@
               )}
             </div>
             )}
-            <div className="form-grid" style={{marginBottom: '15px'}}>
-              <div className="form-group"><label>Date</label><input type="date" value={fd.orderDate} onChange={e=>setFd({...fd,orderDate:e.target.value})}/></div>
-              <div className="form-group"><label>Meal Period</label><select value={fd.category} onChange={e=>setFd({...fd,category:e.target.value})}>{CATEGORIES.map(c=><option key={c} value={c}>{CAT_LABELS[c]}</option>)}</select></div>
-            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', alignItems: 'start', marginBottom: '20px' }}>
+              <div>
+                <div className="form-grid" style={{marginBottom: '15px'}}>
+                  <div className="form-group"><label>Date</label><input type="date" value={fd.orderDate} onChange={e=>setFd({...fd,orderDate:e.target.value})}/></div>
+                  <div className="form-group"><label>Meal Period</label><select value={fd.category} onChange={e=>setFd({...fd,category:e.target.value})}>{CATEGORIES.map(c=><option key={c} value={c}>{CAT_LABELS[c]}</option>)}</select></div>
+                </div>
 
-            <div style={{marginBottom:'20px'}}>
-              <div style={{display:'flex', gap:'8px', overflowX:'auto', paddingBottom:'10px', marginBottom:'15px'}}>
-                 {dynamicFoodCategories.map(c => (
-                    <button type="button" key={c} onClick={()=>setSelFoodCat(c)} className={`btn ${selFoodCat===c?'btn-primary':'btn-secondary'}`} style={{whiteSpace:'nowrap', borderRadius:'20px', padding:'6px 16px'}}>{c}</button>
-                 ))}
-              </div>
-              <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:'10px'}}>
-                 {menuItems.filter(m => m.foodCategory === selFoodCat).map(m => (
-                    <div key={m.itemName} onClick={()=>addItemToOrder(m)} style={{background:'white', border:'1px solid #ddd', borderRadius:'8px', padding:'12px', cursor:'pointer', textAlign:'center', boxShadow:'0 2px 4px rgba(0,0,0,0.05)', transition:'transform 0.1s'}} onMouseDown={e=>e.currentTarget.style.transform='scale(0.95)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
-                       <div style={{fontWeight:'bold', color:'var(--navy-primary)', fontSize:'14px', marginBottom:'5px'}}>{m.itemName}</div>
-                       <div style={{color:'#2ecc71', fontWeight:'600'}}>{fmtCur(m.defaultPrice)}</div>
+                <div style={{marginBottom:'20px'}}>
+                  <div className="form-grid" style={{alignItems:'flex-end'}}>
+                    <div className="form-group" style={{gridColumn:'1 / span 2'}}>
+                      <label>Select Menu Item</label>
+                      <SearchableSelect 
+                        value={selMenuItem}
+                        onChange={setSelMenuItem}
+                        options={menuItems.map(m => ({ value: m.itemName, label: `${m.itemName} - ${fmtCur(m.defaultPrice)}` }))}
+                        placeholder="Search for an item..."
+                      />
                     </div>
-                 ))}
+                    <div className="form-group">
+                      <label>Quantity</label>
+                      <input type="number" min="1" value={selMenuQty} onChange={e=>setSelMenuQty(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <button type="button" className="btn btn-secondary" onClick={handleManualAdd} style={{width:'100%', height:'42px'}}>
+                        <i className="fas fa-plus"></i> Add to Order
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                {orderItems.length > 0 ? (
+                   <div style={{background:'white', border:'1px solid #ddd', borderRadius:'8px', padding:'15px'}}>
+                      <h5 style={{margin:'0 0 10px 0', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>Current Order</h5>
+                      {orderItems.map((item, idx) => (
+                         <div key={idx} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px dashed #eee'}}>
+                            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                              <strong style={{minWidth:'150px'}}>{item.itemName}</strong>
+                              <input type="number" min="1" style={{width:'60px', padding:'4px'}} value={item.quantity} onChange={e => updateItemQty(idx, e.target.value)} />
+                            </div>
+                            <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                               <span>{fmtCur(item.totalAmount)}</span>
+                               <button type="button" onClick={()=>removeItem(idx)} style={{background:'none', border:'none', color:'#e74c3c', cursor:'pointer'}}><i className="fas fa-trash"></i></button>
+                            </div>
+                         </div>
+                      ))}
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px', paddingTop:'10px', borderTop:'2px solid #ddd', fontSize:'18px', fontWeight:'bold'}}>
+                         <div>Grand Total:</div>
+                         <div style={{color:'var(--navy-primary)'}}>{fmtCur(grandTotal)}</div>
+                      </div>
+                   </div>
+                ) : (
+                   <div style={{background:'white', border:'1px dashed #ddd', borderRadius:'8px', padding:'40px 20px', textAlign:'center', color:'#999', height:'100%', display:'flex', flexDirection:'column', justifyContent:'center'}}>
+                      <i className="fas fa-shopping-basket" style={{fontSize:'36px', marginBottom:'15px', opacity:'0.5'}}></i>
+                      <p>Your cart is empty.</p>
+                   </div>
+                )}
               </div>
             </div>
-
-            {orderItems.length > 0 && (
-               <div style={{background:'white', border:'1px solid #ddd', borderRadius:'8px', padding:'15px', marginBottom:'20px'}}>
-                  <h5 style={{margin:'0 0 10px 0', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>Current Order</h5>
-                  {orderItems.map((item, idx) => (
-                     <div key={idx} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px dashed #eee'}}>
-                        <div><strong>{item.itemName}</strong> <span style={{color:'#666', fontSize:'13px'}}>x {item.quantity}</span></div>
-                        <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                           <span>{fmtCur(item.totalAmount)}</span>
-                           <button type="button" onClick={()=>removeItem(idx)} style={{background:'none', border:'none', color:'#e74c3c', cursor:'pointer'}}><i className="fas fa-times"></i></button>
-                        </div>
-                     </div>
-                  ))}
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px', paddingTop:'10px', borderTop:'2px solid #ddd', fontSize:'18px', fontWeight:'bold'}}>
-                     <div>Grand Total:</div>
-                     <div style={{color:'var(--navy-primary)'}}>{fmtCur(grandTotal)}</div>
-                  </div>
-               </div>
-            )}
             {selGuestName&&<p style={{fontSize:'13px',color:'#666',marginBottom:'15px'}}><i className="fas fa-info-circle"></i> Selected Guest: <strong>{selGuestName}</strong> | Check-In ID: <strong>{selCheckIn}</strong></p>}
             <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> {editOrder?'Update':'Add'} Order</>}</button>{editOrder&&<button type="button" className="btn btn-secondary" onClick={resetOrderForm}><i className="fas fa-times"></i> Cancel Edit</button>}</div>
           </form>
@@ -2007,10 +2354,11 @@
       const [disc, setDisc] = useState(0);
       const [gstType, setGstType] = useState('Excluding');
       const [payMode, setPayMode] = useState('Cash');
+      const [payStatus, setPayStatus] = useState('Paid');
       const [processing, setProcessing] = useState(false);
 
       const walkinOrders = allOrders.filter(o => o.checkInId === 'Walk-in' && o.status === 'Active');
-      
+
       const grouped = walkinOrders.reduce((acc, curr) => {
         const name = curr.roomNo || 'Unknown';
         if (!acc[name]) acc[name] = [];
@@ -2023,16 +2371,17 @@
         const orders = grouped[selName];
         if (!orders || orders.length === 0) return;
         const orderIds = orders.map(o => o.orderId);
-        
+
         setProcessing(true);
         Swal.fire({title:'Processing Walk-in Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        
+
         const payload = {
           discountPercent: parseFloat(disc) || 0,
           gstType: gstType,
           sgstPercent: 8,
           cgstPercent: 8,
-          paymentMode: payMode
+          paymentMode: payMode,
+          paymentStatus: payStatus
         };
 
         google.script.run.withSuccessHandler(res => {
@@ -2062,7 +2411,7 @@
                 {Object.keys(grouped).length === 0 ? <p style={{color:'#888', fontSize:'13px'}}>No active walk-in orders.</p> : (
                   <div style={{display:'flex', flexDirection:'column', gap:'5px'}}>
                     {Object.keys(grouped).map(name => (
-                      <button key={name} type="button" 
+                      <button key={name} type="button"
                         onClick={() => setSelName(name)}
                         className={`btn ${selName === name ? 'btn-primary' : 'btn-secondary'}`}
                         style={{textAlign: 'left', padding: '8px 12px'}}>
@@ -2073,7 +2422,7 @@
                   </div>
                 )}
               </div>
-              
+
               {/* Right side: Items and Checkout options */}
               <div style={{flex: '2', display: 'flex', flexDirection: 'column'}}>
                 {!selName ? (
@@ -2104,10 +2453,10 @@
                         </tfoot>
                       </table>
                     </div>
-                    
+
                     <div style={{background: '#f8f9fa', padding: '15px', borderRadius: '4px', border: '1px solid #ddd'}}>
                       <h4 style={{marginBottom: '10px', fontSize: '14px'}}><i className="fas fa-calculator"></i> Billing Options</h4>
-                      <div className="form-grid" style={{gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px'}}>
+                      <div className="form-grid" style={{gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px'}}>
                         <div className="form-group" style={{marginBottom:0}}>
                           <label>Discount (%)</label>
                           <input type="number" min="0" max="100" value={disc} onChange={e=>setDisc(e.target.value)} />
@@ -2119,8 +2468,16 @@
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
+                          <label>Payment Status</label>
+                          <select value={payStatus} onChange={e=>setPayStatus(e.target.value)}>
+                            <option value="Paid">Paid</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Credit">Credit</option>
+                          </select>
+                        </div>
+                        <div className="form-group" style={{marginBottom:0}}>
                           <label>Payment Mode</label>
-                          <select value={payMode} onChange={e=>setPayMode(e.target.value)}>
+                          <select value={payMode} onChange={e=>setPayMode(e.target.value)} disabled={payStatus === 'Credit'}>
                             <option>Cash</option><option>Card</option><option>Bank Transfer</option><option>UPI</option><option>Online</option>
                           </select>
                         </div>
@@ -2143,13 +2500,13 @@
     function HotelInvoiceModal({data,onClose}){
       const d=data;
       const [billView, setBillView] = useState('Combined');
-      
+
       const fmtD=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});};
       const fmtDShort=(dt)=>{if(!dt)return'-';const dd=new Date(dt);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});};
       const n2=(v)=>(parseFloat(v)||0).toFixed(2);
-      const cats=['extraBed','foodBev','miniBar','earlyClean','xerox','laundry','fax','spbuc','travels','misc'];
-      const allCatHeaders=['E.Bed','Fds&Bvg','MiniBar','ErlyCln','Xerox','Laundry','Fax','SP/BUC','Travels','Misc'];
-      
+      const cats=['extraBed','foodBev','laundry'];
+      const allCatHeaders=['E.Bed','Fds&Bvg','Laundry'];
+
       // Calculate dynamic active day rows based on view mode
       const activeDayByDay = (d.dayByDay||[]).map(row => {
          const newRow = {...row};
@@ -2158,14 +2515,7 @@
          } else if (billView === 'Food Only') {
             newRow.rooms = 0;
             newRow.extraBed = 0;
-            newRow.miniBar = 0;
-            newRow.earlyClean = 0;
-            newRow.xerox = 0;
             newRow.laundry = 0;
-            newRow.fax = 0;
-            newRow.spbuc = 0;
-            newRow.travels = 0;
-            newRow.misc = 0;
          }
          newRow.dayTotal = (parseFloat(newRow.rooms)||0) + cats.reduce((sum, c) => sum + (parseFloat(newRow[c])||0), 0);
          return newRow;
@@ -2202,13 +2552,13 @@
       const doPrint=()=>{window.print();};
 
       const doPdf=()=>{
-        const dayRows=(activeDayByDay||[]).map(row=>[fmtDShort(row.date),n2(row.rooms),n2(row.extraBed),n2(row.foodBev),n2(row.miniBar),n2(row.earlyClean),n2(row.xerox),n2(row.laundry),n2(row.fax),n2(row.spbuc),n2(row.travels),n2(row.misc),n2(row.dayTotal),'']);
+        const dayRows=(activeDayByDay||[]).map(row=>[fmtDShort(row.date),n2(row.rooms),n2(row.extraBed),n2(row.foodBev),n2(row.laundry),n2(row.dayTotal),'']);
         const totRow=['Totals',n2(totalRoomsCol),...cats.map(c=>n2(colTotals[c])),n2(liveSubtotal),''];
         const doc={pageSize:'A4',pageOrientation:'landscape',pageMargins:[20,20,20,20],content:[
           {text:d.hotelName||'Hill View Eco Retreat',style:'hdr',alignment:'center'},{text:(d.hotelAddress||'')+' | '+(d.hotelPhone||'')+' | '+(d.hotelEmail||''),alignment:'center',fontSize:9,margin:[0,0,0,5]},
           d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
-          {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',d.address?{text:'Address: '+d.address+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
-          {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto','auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'MiniBar',style:'th'},{text:'ErlyCln',style:'th'},{text:'Xerox',style:'th'},{text:'Laundry',style:'th'},{text:'Fax',style:'th'},{text:'SP/BUC',style:'th'},{text:'Travels',style:'th'},{text:'Misc',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
+          {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
+          {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
           {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],['SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],['CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
           {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
           {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
@@ -2227,7 +2577,7 @@
             <div className="invoice-guest-details">
               <p><strong>Guest:</strong> {d.guestName}</p>
               {d.companyName&&<p><strong>Company:</strong> {d.companyName}</p>}
-              {d.address&&<p><strong>Address:</strong> {d.address}</p>}
+              {(d.address || d.city || d.state || d.pinCode || d.country) && <p><strong>Address:</strong> {[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')}</p>}
               {d.gstNumber&&<p><strong>GSTIN:</strong> {d.gstNumber}</p>}
               <p><strong>Mobile:</strong> {d.mobile||'-'}</p>
               {d.email&&<p><strong>Email:</strong> {d.email}</p>}
@@ -2244,7 +2594,7 @@
             </tbody></table></div>
           </div>
           <table className="invoice-day-table"><thead><tr><th>Date</th><th>Rooms</th>{allCatHeaders.map(h=><th key={h}>{h}</th>)}<th>Days Total</th><th>Gr.Total</th></tr></thead>
-            <tbody>{activeDayByDay.map((row,i)=><tr key={i}><td style={{textAlign:'center'}}>{fmtDShort(row.date)}</td><td>{n2(row.rooms)}</td><td>{n2(row.extraBed)}</td><td>{n2(row.foodBev)}</td><td>{n2(row.miniBar)}</td><td>{n2(row.earlyClean)}</td><td>{n2(row.xerox)}</td><td>{n2(row.laundry)}</td><td>{n2(row.fax)}</td><td>{n2(row.spbuc)}</td><td>{n2(row.travels)}</td><td>{n2(row.misc)}</td><td><strong>{n2(row.dayTotal)}</strong></td><td><strong></strong></td></tr>)}</tbody>
+            <tbody>{activeDayByDay.map((row,i)=><tr key={i}><td style={{textAlign:'center'}}>{fmtDShort(row.date)}</td><td>{n2(row.rooms)}</td><td>{n2(row.extraBed)}</td><td>{n2(row.foodBev)}</td><td>{n2(row.laundry)}</td><td><strong>{n2(row.dayTotal)}</strong></td><td><strong></strong></td></tr>)}</tbody>
             <tfoot><tr><td style={{textAlign:'center'}}><strong>Totals</strong></td><td><strong>{n2(totalRoomsCol)}</strong></td>{cats.map(c=><td key={c}><strong>{n2(colTotals[c])}</strong></td>)}<td><strong>{n2(liveSubtotal)}</strong></td><td></td></tr></tfoot>
           </table>
           <table className="invoice-totals-table"><tbody>
@@ -2281,12 +2631,13 @@
       const [inv,setInv]=useState(null);
       const [saving,setSaving]=useState(false);
       const [payMode,setPayMode]=useState('Cash');
+      const [payStatus,setPayStatus]=useState('Paid');
       const [amtPaid,setAmtPaid]=useState('');
-      const [checkOutDate,setCheckOutDate]=useState(new Date().toISOString().split('T')[0]);
+      const [checkOutDate,setCheckOutDate]=useState(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); });
       const [checkOutTime,setCheckOutTime]=useState('12:00');
       const [discountPercent,setDiscountPercent]=useState(0);
       const [advanceToApply,setAdvanceToApply]=useState(0);
-      const [mg, setMg] = useState({ guestName:'', companyName:'', gstNumber:'', mobile:'', email:'', address:'', gstType:'Excluding', billTo:'Individual' });
+      const [mg, setMg] = useState({ guestName:'', companyName:'', gstNumber:'', mobile:'', email:'', address:'', city:'', state:'', pinCode:'', country:'', gstType:'Excluding', billTo:'Individual', extraPerson: 0 });
 
       useEffect(()=>{
         google.script.run.withSuccessHandler(r=>{setActiveRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getActiveCheckInRooms();
@@ -2313,8 +2664,13 @@
                  mobile: res.mobile || '',
                  email: res.email || '',
                  address: res.address || '',
+                 city: res.city || '',
+                 state: res.state || '',
+                 pinCode: res.pinCode || '',
+                 country: res.country || '',
                  gstType: res.gstType || 'Excluding',
-                 billTo: res.billTo || 'Individual'
+                 billTo: res.billTo || 'Individual',
+                 extraPerson: res.extraPerson || 0
                });
                setDiscountPercent(res.discountPercent || 0); 
             }
@@ -2351,8 +2707,13 @@
             mobile: pCi.mobile || '',
             email: pCi.email || '',
             address: pCi.address || '',
+            city: pCi.city || '',
+            state: pCi.state || '',
+            pinCode: pCi.pinCode || '',
+            country: pCi.country || '',
             gstType: pCi.gstType || 'Excluding',
-            billTo: pCi.billTo || 'Individual'
+            billTo: pCi.billTo || 'Individual',
+            extraPerson: pCi.extraPerson || 0
           });
         }
       };
@@ -2455,7 +2816,7 @@
         setSaving(true);Swal.fire({title: isPreview ? 'Generating Preview...' : 'Processing Advanced Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
         
         const payload = {
-          checkOutDate, checkOutTime, paymentMode:payMode, amountPaid:parseFloat(amtPaid)||0, 
+          checkOutDate, checkOutTime, paymentMode:payMode, paymentStatus:payStatus, amountPaid:parseFloat(amtPaid)||0, 
           discountPercent, advanceToApply: parseFloat(advanceToApply)||0, isPreview
         };
         
@@ -2498,8 +2859,8 @@
                     {group.rooms.map(rm => {
                        const isQueued = queuedCis.some(ci => ci.checkInId === ciId);
                        return (
-                         <button key={rm.roomNo} type="button" 
-                           onClick={() => fetchRoom(rm.roomNo.toString())} 
+                         <button key={rm.roomNo} type="button"
+                           onClick={() => fetchRoom(rm.roomNo.toString())}
                            disabled={isQueued || fetching}
                            className={`btn ${isQueued ? 'btn-secondary' : 'btn-primary'}`}
                            style={{padding: '6px 12px', fontSize: '13px', borderRadius: '4px', opacity: isQueued ? 0.5 : 1, cursor: isQueued ? 'not-allowed' : 'pointer'}}>
@@ -2527,7 +2888,7 @@
               {queuedCis.map(ci => {
                  const ciRooms = (ci.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
                  const ciOrders = foodOrdersMap[ci.checkInId] || [];
-                 
+
                  const roomStats = {};
                  if (ci.staySegments && ci.staySegments.length > 0) {
                    ci.staySegments.forEach(seg => {
@@ -2540,7 +2901,7 @@
                      });
                    });
                  }
-                 
+
                  return (
                    <div key={ci.checkInId} style={{minWidth:'300px', flex:'0 0 auto', background:'#f8f9fa', border:'1px solid #dee2e6', borderRadius:'4px', padding:'15px'}}>
                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px'}}>
@@ -2574,7 +2935,7 @@
                          </div>
                        ))}
                      </div>
-                     
+
                      <div style={{marginTop:'15px'}}>
                        <strong>POS Orders</strong>
                        {ciOrders.length===0 && <div style={{fontSize:'12px',color:'#888',marginTop:'5px'}}>No pending orders</div>}
@@ -2609,6 +2970,12 @@
               <div className="form-group"><label>GST Number</label><input value={mg.gstNumber} onChange={e=>setMg({...mg,gstNumber:e.target.value})}/></div>
               <div className="form-group"><label>Mobile</label><input value={mg.mobile} onChange={e=>setMg({...mg,mobile:e.target.value})}/></div>
               <div className="form-group"><label>Email</label><input type="email" value={mg.email} onChange={e=>setMg({...mg,email:e.target.value})}/></div>
+              <div className="form-group"><label>Village/Street</label><input value={mg.address} onChange={e=>setMg({...mg,address:e.target.value})}/></div>
+              <div className="form-group"><label>City</label><input value={mg.city} onChange={e=>setMg({...mg,city:e.target.value})}/></div>
+              <div className="form-group"><label>State</label><input value={mg.state} onChange={e=>setMg({...mg,state:e.target.value})}/></div>
+              <div className="form-group"><label>Pin Code</label><input value={mg.pinCode} onChange={e=>setMg({...mg,pinCode:e.target.value})}/></div>
+              <div className="form-group"><label>Country</label><input value={mg.country} onChange={e=>setMg({...mg,country:e.target.value})}/></div>
+              <div className="form-group"><label>Extra Person</label><input type="number" min="0" value={mg.extraPerson} onChange={e=>setMg({...mg,extraPerson:e.target.value})}/></div>
               <div className="form-group"><label>Bill To</label><select value={mg.billTo} onChange={e=>setMg({...mg,billTo:e.target.value})}><option>Individual</option><option>Company</option><option>Agent</option></select></div>
               <div className="form-group"><label>GST Type</label><select value={mg.gstType} onChange={e=>setMg({...mg,gstType:e.target.value})}><option>Excluding</option><option>Including</option><option>None</option></select></div>
             </div>
@@ -2621,8 +2988,16 @@
                  <div style={{fontSize:'11px', color:'#666', marginBottom:'4px'}}>Max available: {fmtCur(totalAdvanceAvailable)}</div>
                  <input type="number" step="0.01" min="0" max={totalAdvanceAvailable} value={advanceToApply} onChange={e=>setAdvanceToApply(e.target.value)}/>
               </div>
-              <div className="form-group"><label>Payment Mode</label><select value={payMode} onChange={e=>setPayMode(e.target.value)}><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>UPI</option><option>Online</option></select></div>
-              <div className="form-group"><label>Amount Paid Now ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={amtPaid} onChange={e=>setAmtPaid(e.target.value)}/></div>
+              <div className="form-group">
+                 <label>Payment Status</label>
+                 <select value={payStatus} onChange={e=>setPayStatus(e.target.value)}>
+                    <option value="Paid">Paid</option>
+                    <option value="Partial">Partial</option>
+                    <option value="Credit">Credit</option>
+                 </select>
+              </div>
+              <div className="form-group"><label>Payment Mode</label><select value={payMode} onChange={e=>setPayMode(e.target.value)} disabled={payStatus === 'Credit'}><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>UPI</option><option>Online</option></select></div>
+              <div className="form-group"><label>Amount Paid Now ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" value={amtPaid} onChange={e=>setAmtPaid(e.target.value)} disabled={payStatus === 'Credit'}/></div>
             </div>
           </div>
 
@@ -2637,75 +3012,6 @@
       </div>);
     }
 
-    function FinanceEntryModal({record,onClose,onSave,user}){
-      const [fd,setFd]=useState({date:record?.date?record.date.slice(0,10):'',type:record?.type||'Income',description:record?.description||'',shopSource:record?.shopSource||'',amount:record?.amount||'',category:record?.category||'',currency:record?.currency||APP_CURRENCY});
-      const [sv,setSv]=useState(false);const [cats,setCats]=useState([]);
-      useEffect(()=>{google.script.run.withSuccessHandler(r=>{if(Array.isArray(r))setCats(r);}).getAllCategories();},[]);
-      const filteredCats=cats.filter(c=>c.type===fd.type);
-      const submit=(e)=>{e.preventDefault();setSv(true);
-        const rd={...fd,enteredBy:user};
-        if(record){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});onClose();setTimeout(onSave,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).updateFinanceRecord(record.rowIndex,rd);}
-        else{google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});onClose();setTimeout(onSave,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).addFinanceRecord(rd);}};
-      return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-coins"></i> {record?'Edit':'Add'} Entry</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body"><form onSubmit={submit}><div className="form-grid">
-        <div className="form-group"><label>Date *</label><input type="date" value={fd.date} onChange={e=>setFd({...fd,date:e.target.value})} required/></div>
-        <div className="form-group"><label>Type *</label><select value={fd.type} onChange={e=>setFd({...fd,type:e.target.value,category:''})}><option>Income</option><option>Expense</option></select></div>
-        <div className="form-group"><label>Category</label><select value={fd.category} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Select Category</option>{filteredCats.map(c=><option key={c.categoryId} value={c.name}>{c.name}</option>)}</select></div>
-        <div className="form-group"><label>Currency</label><select value={fd.currency} onChange={e=>setFd({...fd,currency:e.target.value})} style={{fontSize:'16px'}}>{CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-        <div className="form-group"><label>Description *</label><input value={fd.description} onChange={e=>setFd({...fd,description:e.target.value})} required/></div>
-        <div className="form-group"><label>Shop / Source</label><input value={fd.shopSource} onChange={e=>setFd({...fd,shopSource:e.target.value})}/></div>
-        <div className="form-group"><label>Amount ({fd.currency}) *</label><input type="number" step="0.01" min="0.01" value={fd.amount} onChange={e=>setFd({...fd,amount:e.target.value})} required/></div>
-      </div><div className="form-actions"><button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save</>}</button><button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button></div></form></div></div></div>);
-    }
-
-    function FinanceView({user}){
-      const [ld,setLd]=useState(true);const [show,setShow]=useState(false);const [edit,setEdit]=useState(null);const [recs,setRecs]=useState([]);const [summary,setSummary]=useState({totalIncome:0,totalExpenses:0,netBalance:0});const tRef=useRef(null);
-      const [filters,setFilters]=useState({dateFrom:'',dateTo:'',type:'',category:''});const [showCats,setShowCats]=useState(false);
-      useEffect(()=>{load();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[]);
-      const load=()=>{setLd(true);
-        google.script.run.withSuccessHandler(r=>{const d=Array.isArray(r)?r:[];setRecs(d);
-          google.script.run.withSuccessHandler(s=>{setSummary(s&&!s.error?s:{totalIncome:0,totalExpenses:0,netBalance:0});setLd(false);initT(d);}).withFailureHandler(()=>{setLd(false);initT(d);}).getFinanceSummary();
-        }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllFinanceRecords();};
-      const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#finT').empty();}catch(e){}}
-        setTimeout(()=>{try{$.fn.dataTable.ext.search=[];const t=$('#finT').DataTable({data,destroy:true,columns:[
-          {data:'date',title:'Date',render:d=>fmtDate(d)},{data:'type',title:'Type',render:d=>`<span class="status-badge ${statusCls(d)}">${d}</span>`},
-          {data:'description',title:'Description'},{data:'category',title:'Category',render:d=>d||'-'},{data:'shopSource',title:'Shop/Source'},
-          {data:'amount',title:'Amount',render:(d,t,row)=>fmtCur(d,row.currency)},{data:'balance',title:'Balance',render:d=>fmtCur(d)},
-          {data:'enteredBy',title:'Entered By'},
-          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
-        ],pageLength:10,lengthMenu:[[10,25,50,-1],[10,25,50,"All"]],responsive:true,dom:'Blfrtip',buttons:[
-          {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
-          {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
-          {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'desc']],createdRow:function(row,d){if(d.type==='Income')$(row).css('background-color','#d4edda');else if(d.type==='Expense')$(row).css('background-color','#fff3cd');}});
-        $('#finT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEdit(rd);setShow(true);}else delRec(rd);});
-        tRef.current=t;}catch(e){console.error(e);}},150);};
-      const delRec=(rec)=>{Swal.fire({icon:'warning',title:'Delete?',text:'Delete this finance record?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});setTimeout(load,100);}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteFinanceRecord(rec.rowIndex);});};
-      useEffect(()=>{if(!tRef.current||recs.length===0)return;
-        $.fn.dataTable.ext.search=[];
-        $.fn.dataTable.ext.search.push(function(s,d,idx){const row=recs[idx];if(!row)return true;
-          if(filters.dateFrom){const dt=new Date(row.date);if(dt<new Date(filters.dateFrom))return false;}
-          if(filters.dateTo){const dt=new Date(row.date);if(dt>new Date(filters.dateTo+'T23:59:59'))return false;}return true;});
-        if(filters.type)tRef.current.column(1).search(filters.type);else tRef.current.column(1).search('');
-        if(filters.category)tRef.current.column(3).search('^'+filters.category+'$',true,false);else tRef.current.column(3).search('');
-        tRef.current.draw();},[filters]);
-      const clearF=()=>{setFilters({dateFrom:'',dateTo:'',type:'',category:''});if(tRef.current){$.fn.dataTable.ext.search=[];tRef.current.columns().search('').draw();}};
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-coins"></i> Finance</h2><div style={{display:'flex',gap:'10px'}}><button className="btn btn-primary" onClick={()=>setShowCats(true)}><i className="fas fa-tags"></i> Categories</button><button className="btn btn-success" onClick={()=>{setEdit(null);setShow(true);}}><i className="fas fa-plus"></i> Add Entry</button></div></div>
-        {!ld&&<div className="finance-summary">
-          <div className="stat-card green"><div className="stat-card-icon"><i className="fas fa-arrow-up"></i></div><div className="stat-card-value">{fmtCur(summary.totalIncome)}</div><div className="stat-card-label">Total Income</div></div>
-          <div className="stat-card red"><div className="stat-card-icon"><i className="fas fa-arrow-down"></i></div><div className="stat-card-value">{fmtCur(summary.totalExpenses)}</div><div className="stat-card-label">Total Expenses</div></div>
-          <div className="stat-card"><div className="stat-card-icon"><i className="fas fa-wallet"></i></div><div className="stat-card-value">{fmtCur(summary.netBalance)}</div><div className="stat-card-label">Net Balance</div></div>
-        </div>}
-        {!ld&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear</button></div><div className="filters-grid">
-          <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> From</label><input type="date" className="filter-input" value={filters.dateFrom} onChange={e=>setFilters({...filters,dateFrom:e.target.value})}/></div>
-          <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> To</label><input type="date" className="filter-input" value={filters.dateTo} onChange={e=>setFilters({...filters,dateTo:e.target.value})}/></div>
-          <div className="filter-group"><label><i className="fas fa-tag"></i> Type</label><select className="filter-input" value={filters.type} onChange={e=>setFilters({...filters,type:e.target.value})}><option value="">All</option><option>Income</option><option>Expense</option></select></div>
-          <div className="filter-group"><label><i className="fas fa-tags"></i> Category</label><select className="filter-input" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})}><option value="">All</option>{[...new Set(recs.map(r=>r.category).filter(Boolean))].map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-        </div></div>}
-        {ld&&<TableSkeleton rows={6} columns={8}/>}<div style={{display:ld?'none':'block'}}><table id="finT" className="display" style={{width:'100%'}}></table></div>
-        {show&&<FinanceEntryModal record={edit} onClose={()=>{setShow(false);setEdit(null);}} onSave={load} user={user}/>}
-        {showCats&&<CategoryManager onClose={()=>setShowCats(false)}/>}
-      </div>);
-    }
 
     function UserModal({editUser,onClose,onSave}){
       const [fd,setFd]=useState({username:editUser?.username||'',password:'',role:editUser?.role||'user'});
@@ -2721,89 +3027,10 @@
       </form></div></div></div>);
     }
 
-    function UsersView({user}){
-      const [ld,setLd]=useState(true);const [show,setShow]=useState(false);const [edit,setEdit]=useState(null);const tRef=useRef(null);
-      const [filters,setFilters]=useState({role:''});
-      useEffect(()=>{load();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[]);
-      useEffect(()=>{if(!tRef.current)return;if(filters.role)tRef.current.column(1).search('^'+filters.role+'$',true,false);else tRef.current.column(1).search('');tRef.current.draw();},[filters]);
-      const clearF=()=>{setFilters({role:''});if(tRef.current){tRef.current.columns().search('').draw();}};
-      const load=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);if(r&&r.error){Swal.fire({icon:'error',text:r.error});return;}initT(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllUsers();};
-      const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#usrT').empty();}catch(e){}}
-        setTimeout(()=>{try{const t=$('#usrT').DataTable({data,destroy:true,columns:[
-          {data:'username',title:'Username'},{data:'role',title:'Role',render:d=>`<span class="role-badge ${d==='admin'?'role-admin':'role-user'}">${d}</span>`},
-          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
-        ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
-          {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
-          {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
-          {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'asc']]});
-        $('#usrT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEdit(rd);setShow(true);}else delUser(rd);});
-        tRef.current=t;}catch(e){console.error(e);}},150);};
-      const delUser=(u)=>{Swal.fire({icon:'warning',title:'Delete User?',text:'Delete '+u.username+'?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});setTimeout(load,100);}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteUser(u.rowIndex);});};
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-users"></i> Users</h2><button className="btn btn-success" onClick={()=>{setEdit(null);setShow(true);}}><i className="fas fa-plus"></i> Add User</button></div>
-        {!ld&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear All</button></div><div className="filters-grid">
-          <div className="filter-group"><label><i className="fas fa-user-shield"></i> Role</label><select className="filter-input" value={filters.role} onChange={e=>setFilters({...filters,role:e.target.value})}><option value="">All Roles</option><option value="admin">Admin</option><option value="user">User</option></select></div>
-        </div></div>}
-        {ld&&<TableSkeleton rows={5} columns={3}/>}<div style={{display:ld?'none':'block'}}><table id="usrT" className="display" style={{width:'100%'}}></table></div>
-        {show&&<UserModal editUser={edit} onClose={()=>{setShow(false);setEdit(null);}} onSave={load}/>}
-      </div>);
-    }
 
-    function AccountView({user}){
-      const [oldP,setOldP]=useState('');const [newP,setNewP]=useState('');const [confP,setConfP]=useState('');const [sv,setSv]=useState(false);
-      const submit=(e)=>{e.preventDefault();if(newP!==confP){Swal.fire({icon:'error',text:'New passwords do not match'});return;}if(newP.length<4){Swal.fire({icon:'warning',text:'Password must be at least 4 characters'});return;}setSv(true);
-        google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});setOldP('');setNewP('');setConfP('');}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).changePassword(user,oldP,newP);};
-      return(<div className="data-section" style={{maxWidth:'500px'}}><div className="section-header"><h2><i className="fas fa-user-circle"></i> My Account</h2></div>
-        <p style={{marginBottom:'20px',color:'#666'}}>Logged in as: <strong>{user}</strong></p>
-        <form onSubmit={submit}>
-          <div className="form-group"><label>Current Password *</label><input type="password" value={oldP} onChange={e=>setOldP(e.target.value)} required/></div>
-          <div className="form-group"><label>New Password *</label><input type="password" value={newP} onChange={e=>setNewP(e.target.value)} required/></div>
-          <div className="form-group"><label>Confirm New Password *</label><input type="password" value={confP} onChange={e=>setConfP(e.target.value)} required/></div>
-          <button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Changing...</>:<><i className="fas fa-key"></i> Change Password</>}</button>
-        </form>
-      </div>);
-    }
-
-    function AboutView(){
-      return(<div className="about-section">
-        <div className="about-header"><div className="about-logo"><img src={LOGO} alt="Logo"/></div><div className="about-title"><h1>Hill View Eco Retreat</h1></div></div>
-        <div className="about-card"><h2><i className="fas fa-question-circle"></i> What is this App?</h2><p>So basicaly this is the Hill View Eco Retreat management system built with Google Apps Script. Its used to manage room bookings, guest check-ins and checkouts, generate invoices, and track income and expenses. Think of it like a digital front desk where you can handle evrything from one place.</p></div>
-        <div className="about-card"><h2><i className="fas fa-clipboard-list"></i> What Can You Do With It?</h2><ul className="about-features">
-          <li><i className="fas fa-check"></i> <strong>Room Management</strong> - Add, edit, and manage hotel rooms with diffrent types and rates</li>
-          <li><i className="fas fa-check"></i> <strong>Bookings</strong> - Create new bookings, track guest details, and manage reservations</li>
-          <li><i className="fas fa-check"></i> <strong>Checkout & Invoicing</strong> - Process checkouts and generate professional PDF invoices</li>
-          <li><i className="fas fa-check"></i> <strong>Standalone Invoices</strong> - Create invoices with rooms, activities, and services with auto-numbering (INV-0001)</li>
-                    <li><i className="fas fa-check"></i> <strong>Multi-Currency</strong> - Support for MVR and USD currencies per document</li>
-          <li><i className="fas fa-check"></i> <strong>Tax System</strong> - Optional GST (percentage) and Green Tax (per person per night) on invoices</li>
-          <li><i className="fas fa-check"></i> <strong>Finance Tracking</strong> - Record income and expenses with categories, currency support, and running balance</li>
-          <li><i className="fas fa-check"></i> <strong>Budget Management</strong> - Set monthly budgets and track spending with visual progress bars</li>
-          <li><i className="fas fa-check"></i> <strong>Categories</strong> - Manage income and expense categories for better financial tracking</li>
-          <li><i className="fas fa-check"></i> <strong>Monthly Reports</strong> - Generate detailed financial reports with category breakdowns</li>
-          <li><i className="fas fa-check"></i> <strong>PDF to Drive</strong> - Save invoice PDFs directly to Google Drive</li>
-          <li><i className="fas fa-check"></i> <strong>Hotel Settings</strong> - Configure hotel details, logo, default currency, and tax rates</li>
-          <li><i className="fas fa-check"></i> <strong>Dashboard</strong> - Visual overview with charts showing room occupancy, revenue, invoices, and budget</li>
-          <li><i className="fas fa-check"></i> <strong>User Management</strong> - Manage staff accounts with Admin and User roles</li>
-          <li><i className="fas fa-check"></i> <strong>Export Data</strong> - Export any table to CSV, PDF, or print directly</li>
-        </ul></div>
-        <div className="about-card"><h2><i className="fas fa-users-cog"></i> User Roles & Permissions</h2><p style={{marginBottom:'15px'}}>The system has diffrent user roles. Each role can do diffrent things based on there access level.</p><div className="about-table-wrapper"><table className="about-roles-table"><thead><tr><th>Feature / Action</th><th><span className="role-badge role-admin">Admin</span></th><th><span className="role-badge role-user">User</span></th></tr></thead><tbody>
-          <tr><td>View Dashboard</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Create Bookings</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-check-circle text-success"></i></td></tr>
-          <tr><td>View All Bookings</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i> Own only</td></tr>
-          <tr><td>Checkout Guests</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Manage Rooms</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-                    <tr><td>Manage Invoices</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Finance Tracking</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Monthly Reports</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Hotel Settings</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Manage Users</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-times-circle text-danger"></i></td></tr>
-          <tr><td>Change Own Password</td><td><i className="fas fa-check-circle text-success"></i></td><td><i className="fas fa-check-circle text-success"></i></td></tr>
-        </tbody></table></div></div>
-        <div className="about-footer"><p>Hotel Management System</p><p className="about-version">Version 2.0.0</p></div>
-      </div>);
-    }
 
     function InvoiceModal({invoice,onClose,onSave,user}){
-      const [fd,setFd]=useState({guestName:invoice?.guestName||'',phone:invoice?.phone||'',email:invoice?.email||'',customerTIN:invoice?.customerTIN||'',currency:invoice?.currency||APP_CURRENCY,dueDate:invoice?.dueDate?invoice.dueDate.slice(0,10):'',status:invoice?.status||'Draft',notes:invoice?.notes||'',discount:invoice?.discount||0,gstEnabled:invoice?.gstEnabled||false,gstPercent:invoice?.gstPercent||16,greenTaxEnabled:invoice?.greenTaxEnabled||false,greenTaxPerNight:invoice?.greenTaxPerNight||6,greenTaxPax:invoice?.greenTaxPax||0,greenTaxNights:invoice?.greenTaxNights||0});
+      const [fd,setFd]=useState({guestName:invoice?.guestName||'',phone:invoice?.phone||'',email:invoice?.email||'',customerTIN:invoice?.customerTIN||'',currency:invoice?.currency||APP_CURRENCY,dueDate:invoice?.dueDate?invoice.dueDate.slice(0,10):'',status:invoice?.status||'Draft',notes:invoice?.notes||'',discount:invoice?.discount||0,gstEnabled:invoice?.gstEnabled||false,gstPercent:invoice?.gstPercent||16});
       const [items,setItems]=useState(()=>{try{return JSON.parse(typeof invoice?.items==='string'?invoice.items:'[]');}catch(e){return[];}});
       const [sv,setSv]=useState(false);
       const [customers,setCustomers]=useState([]);const [selCust,setSelCust]=useState('');
@@ -2817,11 +3044,10 @@
       const subTotal=items.reduce((s,it)=>s+(parseFloat(it.amount)||0),0);
       const disc=parseFloat(fd.discount)||0;
       const gstAmt=fd.gstEnabled?(subTotal-disc)*(parseFloat(fd.gstPercent)||0)/100:0;
-      const gtAmt=fd.greenTaxEnabled?(parseFloat(fd.greenTaxPerNight)||0)*(parseFloat(fd.greenTaxPax)||0)*(parseFloat(fd.greenTaxNights)||0):0;
-      const total=subTotal-disc+gstAmt+gtAmt;
+      const total=subTotal-disc+gstAmt;
       const submit=(e)=>{e.preventDefault();if(items.length===0)return Swal.fire({icon:'warning',text:'Add at least one item.'});setSv(true);
-        const data={...fd,items:JSON.stringify(items),subTotal,gstAmount:gstAmt,greenTaxAmount:gtAmt,totalAmount:total,createdBy:user};
-        if(invoice){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){let msg=r.message;if(r.paymentRecorded)msg+='\n\nPayment has been auto-recorded in Finance.';Swal.fire({icon:'success',text:msg,timer:r.paymentRecorded?4000:2000,showConfirmButton:!!r.paymentRecorded});onClose();setTimeout(onSave,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).updateInvoice(invoice.rowIndex,data);}
+        const data={...fd,items:JSON.stringify(items),subTotal,gstAmount:gstAmt,totalAmount:total,createdBy:user};
+        if(invoice){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});onClose();setTimeout(onSave,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).updateInvoice(invoice.rowIndex,data);}
         else{google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});onClose();setTimeout(onSave,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).addInvoice(data);}};
       return(<div className="modal-overlay" onClick={onClose}><div className="modal modal-wide" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-file-invoice-dollar"></i> {invoice?'Edit':'New'} Invoice</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body"><form onSubmit={submit}>
         {!invoice&&customers.length>0&&<div className="form-group"><label><i className="fas fa-user-tag"></i> Select Customer (auto-fills guest info)</label><SearchableSelect value={selCust} onChange={pickCustomer} options={[{value:'',label:'-- Manual Entry --'},...customers.map(c=>({value:c.customerId,label:c.name+(c.email?' ('+c.email+')':'')}))] } placeholder="Search customer..." /></div>}
@@ -2846,67 +3072,42 @@
         <div className="tax-toggle-section"><div className="tax-toggle-header"><label className="toggle-switch"><input type="checkbox" checked={fd.gstEnabled} onChange={e=>setFd({...fd,gstEnabled:e.target.checked})}/><span className="toggle-slider"></span></label><label>GST</label></div>
           {fd.gstEnabled&&<div className="tax-inputs"><div className="form-group" style={{marginBottom:0}}><label>GST %</label><input type="number" step="0.01" value={fd.gstPercent} onChange={e=>setFd({...fd,gstPercent:e.target.value})}/></div></div>}
         </div>
-        <div className="tax-toggle-section"><div className="tax-toggle-header"><label className="toggle-switch"><input type="checkbox" checked={fd.greenTaxEnabled} onChange={e=>setFd({...fd,greenTaxEnabled:e.target.checked})}/><span className="toggle-slider"></span></label><label>Green Tax</label></div>
-          {fd.greenTaxEnabled&&<div className="tax-inputs"><div className="form-group" style={{marginBottom:0}}><label>Rate/Night</label><input type="number" step="0.01" value={fd.greenTaxPerNight} onChange={e=>setFd({...fd,greenTaxPerNight:e.target.value})}/></div><div className="form-group" style={{marginBottom:0}}><label>Pax</label><input type="number" min="0" value={fd.greenTaxPax} onChange={e=>setFd({...fd,greenTaxPax:e.target.value})}/></div><div className="form-group" style={{marginBottom:0}}><label>Nights</label><input type="number" min="0" value={fd.greenTaxNights} onChange={e=>setFd({...fd,greenTaxNights:e.target.value})}/></div></div>}
-        </div>
         <div className="form-group"><label>Discount</label><input type="number" step="0.01" min="0" value={fd.discount} onChange={e=>setFd({...fd,discount:e.target.value})}/></div>
-        <div className="totals-section"><div className="totals-row"><span>Subtotal</span><span>{fmtCur(subTotal,fd.currency)}</span></div>{disc>0&&<div className="totals-row"><span>Discount</span><span>- {fmtCur(disc,fd.currency)}</span></div>}{fd.gstEnabled&&<div className="totals-row"><span>GST ({fd.gstPercent}%)</span><span>{fmtCur(gstAmt,fd.currency)}</span></div>}{fd.greenTaxEnabled&&<div className="totals-row"><span>Green Tax</span><span>{fmtCur(gtAmt,fd.currency)}</span></div>}<div className="totals-row grand-total"><span>Total</span><span>{fmtCur(total,fd.currency)}</span></div></div>
+        <div className="totals-section"><div className="totals-row"><span>Subtotal</span><span>{fmtCur(subTotal,fd.currency)}</span></div>{disc>0&&<div className="totals-row"><span>Discount</span><span>- {fmtCur(disc,fd.currency)}</span></div>}{fd.gstEnabled&&<div className="totals-row"><span>GST ({fd.gstPercent}%)</span><span>{fmtCur(gstAmt,fd.currency)}</span></div>}<div className="totals-row grand-total"><span>Total</span><span>{fmtCur(total,fd.currency)}</span></div></div>
         <div className="form-group" style={{marginTop:'15px'}}><label>Notes</label><textarea rows="2" value={fd.notes} onChange={e=>setFd({...fd,notes:e.target.value})}/></div>
         <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save Invoice</>}</button><button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button></div>
       </form></div></div></div>);
     }
 
-    function InvoicePreviewModal({invoice,onClose}){
-      const cur=invoice.currency||APP_CURRENCY;const fc=(a)=>fmtCur(a,cur);
-      const items=(()=>{try{return JSON.parse(typeof invoice.items==='string'?invoice.items:'[]');}catch(e){return[];}})();
-      const roomItems=items.filter(i=>i.type==='room');const actItems=items.filter(i=>i.type==='activity');const svcItems=items.filter(i=>i.type==='service');
-      return(<div className="modal-overlay" onClick={onClose}><div className="modal modal-wide" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-file-invoice-dollar"></i> Invoice Preview</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body">
-        <div className="invoice-preview">
-          <h2>Hill View Eco Retreat</h2><p className="subtitle">INVOICE</p>
-          <div className="invoice-detail-grid">
-            <p><strong>Invoice #:</strong> {invoice.invoiceId}</p><p><strong>Date:</strong> {fmtDate(invoice.createdDate)}</p>
-            <p><strong>Guest:</strong> {invoice.guestName}</p><p><strong>Due Date:</strong> {fmtDate(invoice.dueDate)}</p>
-            <p><strong>Phone:</strong> {invoice.phone||'-'}</p><p><strong>Status:</strong> <span className={`status-badge ${statusCls(invoice.status)}`}>{invoice.status}</span></p>
-            <p><strong>Email:</strong> {invoice.email||'-'}</p><p><strong>Currency:</strong> {cur}</p>
-            {invoice.customerTIN&&<p><strong>Customer TIN:</strong> {invoice.customerTIN}</p>}
-            
-          </div>
-          <table className="invoice-table"><thead><tr><th>Description</th><th>Details</th><th className="right">Amount ({cur})</th></tr></thead><tbody>
-            {roomItems.map((it,i)=><tr key={'r'+i}><td>{it.roomType||'Room'}</td><td>{it.quantity||1} room(s) x {it.nights} night(s) x {fc(it.rate)}</td><td className="right">{fc(it.amount)}</td></tr>)}
-            {actItems.map((it,i)=><tr key={'a'+i}><td>{it.description||'Activity'}</td><td>{it.pax} pax x {fc(it.rate)}</td><td className="right">{fc(it.amount)}</td></tr>)}
-            {svcItems.map((it,i)=><tr key={'s'+i}><td>{it.description||'Service'}</td><td>-</td><td className="right">{fc(it.amount)}</td></tr>)}
-            <tr><td colSpan="2"><strong>Subtotal</strong></td><td className="right"><strong>{fc(invoice.subTotal)}</strong></td></tr>
-            {invoice.discount>0&&<tr><td colSpan="2">Discount</td><td className="right">- {fc(invoice.discount)}</td></tr>}
-            {invoice.gstEnabled&&<tr><td colSpan="2">GST ({invoice.gstPercent}%)</td><td className="right">{fc(invoice.gstAmount)}</td></tr>}
-            {invoice.greenTaxEnabled&&<tr><td colSpan="2">Green Tax ({cur} {invoice.greenTaxPerNight} x {invoice.greenTaxPax} pax x {invoice.greenTaxNights} nights)</td><td className="right">{fc(invoice.greenTaxAmount)}</td></tr>}
-            <tr className="total-row"><td colSpan="2"><strong>TOTAL</strong></td><td className="right"><strong>{fc(invoice.totalAmount)}</strong></td></tr>
-          </tbody></table>
-          {invoice.notes&&<p style={{marginTop:'15px',fontStyle:'italic',color:'#666'}}>Notes: {invoice.notes}</p>}
-        </div>
-        <div className="preview-actions">
-          <button className="btn btn-primary" onClick={()=>downloadInvoicePdf(invoice)}><i className="fas fa-download"></i> Download PDF</button>
-          <button className="btn btn-success" onClick={()=>savePdfToDriveHelper(invoice)}><i className="fas fa-cloud-upload-alt"></i> Save to Drive</button>
-          <button className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Close</button>
-        </div>
-      </div></div></div>);
+    function InvoicePreviewModal({invoice, onClose, sysSettings}){
+      return <HotelInvoiceModal data={convertInvoiceToHotelData(invoice, sysSettings)} onClose={onClose} />;
     }
 
     function InvoicesView({user}){
       const [ld,setLd]=useState(true);const [show,setShow]=useState(false);const [edit,setEdit]=useState(null);const [preview,setPreview]=useState(null);const tRef=useRef(null);const [recs,setRecs]=useState([]);
-      const [filters,setFilters]=useState({dateFrom:'',dateTo:'',status:'',currency:''});
+      const [sysSettings,setSysSettings]=useState(null);
+      const [settingsError,setSettingsError]=useState(null);
+      const [filters,setFilters]=useState({dateFrom:'',dateTo:'',status:''});
       useEffect(()=>{load();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[]);
       const load=()=>{setLd(true);
-        google.script.run.withSuccessHandler(odRes=>{
-          google.script.run.withSuccessHandler(r=>{const d=Array.isArray(r)?r:[];setRecs(d);setLd(false);initT(d);
-            if(odRes&&odRes.overdueCount>0)Swal.fire({icon:'warning',title:'Overdue Invoices',text:odRes.overdueCount+' invoice(s) are now overdue!',timer:4000,showConfirmButton:false});
-          }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllInvoices();
-        }).withFailureHandler(()=>{
-          google.script.run.withSuccessHandler(r=>{const d=Array.isArray(r)?r:[];setRecs(d);setLd(false);initT(d);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllInvoices();
-        }).checkOverdueInvoices();};
+        google.script.run.withSuccessHandler(sRes=>{
+          if(sRes&&sRes.success)setSysSettings(sRes.data);
+          google.script.run.withSuccessHandler(odRes=>{
+            google.script.run.withSuccessHandler(r=>{const d=Array.isArray(r)?r:[];setRecs(d);setLd(false);initT(d);
+              if(odRes&&odRes.overdueCount>0)Swal.fire({icon:'warning',title:'Overdue Invoices',text:odRes.overdueCount+' invoice(s) are now overdue!',timer:4000,showConfirmButton:false});
+            }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllInvoices();
+          }).withFailureHandler(()=>{
+            google.script.run.withSuccessHandler(r=>{const d=Array.isArray(r)?r:[];setRecs(d);setLd(false);initT(d);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllInvoices();
+          }).checkOverdueInvoices();
+        }).withFailureHandler(e=>{
+          setLd(false);
+          Swal.fire({icon:'error',text:'Failed to load settings: '+e.message});
+        }).getSettings();
+      };
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#invT').empty();}catch(e){}}
         setTimeout(()=>{try{$.fn.dataTable.ext.search=[];const t=$('#invT').DataTable({data,destroy:true,columns:[
           {data:'invoiceId',title:'Invoice #'},{data:'guestName',title:'Guest'},{data:'createdDate',title:'Date',render:d=>fmtDate(d)},{data:'dueDate',title:'Due',render:d=>fmtDate(d)},
-          {data:'status',title:'Status',render:d=>`<span class="status-badge ${statusCls(d)}">${d}</span>`},{data:'currency',title:'Cur'},{data:'totalAmount',title:'Total',render:(d,t,row)=>fmtCur(d,row.currency)},
+          {data:'status',title:'Status',render:d=>`<span class="status-badge ${statusCls(d)}">${d}</span>`},{data:'currency',title:'Cur',render:d=>d||'INR'},{data:'totalAmount',title:'Total',render:(d,t,row)=>fmtCur(d,row.currency||'INR')},
           {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon view-icon" data-action="view"><i class="fas fa-eye"></i></button><button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon" data-action="email" title="Email Invoice" style="color:#0074D9"><i class="fas fa-envelope"></i></button><button class="action-icon" data-action="pdf" style="color:#001f3f"><i class="fas fa-file-pdf"></i></button><button class="action-icon" data-action="drive" style="color:#34a853"><i class="fas fa-cloud-upload-alt"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
         ],pageLength:10,lengthMenu:[[10,25,50,-1],[10,25,50,"All"]],responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},{extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},{extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}],order:[[2,'desc']]});
@@ -2918,104 +3119,266 @@
       useEffect(()=>{if(!tRef.current||recs.length===0)return;$.fn.dataTable.ext.search=[];
         $.fn.dataTable.ext.search.push(function(s,d,idx){const row=recs[idx];if(!row)return true;if(filters.dateFrom){const dt=new Date(row.createdDate);if(dt<new Date(filters.dateFrom))return false;}if(filters.dateTo){const dt=new Date(row.createdDate);if(dt>new Date(filters.dateTo+'T23:59:59'))return false;}return true;});
         if(filters.status)tRef.current.column(4).search('^'+filters.status+'$',true,false);else tRef.current.column(4).search('');
-        if(filters.currency)tRef.current.column(5).search(filters.currency);else tRef.current.column(5).search('');
         tRef.current.draw();},[filters]);
-      const clearF=()=>{setFilters({dateFrom:'',dateTo:'',status:'',currency:''});if(tRef.current){$.fn.dataTable.ext.search=[];tRef.current.columns().search('').draw();}};
+      const clearF=()=>{setFilters({dateFrom:'',dateTo:'',status:''});if(tRef.current){$.fn.dataTable.ext.search=[];tRef.current.columns().search('').draw();}};
       return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-file-invoice-dollar"></i> Invoices</h2><button className="btn btn-success" onClick={()=>{setEdit(null);setShow(true);}}><i className="fas fa-plus"></i> New Invoice</button></div>
         {!ld&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear</button></div><div className="filters-grid">
           <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> From</label><input type="date" className="filter-input" value={filters.dateFrom} onChange={e=>setFilters({...filters,dateFrom:e.target.value})}/></div>
           <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> To</label><input type="date" className="filter-input" value={filters.dateTo} onChange={e=>setFilters({...filters,dateTo:e.target.value})}/></div>
           <div className="filter-group"><label><i className="fas fa-check-circle"></i> Status</label><select className="filter-input" value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All</option><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option><option>Cancelled</option></select></div>
-          <div className="filter-group"><label><i className="fas fa-money-bill"></i> Currency</label><select className="filter-input" value={filters.currency} onChange={e=>setFilters({...filters,currency:e.target.value})}><option value="">All</option>{CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
         </div></div>}
         {ld&&<TableSkeleton rows={5} columns={7}/>}<div style={{display:ld?'none':'block'}}><table id="invT" className="display" style={{width:'100%'}}></table></div>
         {show&&<InvoiceModal invoice={edit} onClose={()=>{setShow(false);setEdit(null);}} onSave={load} user={user}/>}
-        {preview&&<InvoicePreviewModal invoice={preview} onClose={()=>setPreview(null)}/>}
+        {preview&&<InvoicePreviewModal invoice={preview} onClose={()=>setPreview(null)} sysSettings={sysSettings} />}
       </div>);
     }
 
-    function SettingsView({user}){
+    function MenuItemModal({editItem, onClose, onSave}){
+      const [fd, setFd] = useState({
+        itemName: editItem ? editItem.itemName : '',
+        foodCategory: editItem ? editItem.foodCategory : 'Lunch',
+        defaultPrice: editItem ? editItem.defaultPrice : ''
+      });
+      const [sv, setSv] = useState(false);
+      const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'FoodBeverage'];
+      const CAT_LABELS = {Breakfast: 'Breakfast', Lunch: 'Lunch', Dinner: 'Dinner', Snacks: 'Snacks', FoodBeverage: 'Other Food & Beverage'};
+
+      const submit = (e) => {
+        e.preventDefault();
+        setSv(true);
+        onSave({...fd, rowIndex: editItem ? editItem.rowIndex : null}, () => setSv(false));
+      };
+
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><i className="fas fa-utensils"></i> {editItem ? 'Edit Menu Item' : 'Add Menu Item'}</h3>
+              <button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={submit}>
+                <div className="form-group">
+                  <label>Item Name *</label>
+                  <input value={fd.itemName} onChange={e=>setFd({...fd, itemName: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label>Category *</label>
+                  <select value={fd.foodCategory} onChange={e=>setFd({...fd, foodCategory: e.target.value})}>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Default Price ({APP_CURRENCY}) *</label>
+                  <input type="number" step="0.01" min="0" value={fd.defaultPrice} onChange={e=>setFd({...fd, defaultPrice: e.target.value})} required />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary" disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save</>}</button>
+                  <button type="button" className="btn btn-secondary" onClick={onClose}><i className="fas fa-times"></i> Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function SettingsView({user, role}){
+      const isAdmin = role === 'admin';
+      const [activeSettingsTab, setActiveSettingsTab] = useState('profile');
       const [ld,setLd]=useState(true);const [sv,setSv]=useState(false);
-      const [fd,setFd]=useState({hotelName:'Hill View Eco Retreat',hotelAddress:'',hotelPhone:'',hotelEmail:'',hotelTIN:'',logoUrl:'',defaultCurrency:'MVR',gstDefaultPercent:16,greenTaxDefaultRate:6});
-      useEffect(()=>{google.script.run.withSuccessHandler(r=>{setLd(false);if(r.success){setFd({...fd,...r.data});if(r.data.defaultCurrency)APP_CURRENCY=r.data.defaultCurrency;}}).withFailureHandler(()=>setLd(false)).getSettings();},[]);
-      const save=()=>{setSv(true);google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){APP_CURRENCY=fd.defaultCurrency;Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).updateSettings(fd);};
+      const [fd,setFd]=useState({hotelName:'Hill View Eco Retreat',hotelAddress:'',hotelPhone:'',hotelEmail:'',hotelTIN:'',logoUrl:'',gstDefaultPercent:16});
+      useEffect(()=>{google.script.run.withSuccessHandler(r=>{setLd(false);if(r.success){setFd({...fd,...r.data});}}).withFailureHandler(()=>setLd(false)).getSettings();},[]);
+      const save=()=>{setSv(true);google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setSv(false);Swal.fire({icon:'error',text:e.message});}).updateSettings(fd);};
       const uploadLogo=(e)=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024)return Swal.fire({icon:'warning',text:'Max 2MB file size.'});
         const reader=new FileReader();reader.onload=()=>{const b64=reader.result.split(',')[1];Swal.fire({title:'Uploading...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
           google.script.run.withSuccessHandler(r=>{Swal.close();if(r.success){setFd({...fd,logoUrl:r.logoUrl,logoFileId:r.fileId});Swal.fire({icon:'success',text:'Logo uploaded!',timer:2000,showConfirmButton:false});}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{Swal.close();Swal.fire({icon:'error',text:e.message});}).uploadLogo(b64,file.name,file.type);};reader.readAsDataURL(file);};
+      
+      // Profile Tab States
+      const [oldP,setOldP]=useState('');const [newP,setNewP]=useState('');const [confP,setConfP]=useState('');const [profileSv,setProfileSv]=useState(false);
+      const submitProfile=(e)=>{e.preventDefault();if(newP!==confP){Swal.fire({icon:'error',text:'New passwords do not match'});return;}if(newP.length<4){Swal.fire({icon:'warning',text:'Password must be at least 4 characters'});return;}setProfileSv(true);
+        google.script.run.withSuccessHandler(r=>{setProfileSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2000,showConfirmButton:false});setOldP('');setNewP('');setConfP('');}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setProfileSv(false);Swal.fire({icon:'error',text:e.message});}).changePassword(user,oldP,newP);};
+        
+      // Users Tab States
+      const [usersLd,setUsersLd]=useState(true);const [showUserModal,setShowUserModal]=useState(false);const [editUser,setEditUser]=useState(null);const tRef=useRef(null);
+      
+      // Menu Tab States
+      const [menuLd, setMenuLd] = useState(true);
+      const [menuItems, setMenuItems] = useState([]);
+      const [showMenuModal, setShowMenuModal] = useState(false);
+      const [editMenu, setEditMenu] = useState(null);
+      const menuTRef = useRef(null);
+
+      useEffect(() => {
+        if(activeSettingsTab === 'menu' && isAdmin) loadMenu();
+        return () => { if(menuTRef.current) try{ menuTRef.current.destroy(); }catch(e){} };
+      }, [activeSettingsTab, isAdmin]);
+
+      const loadMenu = () => {
+        setMenuLd(true);
+        google.script.run.withSuccessHandler(r => {
+          setMenuLd(false);
+          const data = Array.isArray(r) ? r : [];
+          setMenuItems(data);
+          initMenuT(data);
+        }).withFailureHandler(e => {
+          setMenuLd(false);
+          Swal.fire({icon:'error', text:e.message});
+        }).getAllMenuItems();
+      };
+
+      const initMenuT = (data) => {
+        if(menuTRef.current){ try{ menuTRef.current.destroy(); menuTRef.current=null; $('#menuT').empty(); }catch(e){} }
+        setTimeout(()=>{
+          try {
+            const t = $('#menuT').DataTable({
+              data,
+              destroy: true,
+              columns: [
+                {data: 'itemName', title: 'Item Name'},
+                {data: 'foodCategory', title: 'Category'},
+                {data: 'defaultPrice', title: 'Default Price', render: d => fmtCur(d)},
+                {data: null, title: 'Actions', orderable: false, className: 'all', responsivePriority: 1, render: () => '<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
+              ],
+              pageLength: 10,
+              responsive: true,
+              dom: 'Blfrtip',
+              buttons: [
+                {extend: 'csv', text: '<i class="fas fa-file-csv"></i> CSV', exportOptions: {columns: ':not(:last-child)'}},
+                {extend: 'pdf', text: '<i class="fas fa-file-pdf"></i> PDF', exportOptions: {columns: ':not(:last-child)'}},
+                {extend: 'print', text: '<i class="fas fa-print"></i> Print', exportOptions: {columns: ':not(:last-child)'}}
+              ]
+            });
+            $('#menuT').off('click', '.action-icon').on('click', '.action-icon', function(){
+              const a = $(this).data('action');
+              const tr = $(this).closest('tr');
+              const rowData = t.row(tr.hasClass('child') ? tr.prev() : tr).data();
+              if(a === 'edit'){
+                setEditMenu(rowData);
+                setShowMenuModal(true);
+              } else if(a === 'delete'){
+                delMenuItem(rowData);
+              }
+            });
+            menuTRef.current = t;
+          } catch(e) { console.error(e); }
+        }, 150);
+      };
+
+      const saveMenuItem = (data, resetSv) => {
+        if(data.rowIndex) {
+          google.script.run.withSuccessHandler(r=>{
+            resetSv();
+            if(r.success){ Swal.fire({icon:'success', text:r.message, timer:1500, showConfirmButton:false}); setShowMenuModal(false); setEditMenu(null); loadMenu(); }
+            else Swal.fire({icon:'error', text:r.message});
+          }).withFailureHandler(e=>{ resetSv(); Swal.fire({icon:'error', text:e.message}); }).updateMenuItem(data.rowIndex, data.itemName, data.foodCategory, data.defaultPrice);
+        } else {
+          google.script.run.withSuccessHandler(r=>{
+            resetSv();
+            if(r.success){ Swal.fire({icon:'success', text:r.message, timer:1500, showConfirmButton:false}); setShowMenuModal(false); loadMenu(); }
+            else Swal.fire({icon:'error', text:r.message});
+          }).withFailureHandler(e=>{ resetSv(); Swal.fire({icon:'error', text:e.message}); }).addMenuItem(data.itemName, data.foodCategory, data.defaultPrice);
+        }
+      };
+
+      const delMenuItem = (row) => {
+        Swal.fire({title: 'Delete Menu Item?', text: "This action cannot be undone.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, delete it!'}).then((res) => {
+          if(res.isConfirmed) {
+            Swal.fire({title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            google.script.run.withSuccessHandler(r => {
+              if(r.success) { Swal.fire({icon:'success', text:r.message, timer:1500, showConfirmButton:false}); loadMenu(); }
+              else { Swal.fire({icon:'error', text:r.message}); }
+            }).withFailureHandler(e => { Swal.fire({icon:'error', text:e.message}); }).deleteMenuItem(row.rowIndex);
+          }
+        });
+      };
+      const [filters,setFilters]=useState({role:''});
+      useEffect(()=>{if(activeSettingsTab==='users'&&isAdmin)loadUsers();return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};},[activeSettingsTab,isAdmin]);
+      useEffect(()=>{if(!tRef.current)return;if(filters.role)tRef.current.column(1).search('^'+filters.role+'$',true,false);else tRef.current.column(1).search('');tRef.current.draw();},[filters]);
+      const clearF=()=>{setFilters({role:''});if(tRef.current){tRef.current.columns().search('').draw();}};
+      const loadUsers=()=>{setUsersLd(true);google.script.run.withSuccessHandler(r=>{setUsersLd(false);if(r&&r.error){Swal.fire({icon:'error',text:r.error});return;}initT(Array.isArray(r)?r:[]);}).withFailureHandler(e=>{setUsersLd(false);Swal.fire({icon:'error',text:e.message});}).getAllUsers();};
+      const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#usrT').empty();}catch(e){}}
+        setTimeout(()=>{try{const t=$('#usrT').DataTable({data,destroy:true,columns:[
+          {data:'username',title:'Username'},{data:'role',title:'Role',render:d=>`<span class="role-badge ${d==='admin'?'role-admin':'role-user'}">${d}</span>`},
+          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
+        ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
+          {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
+          {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},
+          {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
+        ],order:[[0,'asc']]});
+        $('#usrT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEditUser(rd);setShowUserModal(true);}else delUser(rd);});
+        tRef.current=t;}catch(e){console.error(e);}},150);};
+      const delUser=(u)=>{Swal.fire({icon:'warning',title:'Delete User?',text:'Delete '+u.username+'?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});setTimeout(loadUsers,100);}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteUser(u.rowIndex);});};
+
       if(ld)return <div><DashboardCardSkeleton/></div>;
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-cog"></i> Settings</h2></div><div className="settings-form">
-        <div className="form-grid">
-          <div className="form-group"><label>Hotel Name</label><input value={fd.hotelName} onChange={e=>setFd({...fd,hotelName:e.target.value})}/></div>
-          <div className="form-group"><label>Hotel Phone</label><input value={fd.hotelPhone} onChange={e=>setFd({...fd,hotelPhone:e.target.value})}/></div>
-          <div className="form-group"><label>Hotel Email</label><input type="email" value={fd.hotelEmail} onChange={e=>setFd({...fd,hotelEmail:e.target.value})}/></div>
-          <div className="form-group"><label>Hotel TIN</label><input value={fd.hotelTIN} onChange={e=>setFd({...fd,hotelTIN:e.target.value})}/></div>
+      return(<div className="data-section">
+        <div className="section-header"><h2><i className="fas fa-cog"></i> Settings</h2></div>
+        
+        <div className="tabs-header" style={{display:'flex', gap:'10px', marginBottom:'20px'}}>
+          <button className={`btn ${activeSettingsTab==='profile'?'btn-primary':'btn-secondary'}`} onClick={()=>setActiveSettingsTab('profile')}><i className="fas fa-user-circle"></i> My Profile</button>
+          {isAdmin&&<button className={`btn ${activeSettingsTab==='hotel'?'btn-primary':'btn-secondary'}`} onClick={()=>setActiveSettingsTab('hotel')}><i className="fas fa-hotel"></i> Hotel Config</button>}
+          {isAdmin&&<button className={`btn ${activeSettingsTab==='users'?'btn-primary':'btn-secondary'}`} onClick={()=>setActiveSettingsTab('users')}><i className="fas fa-users"></i> User Management</button>}
+            {isAdmin && <button className={`btn ${activeSettingsTab==='menu'?'btn-primary':'btn-secondary'}`} onClick={()=>setActiveSettingsTab('menu')}><i className="fas fa-utensils"></i> Menu Config</button>}
         </div>
-        <div className="form-group"><label>Hotel Address</label><textarea rows="2" value={fd.hotelAddress} onChange={e=>setFd({...fd,hotelAddress:e.target.value})}/></div>
-        <div className="form-group"><label>Logo</label><input type="file" accept="image/*" onChange={uploadLogo}/>{fd.logoUrl&&<img src={fd.logoUrl} alt="Logo" className="logo-preview"/>}</div>
-        <div className="form-grid">
-          <div className="form-group"><label>Default Currency</label><select value={fd.defaultCurrency} onChange={e=>setFd({...fd,defaultCurrency:e.target.value})} style={{fontSize:'16px'}}>{CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-          <div className="form-group"><label>Default GST %</label><input type="number" step="0.01" value={fd.gstDefaultPercent} onChange={e=>setFd({...fd,gstDefaultPercent:e.target.value})}/></div>
-          <div className="form-group"><label>Green Tax Rate (per night)</label><input type="number" step="0.01" value={fd.greenTaxDefaultRate} onChange={e=>setFd({...fd,greenTaxDefaultRate:e.target.value})}/></div>
-        </div>
-        <button className="btn btn-primary" onClick={save} disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save Settings</>}</button>
-      </div></div>);
-    }
 
-    function CategoryManager({onClose}){
-      const [ld,setLd]=useState(true);const [cats,setCats]=useState([]);const [name,setName]=useState('');const [type,setType]=useState('Expense');
-      const load=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);setCats(Array.isArray(r)?r:[]);}).withFailureHandler(()=>setLd(false)).getAllCategories();};
-      useEffect(()=>{load();},[]);
-      const add=()=>{if(!name.trim())return;google.script.run.withSuccessHandler(r=>{if(r.success){setName('');load();}else Swal.fire({icon:'error',text:r.message});}).addCategory(name.trim(),type,'');};
-      const del=(cat)=>{if(cat.isDefault)return Swal.fire({icon:'warning',text:'Cannot delete default categories.'});
-        google.script.run.withSuccessHandler(r=>{if(r.success)load();else Swal.fire({icon:'error',text:r.message});}).deleteCategory(cat.rowIndex);};
-      return(<div className="modal-overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className="fas fa-tags"></i> Manage Categories</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body">
-        <div style={{display:'flex',gap:'10px',marginBottom:'20px'}}>
-          <input placeholder="Category name" value={name} onChange={e=>setName(e.target.value)} style={{flex:1,padding:'10px',border:'1.5px solid #d0d0d0',borderRadius:'3px',fontSize:'16px'}}/>
-          <select value={type} onChange={e=>setType(e.target.value)} style={{padding:'10px',border:'1.5px solid #d0d0d0',borderRadius:'3px',fontSize:'16px'}}><option>Income</option><option>Expense</option></select>
-          <button className="btn btn-primary" onClick={add}><i className="fas fa-plus"></i></button>
-        </div>
-        {ld?<TableSkeleton rows={3} columns={3}/>:<div>
-          <h4 style={{color:'var(--navy-primary)',marginBottom:'10px'}}>Expense Categories</h4>
-          {cats.filter(c=>c.type==='Expense').map(c=>(<div key={c.categoryId} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px',borderBottom:'1px solid #eee'}}><span>{c.name} {c.isDefault&&<small style={{color:'#888'}}>(default)</small>}</span>{!c.isDefault&&<button className="action-icon delete-icon" onClick={()=>del(c)}><i className="fas fa-trash"></i></button>}</div>))}
-          <h4 style={{color:'var(--navy-primary)',marginTop:'20px',marginBottom:'10px'}}>Income Categories</h4>
-          {cats.filter(c=>c.type==='Income').map(c=>(<div key={c.categoryId} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px',borderBottom:'1px solid #eee'}}><span>{c.name} {c.isDefault&&<small style={{color:'#888'}}>(default)</small>}</span>{!c.isDefault&&<button className="action-icon delete-icon" onClick={()=>del(c)}><i className="fas fa-trash"></i></button>}</div>))}
-        </div>}
-      </div></div></div>);
-    }
-
-    function ReportsView({user}){
-      const [month,setMonth]=useState(new Date().getMonth()+1);const [year,setYear]=useState(new Date().getFullYear());const [type,setType]=useState('full');
-      const [ld,setLd]=useState(false);const [data,setData]=useState(null);
-      const load=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);if(r.success)setData(r.data);else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getMonthlyReport(month,year,type);};
-      useEffect(()=>{load();},[month,year,type]);
-      const monthNames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return(<div className="data-section"><div className="section-header"><h2><i className="fas fa-chart-bar"></i> Monthly Report</h2></div>
-        <div className="filters-section"><div className="filters-grid">
-          <div className="filter-group"><label><i className="fas fa-calendar"></i> Month</label><select className="filter-input" value={month} onChange={e=>setMonth(parseInt(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m=><option key={m} value={m}>{monthNames[m]}</option>)}</select></div>
-          <div className="filter-group"><label><i className="fas fa-calendar"></i> Year</label><input type="number" className="filter-input" value={year} onChange={e=>setYear(parseInt(e.target.value))}/></div>
-          <div className="filter-group"><label><i className="fas fa-filter"></i> Type</label><select className="filter-input" value={type} onChange={e=>setType(e.target.value)}><option value="full">Full Report</option><option value="income">Income Only</option><option value="expense">Expense Only</option></select></div>
-        </div></div>
-        {ld&&<div><DashboardCardSkeleton/></div>}
-        {!ld&&data&&<>
-          <div className="report-summary">
-            <div className="stat-card green"><div className="stat-card-icon"><i className="fas fa-arrow-up"></i></div><div className="stat-card-value">{fmtCur(data.totalIncome)}</div><div className="stat-card-label">Total Income</div></div>
-            <div className="stat-card red"><div className="stat-card-icon"><i className="fas fa-arrow-down"></i></div><div className="stat-card-value">{fmtCur(data.totalExpenses)}</div><div className="stat-card-label">Total Expenses</div></div>
-            <div className="stat-card"><div className="stat-card-icon"><i className="fas fa-balance-scale"></i></div><div className="stat-card-value">{fmtCur(data.net)}</div><div className="stat-card-label">Net</div></div>
-            {data.budget&&<div className="stat-card"><div className="stat-card-icon"><i className="fas fa-piggy-bank"></i></div><div className="stat-card-value">{fmtCur(data.budget.remaining)}</div><div className="stat-card-label">Budget Remaining</div>
-              <div className="budget-bar-container"><div className="budget-bar" style={{width:Math.min(100,(data.budget.budgetAmount>0?data.budget.totalSpent/data.budget.budgetAmount*100:0))+'%',background:(data.budget.budgetAmount>0?data.budget.totalSpent/data.budget.budgetAmount:0)>0.9?'#ea4335':(data.budget.budgetAmount>0?data.budget.totalSpent/data.budget.budgetAmount:0)>0.7?'#fbbc04':'#34a853'}}></div></div>
-              <small style={{color:'#888'}}>{fmtCur(data.budget.totalSpent)} / {fmtCur(data.budget.budgetAmount)}</small>
-            </div>}
+        {activeSettingsTab === 'profile' && (
+          <div className="settings-form" style={{maxWidth:'500px'}}>
+            <p style={{marginBottom:'20px',color:'#666'}}>Logged in as: <strong>{user}</strong></p>
+            <form onSubmit={submitProfile}>
+              <div className="form-group"><label>Current Password *</label><input type="password" value={oldP} onChange={e=>setOldP(e.target.value)} required/></div>
+              <div className="form-group"><label>New Password *</label><input type="password" value={newP} onChange={e=>setNewP(e.target.value)} required/></div>
+              <div className="form-group"><label>Confirm New Password *</label><input type="password" value={confP} onChange={e=>setConfP(e.target.value)} required/></div>
+              <button type="submit" className="btn btn-primary" disabled={profileSv}>{profileSv?<><i className="fas fa-spinner fa-spin"></i> Changing...</>:<><i className="fas fa-key"></i> Change Password</>}</button>
+            </form>
           </div>
-          {data.categoryTotals&&data.categoryTotals.length>0&&<div style={{marginBottom:'25px'}}><h3 style={{color:'var(--navy-primary)',marginBottom:'15px'}}><i className="fas fa-tags"></i> Category Breakdown</h3><table className="invoice-table"><thead><tr><th>Category</th><th>Type</th><th className="right">Total</th></tr></thead><tbody>
-            {data.categoryTotals.map((ct,i)=><tr key={i}><td>{ct.category}</td><td><span className={`status-badge ${statusCls(ct.type)}`}>{ct.type}</span></td><td className="right">{fmtCur(ct.total)}</td></tr>)}
-          </tbody></table></div>}
-          {data.records&&data.records.length>0&&<div><h3 style={{color:'var(--navy-primary)',marginBottom:'15px'}}><i className="fas fa-list"></i> Detailed Records ({data.records.length})</h3><table className="invoice-table"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Category</th><th className="right">Amount</th></tr></thead><tbody>
-            {data.records.map((r,i)=><tr key={i}><td>{fmtDate(r.date)}</td><td><span className={`status-badge ${statusCls(r.type)}`}>{r.type}</span></td><td>{r.description}</td><td>{r.category||'-'}</td><td className="right">{fmtCur(r.amount,r.currency)}</td></tr>)}
-          </tbody></table></div>}
-          {data.records&&data.records.length===0&&<p style={{textAlign:'center',color:'#888',padding:'40px'}}>No records found for {monthNames[month]} {year}.</p>}
-        </>}
+        )}
+
+        {activeSettingsTab === 'hotel' && isAdmin && (
+          <div className="settings-form">
+            <div className="form-grid">
+              <div className="form-group"><label>Hotel Name</label><input value={fd.hotelName} onChange={e=>setFd({...fd,hotelName:e.target.value})}/></div>
+              <div className="form-group"><label>Hotel Phone</label><input value={fd.hotelPhone} onChange={e=>setFd({...fd,hotelPhone:e.target.value})}/></div>
+              <div className="form-group"><label>Hotel Email</label><input type="email" value={fd.hotelEmail} onChange={e=>setFd({...fd,hotelEmail:e.target.value})}/></div>
+              <div className="form-group"><label>Hotel TIN</label><input value={fd.hotelTIN} onChange={e=>setFd({...fd,hotelTIN:e.target.value})}/></div>
+            </div>
+            <div className="form-group"><label>Hotel Address</label><textarea rows="2" value={fd.hotelAddress} onChange={e=>setFd({...fd,hotelAddress:e.target.value})}/></div>
+            <div className="form-group"><label>Logo</label><input type="file" accept="image/*" onChange={uploadLogo}/>{fd.logoUrl&&<img src={fd.logoUrl} alt="Logo" className="logo-preview"/>}</div>
+            <div className="form-grid">
+              <div className="form-group"><label>Default GST %</label><input type="number" step="0.01" value={fd.gstDefaultPercent} onChange={e=>setFd({...fd,gstDefaultPercent:e.target.value})}/></div>
+            </div>
+            <button className="btn btn-primary" onClick={save} disabled={sv}>{sv?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> Save Settings</>}</button>
+          </div>
+        )}
+
+        {activeSettingsTab === 'users' && isAdmin && (
+          <div className="settings-form">
+            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'15px'}}><button className="btn btn-success" onClick={()=>{setEditUser(null);setShowUserModal(true);}}><i className="fas fa-plus"></i> Add User</button></div>
+            {!usersLd&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear All</button></div><div className="filters-grid">
+              <div className="filter-group"><label><i className="fas fa-user-shield"></i> Role</label><select className="filter-input" value={filters.role} onChange={e=>setFilters({...filters,role:e.target.value})}><option value="">All Roles</option><option value="admin">Admin</option><option value="user">User</option></select></div>
+            </div></div>}
+            {usersLd&&<TableSkeleton rows={5} columns={3}/>}<div style={{display:usersLd?'none':'block'}}><table id="usrT" className="display" style={{width:'100%'}}></table></div>
+            {showUserModal&&<UserModal editUser={editUser} onClose={()=>{setShowUserModal(false);setEditUser(null);}} onSave={loadUsers}/>}
+          </div>
+        )}
+
+        {activeSettingsTab === 'menu' && isAdmin && (
+          <div className="settings-form">
+            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'15px'}}>
+              <button className="btn btn-success" onClick={()=>{setEditMenu(null);setShowMenuModal(true);}}>
+                <i className="fas fa-plus"></i> Add Menu Item
+              </button>
+            </div>
+            {menuLd && <TableSkeleton rows={5} columns={4}/>}
+            <div style={{display: menuLd ? 'none' : 'block'}}>
+              <table id="menuT" className="display" style={{width:'100%'}}></table>
+            </div>
+            {showMenuModal && <MenuItemModal editItem={editMenu} onClose={()=>{setShowMenuModal(false);setEditMenu(null);}} onSave={saveMenuItem}/>}
+          </div>
+        )}
+
       </div>);
     }
+
 
     function BottomNav({activeMenu,setActiveMenu,role,onLogout}){
       const adm=role==='admin';
@@ -3027,8 +3390,7 @@
       ]:[
         {k:'bookings',i:'fa-calendar-check',l:'Bookings'},
         {k:'calendar',i:'fa-calendar-alt',l:'Calendar'},
-                {k:'account',i:'fa-user-circle',l:'Account'},
-        {k:'about',i:'fa-info-circle',l:'About'}
+                {k:'settings',i:'fa-cog',l:'Settings'}
       ];
       const [showMore,setShowMore]=useState(false);
       const moreItems=adm?[
@@ -3036,13 +3398,8 @@
         {k:'checkin',i:'fa-door-open',l:'Check-In'},
         {k:'restaurant',i:'fa-utensils',l:'Restaurant'},
                 {k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices'},
-        {k:'finance',i:'fa-coins',l:'Finance'},
-        {k:'reports',i:'fa-chart-bar',l:'Reports'},
-        {k:'users',i:'fa-users',l:'Users'},
         {k:'customers',i:'fa-address-book',l:'Customers'},
         {k:'settings',i:'fa-cog',l:'Settings'},
-        {k:'account',i:'fa-user-circle',l:'Account'},
-        {k:'about',i:'fa-info-circle',l:'About'},
         {k:'_logout',i:'fa-power-off',l:'Logout'}
       ]:[];
       const handleClick=(k)=>{if(k==='more'){setShowMore(!showMore);return;}if(k==='_logout'){onLogout();return;}setActiveMenu(k);setShowMore(false);};
@@ -3110,7 +3467,10 @@
       const getBookingsForDate=(date)=>{
         const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
         const dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
-        return bookings.filter(b=>{if(!b.checkIn||!b.checkOut)return false;const ci=new Date(b.checkIn);const co=new Date(b.checkOut);return ci<dayEnd&&co>dayStart;});
+        return bookings.filter(b=>{if(!b.checkIn||!b.checkOut)return false;const ci=new Date(b.checkIn);const co=new Date(b.checkOut);
+        // Exclude the actual check-out day block from occupancy maps
+        const actualCheckoutStart = new Date(co.getFullYear(), co.getMonth(), co.getDate());
+        return ci < dayEnd && actualCheckoutStart > dayStart;});
       };
 
       const today=new Date();
@@ -3149,7 +3509,7 @@
       </div>);
     }
 
-    function MainContent({activeMenu,user,role}){
+    function MainContent({activeMenu,user,role,onLogout}){
       switch(activeMenu){
         case 'dashboard': return <DashboardView user={user}/>;
         case 'bookings': return <BookingsView user={user} role={role}/>;
@@ -3159,12 +3519,7 @@
         case 'restaurant': return <RestaurantView user={user}/>;
         case 'customers': return <CustomersView user={user}/>;
                 case 'invoices': return <InvoicesView user={user}/>;
-        case 'finance': return <FinanceView user={user}/>;
-        case 'reports': return <ReportsView user={user}/>;
-        case 'settings': return <SettingsView user={user}/>;
-        case 'users': return <UsersView user={user}/>;
-        case 'account': return <AccountView user={user}/>;
-        case 'about': return <AboutView/>;
+        case 'settings': return <SettingsView user={user} role={role} onLogout={onLogout}/>;
                 default: return null;
       }
     }
@@ -3172,7 +3527,7 @@
     function Dashboard({user,role,onLogout}){
       const [am,setAm]=useState(role==='admin'?'dashboard':'bookings');
       const [so,setSo]=useState(false);
-      return(<div className="app-container"><Sidebar activeMenu={am} setActiveMenu={setAm} role={role} user={user} onLogout={onLogout} isOpen={so} setIsOpen={setSo}/><div className="main-content"><div className="header"><div style={{display:'flex',alignItems:'center',gap:'10px'}}><button className="hamburger" onClick={()=>setSo(!so)}><i className="fas fa-bars"></i></button><h1><i className="fas fa-hotel"></i> Hill View Eco Retreat</h1></div><div style={{fontSize:'14px',color:'#666'}}>Welcome, {user}</div></div><MainContent activeMenu={am} user={user} role={role}/></div><BottomNav activeMenu={am} setActiveMenu={setAm} role={role} onLogout={onLogout}/></div>);
+      return(<div className="app-container"><Sidebar activeMenu={am} setActiveMenu={setAm} role={role} user={user} onLogout={onLogout} isOpen={so} setIsOpen={setSo}/><div className="main-content"><div className="header"><div style={{display:'flex',alignItems:'center',gap:'10px'}}><button className="hamburger" onClick={()=>setSo(!so)}><i className="fas fa-bars"></i></button><h1><i className="fas fa-hotel"></i> Hill View Eco Retreat</h1></div><div style={{fontSize:'14px',color:'#666'}}>Welcome, {user}</div></div><MainContent activeMenu={am} user={user} role={role} onLogout={onLogout}/></div><BottomNav activeMenu={am} setActiveMenu={setAm} role={role} onLogout={onLogout}/></div>);
     }
 
     function App(){
