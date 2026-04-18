@@ -2130,6 +2130,19 @@ function processFullCheckout(checkInId, checkoutData) {
       }
     }
 
+    try {
+      syncCustomerProfile({
+        name: guestName,
+        phone: mobile,
+        email: email,
+        address: address,
+        companyName: companyName,
+        gstNumber: gstNumber
+      });
+    } catch(syncErr) {
+      Logger.log("Customer Sync Checkout Error: " + syncErr.message);
+    }
+
     SpreadsheetApp.flush();
 
     return {
@@ -2619,6 +2632,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         phone: primaryGuestData.mobile,
         name: primaryGuestData.guestName,
         email: primaryGuestData.email,
+        address: primaryGuestData.address,
         companyName: primaryGuestData.companyName,
         gstNumber: primaryGuestData.gstNumber
       });
@@ -3298,6 +3312,7 @@ function addCustomer(customerData) {
 
 function syncCustomerProfile(guestData) {
   try {
+    initDataStructure();
     if (!guestData || !guestData.phone) return; // phone is our key identifier
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
@@ -3326,10 +3341,10 @@ function syncCustomerProfile(guestData) {
       if (!(existingRow[CUST_EMAIL_COL] || '').toString().trim() && guestData.email) {
         sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
       }
-      if (guestData.companyName && !(existingRow[CUST_COMPANY_COL] || '').toString().trim()) {
+      if (guestData.companyName) {
         sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
       }
-      if (guestData.gstNumber && !(existingRow[CUST_GST_COL] || '').toString().trim()) {
+      if (guestData.gstNumber) {
         sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
       }
       if (guestData.address && !(existingRow[CUST_ADDRESS_COL] || '').toString().trim()) {
