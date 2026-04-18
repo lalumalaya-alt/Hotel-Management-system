@@ -1646,25 +1646,25 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
     if (selectedOrders.length === 0) return { success: false, message: "No active orders found." };
 
     // 2. Billing Math
+    let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
+    let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
+
+    let taxDivisor = checkoutData.gstType === 'Including' ? (1 + ((sgstPercent + cgstPercent) / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalFooding = totalFooding / taxDivisor;
+      selectedOrders.forEach(o => {
+        o.amount = o.amount / taxDivisor;
+      });
+    }
+
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
     let discountAmount = totalFooding * (discountPercent / 100);
     let afterDiscount = totalFooding - discountAmount;
 
-    let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
-    let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
-    let sgstAmount = 0, cgstAmount = 0;
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
 
-    if (checkoutData.gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    } else if (checkoutData.gstType === 'Including') {
-      let totalPct = sgstPercent + cgstPercent;
-      let baseAmt = afterDiscount / (1 + (totalPct / 100));
-      sgstAmount = (afterDiscount - baseAmt) / 2;
-      cgstAmount = (afterDiscount - baseAmt) / 2;
-    }
-
-    let billAmount = checkoutData.gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
+    let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let paymentMode = checkoutData.paymentMode || 'Cash';
 
     // Read Settings
@@ -2008,6 +2008,20 @@ function processFullCheckout(checkInId, checkoutData) {
     // Calculate global Extra Bed total before subtotal
     let totalExtraBedCalculated = nights * extraPerson * DEFAULT_EXTRA_PERSON_RATE;
 
+    let taxDivisor = gstType === 'Including' ? (1 + (gstPercent / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalRoomRent = totalRoomRent / taxDivisor;
+      totalFooding = totalFooding / taxDivisor;
+      totalExtraBed = totalExtraBed / taxDivisor;
+      totalOtherServices = totalOtherServices / taxDivisor;
+      totalExtraBedCalculated = totalExtraBedCalculated / taxDivisor;
+      dailyRoomRate = dailyRoomRate / taxDivisor;
+
+      staySegments.forEach(s => { s.rate = s.rate / taxDivisor; });
+      foodOrders.forEach(o => { o.amount = o.amount / taxDivisor; });
+      Object.keys(categoryTotals).forEach(k => { categoryTotals[k] = categoryTotals[k] / taxDivisor; });
+    }
+
     let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountAmount = subtotal * (discountPercent / 100);
     let afterDiscount = subtotal - discountAmount;
@@ -2015,19 +2029,11 @@ function processFullCheckout(checkInId, checkoutData) {
     // CGST + SGST (each half of total GST)
     let sgstPercent = gstPercent / 2;
     let cgstPercent = gstPercent / 2;
-    let sgstAmount = 0, cgstAmount = 0;
-    if (gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    } else if (gstType === 'Including') {
-      let totalPct = sgstPercent + cgstPercent;
-      let baseAmt = afterDiscount / (1 + (totalPct / 100));
-      sgstAmount = (afterDiscount - baseAmt) / 2;
-      cgstAmount = (afterDiscount - baseAmt) / 2;
-    }
-    // If Including, GST is already in the price — no extra charge
 
-    let billAmount = gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
+
+    let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advancePaid;
     if (netAmount < 0) netAmount = 0;
 
@@ -2071,7 +2077,7 @@ function processFullCheckout(checkInId, checkoutData) {
 
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
       
-      let dailyEpCharge = extraPerson * DEFAULT_EXTRA_PERSON_RATE;
+      let dailyEpCharge = (extraPerson * DEFAULT_EXTRA_PERSON_RATE) / taxDivisor;
       dayCats.ExtraBed += dailyEpCharge;
 
       foodOrders.forEach(o => {
@@ -2363,6 +2369,19 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     if (combinedNights < 1) combinedNights = 1;
     let totalExtraBedCalculated = combinedNights * (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
 
+    let taxDivisor = primaryGuestData.gstType === 'Including' ? (1 + (gstPercent / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalRoomRent = totalRoomRent / taxDivisor;
+      totalFooding = totalFooding / taxDivisor;
+      totalExtraBed = totalExtraBed / taxDivisor;
+      totalOtherServices = totalOtherServices / taxDivisor;
+      totalExtraBedCalculated = totalExtraBedCalculated / taxDivisor;
+
+      allSegments.forEach(s => { s.rate = s.rate / taxDivisor; });
+      foodOrders.forEach(o => { o.amount = o.amount / taxDivisor; });
+      Object.keys(categoryTotals).forEach(k => { categoryTotals[k] = categoryTotals[k] / taxDivisor; });
+    }
+
     // 3. Billing Math
     let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
@@ -2371,18 +2390,11 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
     let sgstPercent = gstPercent / 2;
     let cgstPercent = gstPercent / 2;
-    let sgstAmount = 0, cgstAmount = 0;
-    if (primaryGuestData.gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    } else if (primaryGuestData.gstType === 'Including') {
-      let totalPct = sgstPercent + cgstPercent;
-      let baseAmt = afterDiscount / (1 + (totalPct / 100));
-      sgstAmount = (afterDiscount - baseAmt) / 2;
-      cgstAmount = (afterDiscount - baseAmt) / 2;
-    }
 
-    let billAmount = primaryGuestData.gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
+
+    let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advanceToApply;
     if (netAmount < 0) netAmount = 0;
 
@@ -2428,7 +2440,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
       
-      let dailyEpCharge = (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
+      let dailyEpCharge = ((parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE) / taxDivisor;
       dayCats.ExtraBed += dailyEpCharge;
 
       foodOrders.forEach(o => {

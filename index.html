@@ -729,17 +729,11 @@
       const liveSubtotal = activeDayByDay.reduce((sum, row) => sum + row.dayTotal, 0);
       const liveDiscount = liveSubtotal * ((parseFloat(d.discountPercent)||0) / 100);
       const afterDiscount = liveSubtotal - liveDiscount;
-      let liveSgst = 0, liveCgst = 0;
-      if (d.gstType === 'Excluding') {
-         liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
-         liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
-      } else if (d.gstType === 'Including') {
-         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
-         let baseAmt = afterDiscount / (1 + (totPct / 100));
-         liveSgst = (afterDiscount - baseAmt) / 2;
-         liveCgst = (afterDiscount - baseAmt) / 2;
-      }
-      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
+
+      let liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
+      let liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+
+      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
       const liveAdvance = (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
@@ -772,17 +766,11 @@
       const liveSubtotal = activeDayByDay.reduce((sum, row) => sum + row.dayTotal, 0);
       const liveDiscount = liveSubtotal * ((parseFloat(d.discountPercent)||0) / 100);
       const afterDiscount = liveSubtotal - liveDiscount;
-      let liveSgst = 0, liveCgst = 0;
-      if (d.gstType === 'Excluding') {
-         liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
-         liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
-      } else if (d.gstType === 'Including') {
-         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
-         let baseAmt = afterDiscount / (1 + (totPct / 100));
-         liveSgst = (afterDiscount - baseAmt) / 2;
-         liveCgst = (afterDiscount - baseAmt) / 2;
-      }
-      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
+
+      let liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
+      let liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+
+      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
       const liveAdvance = (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
@@ -2538,17 +2526,11 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const liveSubtotal = activeDayByDay.reduce((sum, row) => sum + row.dayTotal, 0);
       const liveDiscount = liveSubtotal * ((parseFloat(d.discountPercent)||0) / 100);
       const afterDiscount = liveSubtotal - liveDiscount;
-      let liveSgst = 0, liveCgst = 0;
-      if (d.gstType === 'Excluding') {
-         liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
-         liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
-      } else if (d.gstType === 'Including') {
-         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
-         let baseAmt = afterDiscount / (1 + (totPct / 100));
-         liveSgst = (afterDiscount - baseAmt) / 2;
-         liveCgst = (afterDiscount - baseAmt) / 2;
-      }
-      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
+
+      let liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
+      let liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+
+      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
       const liveAdvance = billView === 'Food Only' ? 0 : (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
