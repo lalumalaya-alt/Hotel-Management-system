@@ -733,8 +733,13 @@
       if (d.gstType === 'Excluding') {
          liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
          liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+      } else if (d.gstType === 'Including') {
+         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
+         let baseAmt = afterDiscount / (1 + (totPct / 100));
+         liveSgst = (afterDiscount - baseAmt) / 2;
+         liveCgst = (afterDiscount - baseAmt) / 2;
       }
-      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
+      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
       const liveAdvance = (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
@@ -746,7 +751,7 @@
         d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
         {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
         {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
-        {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],['SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],['CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
+        {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
         {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
         {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
       ],styles:{hdr:{fontSize:18,bold:true,color:'#001f3f'},th:{bold:true,fontSize:8,color:'white',fillColor:'#001f3f',alignment:'center'}},defaultStyle:{fontSize:10}};
@@ -771,8 +776,13 @@
       if (d.gstType === 'Excluding') {
          liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
          liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+      } else if (d.gstType === 'Including') {
+         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
+         let baseAmt = afterDiscount / (1 + (totPct / 100));
+         liveSgst = (afterDiscount - baseAmt) / 2;
+         liveCgst = (afterDiscount - baseAmt) / 2;
       }
-      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
+      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
       const liveAdvance = (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
@@ -2532,8 +2542,13 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       if (d.gstType === 'Excluding') {
          liveSgst = afterDiscount * ((parseFloat(d.sgstPercent)||0) / 100);
          liveCgst = afterDiscount * ((parseFloat(d.cgstPercent)||0) / 100);
+      } else if (d.gstType === 'Including') {
+         let totPct = (parseFloat(d.sgstPercent)||0) + (parseFloat(d.cgstPercent)||0);
+         let baseAmt = afterDiscount / (1 + (totPct / 100));
+         liveSgst = (afterDiscount - baseAmt) / 2;
+         liveCgst = (afterDiscount - baseAmt) / 2;
       }
-      const liveBillAmount = afterDiscount + liveSgst + liveCgst;
+      const liveBillAmount = d.gstType === 'Including' ? afterDiscount : afterDiscount + liveSgst + liveCgst;
       const liveAdvance = billView === 'Food Only' ? 0 : (parseFloat(d.advancePaid)||0);
       const liveNetAmount = Math.max(0, liveBillAmount - liveAdvance);
 
@@ -2559,7 +2574,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
           {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
           {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
-          {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],['SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],['CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
+          {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
           {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
           {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
         ],styles:{hdr:{fontSize:18,bold:true,color:'#001f3f'},th:{bold:true,fontSize:8,color:'white',fillColor:'#001f3f',alignment:'center'}},defaultStyle:{fontSize:10}};
@@ -2600,8 +2615,8 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           <table className="invoice-totals-table"><tbody>
             <tr><td>Total Amount</td><td>{n2(liveSubtotal)}</td></tr>
             {liveDiscount>0&&<tr><td>Discount ({n2(d.discountPercent||0)}%)</td><td>- {n2(liveDiscount)}</td></tr>}
-            <tr><td>SGST {n2(d.sgstPercent||0)}%</td><td>{n2(liveSgst)}</td></tr>
-            <tr><td>CGST {n2(d.cgstPercent||0)}%</td><td>{n2(liveCgst)}</td></tr>
+            <tr><td>{(d.gstType==='Including'?'(Incl) ':'')}SGST {n2(d.sgstPercent||0)}%</td><td>{n2(liveSgst)}</td></tr>
+            <tr><td>{(d.gstType==='Including'?'(Incl) ':'')}CGST {n2(d.cgstPercent||0)}%</td><td>{n2(liveCgst)}</td></tr>
             <tr><td>Bill Amount</td><td>{n2(liveBillAmount)}</td></tr>
             {liveAdvance>0&&<tr><td>Less Advance</td><td>- {n2(liveAdvance)}</td></tr>}
             <tr><td>Net Amount</td><td>{n2(liveNetAmount)}</td></tr>

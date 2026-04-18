@@ -1657,9 +1657,14 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
     if (checkoutData.gstType === 'Excluding') {
       sgstAmount = afterDiscount * (sgstPercent / 100);
       cgstAmount = afterDiscount * (cgstPercent / 100);
+    } else if (checkoutData.gstType === 'Including') {
+      let totalPct = sgstPercent + cgstPercent;
+      let baseAmt = afterDiscount / (1 + (totalPct / 100));
+      sgstAmount = (afterDiscount - baseAmt) / 2;
+      cgstAmount = (afterDiscount - baseAmt) / 2;
     }
 
-    let billAmount = afterDiscount + sgstAmount + cgstAmount;
+    let billAmount = checkoutData.gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
     let paymentMode = checkoutData.paymentMode || 'Cash';
 
     // Read Settings
@@ -2014,10 +2019,15 @@ function processFullCheckout(checkInId, checkoutData) {
     if (gstType === 'Excluding') {
       sgstAmount = afterDiscount * (sgstPercent / 100);
       cgstAmount = afterDiscount * (cgstPercent / 100);
+    } else if (gstType === 'Including') {
+      let totalPct = sgstPercent + cgstPercent;
+      let baseAmt = afterDiscount / (1 + (totalPct / 100));
+      sgstAmount = (afterDiscount - baseAmt) / 2;
+      cgstAmount = (afterDiscount - baseAmt) / 2;
     }
     // If Including, GST is already in the price — no extra charge
 
-    let billAmount = afterDiscount + sgstAmount + cgstAmount;
+    let billAmount = gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advancePaid;
     if (netAmount < 0) netAmount = 0;
 
@@ -2365,9 +2375,14 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     if (primaryGuestData.gstType === 'Excluding') {
       sgstAmount = afterDiscount * (sgstPercent / 100);
       cgstAmount = afterDiscount * (cgstPercent / 100);
+    } else if (primaryGuestData.gstType === 'Including') {
+      let totalPct = sgstPercent + cgstPercent;
+      let baseAmt = afterDiscount / (1 + (totalPct / 100));
+      sgstAmount = (afterDiscount - baseAmt) / 2;
+      cgstAmount = (afterDiscount - baseAmt) / 2;
     }
 
-    let billAmount = afterDiscount + sgstAmount + cgstAmount;
+    let billAmount = primaryGuestData.gstType === 'Including' ? afterDiscount : afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advanceToApply;
     if (netAmount < 0) netAmount = 0;
 
