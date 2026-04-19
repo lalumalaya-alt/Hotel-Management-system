@@ -947,6 +947,10 @@ function generateInvoiceHtml(invoiceData) {
  * CHECK-IN FUNCTIONS
  ***************************************************/
 
+function generateCustomerId() {
+  return "CUST-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+}
+
 function generateCheckInId() {
   const ss = SpreadsheetApp.openById(SS_ID);
   const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
@@ -1106,14 +1110,14 @@ function addCheckIn(checkInData) {
         name: checkInData.guestName,
         phone: checkInData.mobile,
         email: checkInData.email,
+        companyName: checkInData.companyName,
+        gstNumber: checkInData.gstNumber,
+        identityProof: checkInData.identityProof,
         address: checkInData.address,
         city: checkInData.city,
         state: checkInData.state,
         pinCode: checkInData.pinCode,
-        country: checkInData.country,
-        companyName: checkInData.companyName,
-        gstNumber: checkInData.gstNumber,
-        identityProof: checkInData.identityProof
+        country: checkInData.country
       });
     } catch(syncErr) {
       Logger.log("Silent customer sync fail: " + syncErr.message);
@@ -3369,7 +3373,7 @@ function syncCustomerProfile(guestData) {
       }
     } else {
       // Append new
-      const newId = "CUST-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+      const newId = generateCustomerId();
       const row = new Array(14).fill(''); // 14 headers per schema
       row[CUST_ID_COL] = newId;
       row[CUST_NAME_COL] = guestData.name || '';
