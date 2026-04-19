@@ -2093,7 +2093,8 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [ld,setLd]=useState(true);
       const [saving,setSaving]=useState(false);
       const [editOrder,setEditOrder]=useState(null);
-      const tRef=useRef(null);
+      const [searchRoom, setSearchRoom] = useState('');
+      const [searchPeriod, setSearchPeriod] = useState('');
       const [orderType,setOrderType]=useState('checkin');
       const [walkinName,setWalkinName]=useState('');
       const CATEGORIES=['Breakfast','Lunch','Dinner','Snacks','FoodBeverage'];
@@ -2112,10 +2113,9 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         google.script.run.withSuccessHandler(r=>{setActiveRooms(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getActiveCheckInRooms();
         google.script.run.withSuccessHandler(r=>{setMenuItems(Array.isArray(r)?r:[]);}).withFailureHandler(()=>{}).getAllMenuItems();
         loadOrders();
-        return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
 
-      const loadOrders=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);const arr = Array.isArray(r)?r:[];setAllOrders(arr);initT(arr);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllFoodOrders();};
+      const loadOrders=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{setLd(false);const arr = Array.isArray(r)?r:[];setAllOrders(arr);}).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getAllFoodOrders();};
 
       const handleManualAdd = () => {
         if (!selMenuItem) { Swal.fire({icon:'warning',text:'Select a menu item first.'}); return; }
@@ -2154,25 +2154,6 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           return up;
         });
       };
-
-      const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#restT').empty();}catch(e){}}
-        setTimeout(()=>{try{const t=$('#restT').DataTable({data,destroy:true,columns:[
-          {data:'orderId',title:'Order ID'},{data:'roomNo',title:'Room'},{data:'checkInId',title:'Check-In'},
-          {data:'orderDate',title:'Date',render:d=>fmtDate(d)},
-          {data:'mealPeriod',title:'Category'},
-          {data:'itemName',title:'Item Name'},
-          {data:'quantity',title:'Qty'},
-          {data:'rate',title:'Rate',render:d=>fmtCur(d)},
-          {data:'totalAmount',title:'Total',render:d=>fmtCur(d)},
-          {data:'status',title:'Status',render:d=>'<span class="status-badge status-'+(d||'active').toLowerCase()+'">'+d+'</span>'},
-          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
-        ],pageLength:10,responsive:true,dom:'Blfrtip',buttons:[
-          {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},
-          {extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'},orientation:'landscape'},
-          {extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}
-        ],order:[[0,'desc']]});
-        $('#restT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();if(a==='edit'){setEditOrder(rd);setSelRooms((rd.roomNo||'').split(',').map(r=>r.trim()).filter(Boolean));setSelCheckIn(rd.checkInId);if(rd.checkInId==='Walk-in'){setOrderType('table');setWalkinName(rd.roomNo);}else{setOrderType('checkin');}setOrderItems([{itemName:rd.itemName,quantity:rd.quantity,defaultPrice:rd.rate,totalAmount:rd.totalAmount}]);setFd({category:rd.category,description:rd.itemName,amount:rd.totalAmount,orderDate:rd.orderDate?rd.orderDate.split('T')[0]:''});}else if(a==='delete')delOrder(rd);});
-        tRef.current=t;}catch(e){console.error(e);}},150);};
 
       const toggleRoom=(rn, ciId, guestName)=>{
         setSelRooms(prev => {
@@ -2377,8 +2358,60 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
             <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={saving}>{saving?<><i className="fas fa-spinner fa-spin"></i> Saving...</>:<><i className="fas fa-save"></i> {editOrder?'Update':'Add'} Order</>}</button>{editOrder&&<button type="button" className="btn btn-secondary" onClick={resetOrderForm}><i className="fas fa-times"></i> Cancel Edit</button>}</div>
           </form>
         </div>
-        <h3 style={{marginBottom:'15px',color:'var(--navy-primary)'}}><i className="fas fa-list"></i> All Orders</h3>
-        {ld&&<TableSkeleton rows={5} columns={5}/>}<div style={{display:ld?'none':'block'}}><table id="restT" className="display" style={{width:'100%'}}></table></div>
+
+        <div style={{ background: '#fff', padding: '20px', borderRadius: '4px', border: '1px solid #ddd', marginBottom: '20px' }}>
+          <h4 style={{ color: 'var(--navy-primary)', marginBottom: '15px' }}><i className="fas fa-search"></i> Search / View Active Orders</h4>
+          <div className="form-grid" style={{ marginBottom: '20px' }}>
+            <div className="form-group">
+              <label>Select Room</label>
+              <select value={searchRoom} onChange={e => setSearchRoom(e.target.value)}>
+                <option value="">-- All Rooms --</option>
+                {[...new Set(allOrders.filter(o => o.status === 'Active').map(o => o.roomNo))].map(rn => (
+                  <option key={rn} value={rn}>Room {rn}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Meal Period</label>
+              <select value={searchPeriod} onChange={e => setSearchPeriod(e.target.value)}>
+                <option value="">-- All Periods --</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="dash-table" style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Room</th>
+                  <th>Meal Period</th>
+                  <th>Item</th>
+                  <th style={{textAlign: 'center'}}>Qty</th>
+                  <th style={{textAlign: 'right'}}>Amount</th>
+                  <th style={{textAlign: 'center'}}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod)).length > 0 ?
+                  allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod)).map((o, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 'bold' }}>{o.roomNo}</td>
+                      <td>{o.mealPeriod}</td>
+                      <td>{o.itemName}</td>
+                      <td style={{textAlign: 'center'}}>{o.quantity}</td>
+                      <td style={{ fontWeight: 'bold', color: 'var(--navy-primary)', textAlign: 'right' }}>{fmtCur(o.totalAmount)}</td>
+                      <td style={{textAlign: 'center'}}>
+                        <button type="button" className="action-icon delete-icon" onClick={() => delOrder(o)} title="Delete Order"><i className="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#999' }}><i className="fas fa-receipt" style={{fontSize: '24px', display: 'block', marginBottom: '10px', opacity: 0.5}}></i>No active orders match your search.</td></tr>
+                  )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {showWalkinBill && <WalkinBillingModal allOrders={allOrders} onClose={()=>setShowWalkinBill(false)} onCheckout={(invData)=>{setShowWalkinBill(false);loadOrders();setInv(invData);}} />}
         {inv && <HotelInvoiceModal data={inv} onClose={()=>setInv(null)} />}
