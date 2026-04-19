@@ -3318,69 +3318,51 @@ function addCustomer(customerData) {
 
 function syncCustomerProfile(guestData) {
   try {
-    initDataStructure();
-    if (!guestData || !guestData.phone) return; // phone is our key identifier
+    // The phone number is the strict unique identifier. If missing, abort sync.
+    if (!guestData || !guestData.phone) return;
+
+    initDataStructure(); // Ensure the 14-column schema is active
+
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
     if (!sheet) return;
-    
+
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
-    let existingRow = null;
-    
-    // Find matching phone
     const incomingPhone = String(guestData.phone).trim();
+
+    // 1. Search for existing customer by Mobile Number
     for (let i = 1; i < data.length; i++) {
       let existingPhone = String(data[i][CUST_PHONE_COL] || '').trim();
       if (existingPhone === incomingPhone) {
         rowIndex = i + 1;
-        existingRow = data[i];
         break;
       }
     }
-    
+
     if (rowIndex > -1) {
-      // Update existing blanks or newly provided values
-      if (!(existingRow[CUST_NAME_COL] || '').toString().trim() && guestData.name) {
-        sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(guestData.name);
-      }
-      if (!(existingRow[CUST_EMAIL_COL] || '').toString().trim() && guestData.email) {
-        sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
-      }
-      if (guestData.companyName) {
-        sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
-      }
-      if (guestData.gstNumber) {
-        sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
-      }
-      if (guestData.identityProof) {
-        sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(guestData.identityProof);
-      }
-      if (guestData.address && !(existingRow[CUST_ADDRESS_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(guestData.address);
-      }
-      if (guestData.city && !(existingRow[CUST_CITY_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(guestData.city);
-      }
-      if (guestData.state && !(existingRow[CUST_STATE_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(guestData.state);
-      }
-      if (guestData.pinCode && !(existingRow[CUST_PINCODE_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(guestData.pinCode);
-      }
-      if (guestData.country && !(existingRow[CUST_COUNTRY_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(guestData.country);
-      }
+      // 2. UPDATE EXISTING: Aggressively overwrite old data with new data if provided during checkout
+      if (guestData.name) sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(guestData.name);
+      if (guestData.companyName) sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
+      if (guestData.gstNumber) sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
+      if (guestData.identityProof) sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(guestData.identityProof);
+      if (guestData.email) sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
+      if (guestData.address) sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(guestData.address);
+      if (guestData.city) sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(guestData.city);
+      if (guestData.state) sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(guestData.state);
+      if (guestData.pinCode) sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(guestData.pinCode);
+      if (guestData.country) sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(guestData.country);
     } else {
-      // Append new
-      const newId = generateCustomerId();
-      const row = new Array(14).fill(''); // 14 headers per schema
+      // 3. CREATE NEW: No matching mobile number found, build a fresh 14-column row
+      const newId = "CUST-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+      const row = new Array(14).fill('');
+
       row[CUST_ID_COL] = newId;
       row[CUST_NAME_COL] = guestData.name || '';
       row[CUST_COMPANY_COL] = guestData.companyName || '';
       row[CUST_GST_COL] = guestData.gstNumber || '';
       row[CUST_IDENTITY_COL] = guestData.identityProof || '';
-      row[CUST_PHONE_COL] = guestData.phone || '';
+      row[CUST_PHONE_COL] = incomingPhone;
       row[CUST_EMAIL_COL] = guestData.email || '';
       row[CUST_ADDRESS_COL] = guestData.address || '';
       row[CUST_CITY_COL] = guestData.city || '';
@@ -3392,6 +3374,7 @@ function syncCustomerProfile(guestData) {
       
       sheet.appendRow(row);
     }
+    SpreadsheetApp.flush();
   } catch (e) {
     Logger.log("Customer Sync Error: " + e.message);
   }
