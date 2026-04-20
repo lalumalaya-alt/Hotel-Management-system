@@ -1686,7 +1686,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
       }
     } catch (e) {}
 
-    const billNumber = generateInvoiceId();
+    const billNumber = generateBillNumber();
     const nowStr = new Date().toISOString();
 
     // 3. Database Updates
