@@ -1690,38 +1690,40 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
     const nowStr = new Date().toISOString();
 
     // 3. Database Updates
-    selectedOrders.forEach(o => {
-       restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
-       restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
-    });
+    if (!checkoutData.isPreview) {
+      selectedOrders.forEach(o => {
+         restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
+         restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
+      });
 
-    const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
+      const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
 
-    const invoiceRow = new Array(20).fill('');
-    invoiceRow[0] = billNumber;
-    invoiceRow[1] = guestName;
-    invoiceRow[2] = "";
-    invoiceRow[3] = "";
-    invoiceRow[4] = "";
-    invoiceRow[5] = defaultCurrency;
-    invoiceRow[6] = nowStr;
-    invoiceRow[7] = nowStr;
-    invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
-    invoiceRow[9] = JSON.stringify(invoiceItems);
-    invoiceRow[10] = totalFooding;
-    invoiceRow[11] = true;
-    invoiceRow[12] = sgstPercent + cgstPercent;
-    invoiceRow[13] = sgstAmount + cgstAmount;
-    invoiceRow[14] = discountAmount;
-    invoiceRow[15] = billAmount;
-    invoiceRow[16] = "Walk-in POS Bill";
-    invoiceRow[17] = "";
-    invoiceRow[18] = "System";
-    invoiceRow[19] = nowStr;
+      const invoiceRow = new Array(20).fill('');
+      invoiceRow[0] = billNumber;
+      invoiceRow[1] = guestName;
+      invoiceRow[2] = "";
+      invoiceRow[3] = "";
+      invoiceRow[4] = "";
+      invoiceRow[5] = defaultCurrency;
+      invoiceRow[6] = nowStr;
+      invoiceRow[7] = nowStr;
+      invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
+      invoiceRow[9] = JSON.stringify(invoiceItems);
+      invoiceRow[10] = totalFooding;
+      invoiceRow[11] = true;
+      invoiceRow[12] = sgstPercent + cgstPercent;
+      invoiceRow[13] = sgstAmount + cgstAmount;
+      invoiceRow[14] = discountAmount;
+      invoiceRow[15] = billAmount;
+      invoiceRow[16] = "Walk-in POS Bill";
+      invoiceRow[17] = "";
+      invoiceRow[18] = "System";
+      invoiceRow[19] = nowStr;
 
-    invSheet.appendRow(invoiceRow);
+      invSheet.appendRow(invoiceRow);
 
-    SpreadsheetApp.flush();
+      SpreadsheetApp.flush();
+    }
 
     // 5. Construct invoiceData for frontend
     let syntheticDayByDay = [{
@@ -1736,7 +1738,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
 
     return {
       success: true,
-      message: "Walk-in Checkout completed successfully.",
+      message: checkoutData.isPreview ? "Preview generated." : "Walk-in Checkout completed successfully.",
       invoiceData: {
         billNumber,
         checkInId: "Walk-in",

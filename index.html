@@ -2426,7 +2426,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           </div>
         </div>
 
-        {showWalkinBill && <WalkinBillingModal allOrders={allOrders} onClose={()=>setShowWalkinBill(false)} onCheckout={(invData)=>{setShowWalkinBill(false);loadOrders();setInv(invData);}} />}
+        {showWalkinBill && <WalkinBillingModal allOrders={allOrders} onClose={()=>setShowWalkinBill(false)} onCheckout={(invData, isPreview) => { if (!isPreview) { setShowWalkinBill(false); loadOrders(); } setInv(invData); }} />}
         {inv && <HotelInvoiceModal data={inv} onClose={()=>setInv(null)} />}
       </div>);
     }
@@ -2448,14 +2448,14 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         return acc;
       }, {});
 
-      const doCheckout = () => {
+      const doCheckout = (isPreview = false) => {
         if (!selName) return;
         const orders = grouped[selName];
         if (!orders || orders.length === 0) return;
         const orderIds = orders.map(o => o.orderId);
 
         setProcessing(true);
-        Swal.fire({title:'Processing Walk-in Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        Swal.fire({title: isPreview ? 'Generating Preview...' : 'Processing Walk-in Checkout...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
 
         const payload = {
           discountPercent: parseFloat(disc) || 0,
@@ -2463,13 +2463,14 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           sgstPercent: 8,
           cgstPercent: 8,
           paymentMode: payMode,
-          paymentStatus: payStatus
+          paymentStatus: payStatus,
+          isPreview: isPreview
         };
 
         google.script.run.withSuccessHandler(res => {
           Swal.close(); setProcessing(false);
           if (res.success) {
-            onCheckout(res.invoiceData);
+            onCheckout(res.invoiceData, isPreview);
           } else {
             Swal.fire({icon:'error', text: res.message});
           }
@@ -2564,8 +2565,9 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
                           </select>
                         </div>
                       </div>
-                      <div className="form-actions" style={{marginTop: '15px'}}>
-                        <button type="button" className="btn btn-success" onClick={doCheckout} disabled={processing} style={{width: '100%'}}>
+                      <div className="form-actions" style={{marginTop: '15px', display: 'flex', gap: '10px'}}>
+                        <button type="button" className="btn btn-info" style={{background: '#17a2b8', color: 'white', flex: 1}} onClick={() => doCheckout(true)} disabled={processing}><i className="fas fa-eye"></i> Preview Bill</button>
+                        <button type="button" className="btn btn-success" onClick={() => doCheckout(false)} disabled={processing} style={{flex: 1}}>
                           {processing ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <><i className="fas fa-print"></i> Checkout & Print Bill</>}
                         </button>
                       </div>
