@@ -870,7 +870,7 @@
 
     function Sidebar({activeMenu,setActiveMenu,role,user,onLogout,isOpen,setIsOpen}){
       const adm=role==='admin';
-      const items=[{k:'dashboard',i:'fa-chart-line',l:'Dashboard',a:true},{k:'bookings',i:'fa-calendar-check',l:'Bookings',a:false},{k:'calendar',i:'fa-calendar-alt',l:'Calendar',a:false},{k:'checkin',i:'fa-door-open',l:'Check-In',a:true},{k:'checkout',i:'fa-sign-out-alt',l:'Checkout',a:true},{k:'restaurant',i:'fa-utensils',l:'Restaurant',a:true},{k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices',a:true},{k:'customers',i:'fa-address-book',l:'Customers',a:true},{k:'settings',i:'fa-cog',l:'Settings',a:false}];
+      const items=[{k:'dashboard',i:'fa-chart-line',l:'Dashboard',a:true},{k:'bookings',i:'fa-calendar-check',l:'Bookings',a:false},{k:'calendar',i:'fa-calendar-alt',l:'Calendar',a:false},{k:'checkin',i:'fa-door-open',l:'Check-In',a:true},{k:'checkout',i:'fa-sign-out-alt',l:'Checkout',a:true},{k:'restaurant',i:'fa-utensils',l:'Restaurant',a:true},{k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices',a:true},{k:'gst-report', i:'fa-chart-pie', l:'GST Report', a:true},{k:'customers',i:'fa-address-book',l:'Customers',a:true},{k:'settings',i:'fa-cog',l:'Settings',a:false}];
       const click=(k)=>{setActiveMenu(k);setIsOpen(false);};
       return(<><div className={`sidebar-overlay ${isOpen?'open':''}`} onClick={()=>setIsOpen(false)}></div><div className={`sidebar ${isOpen?'open':''}`}><div style={{padding:'24px',borderBottom:'1px solid rgba(255,255,255,0.1)',textAlign:'center'}}><div style={{color:'white',fontSize:'20px',fontWeight:'700'}}><i className="fas fa-hotel"></i> Hill View Eco Retreat</div></div><div className="sidebar-user-info"><div className="sidebar-user-name">{user}</div><div className="sidebar-user-role">{role}</div></div><div className="sidebar-menu-section"><div className="sidebar-menu-title">Navigation</div><ul className="sidebar-menu">{items.filter(m=>adm||!m.a).map(m=>(<li key={m.k}><button className={activeMenu===m.k?'active':''} onClick={()=>click(m.k)}><i className={`fas ${m.i}`}></i><span>{m.l}</span></button></li>))}</ul></div><div className="sidebar-logout"><button onClick={onLogout}><i className="fas fa-sign-out-alt"></i><span>Logout</span></button></div></div></>);
     }
@@ -3516,6 +3516,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         {k:'checkin',i:'fa-door-open',l:'Check-In'},
         {k:'restaurant',i:'fa-utensils',l:'Restaurant'},
                 {k:'invoices',i:'fa-file-invoice-dollar',l:'Invoices'},
+        {k:'gst-report', i:'fa-chart-pie', l:'GST Report'},
         {k:'customers',i:'fa-address-book',l:'Customers'},
         {k:'settings',i:'fa-cog',l:'Settings'},
         {k:'_logout',i:'fa-power-off',l:'Logout'}
@@ -3627,6 +3628,120 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       </div>);
     }
 
+    function GstReportView({user}) {
+      const [ld, setLd] = useState(true);
+      const [reportMonth, setReportMonth] = useState(() => {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      });
+      const tRef = useRef(null);
+
+      useEffect(() => { loadReport(); return () => { if(tRef.current) try{ tRef.current.destroy(); }catch(e){} }; }, [reportMonth]);
+
+      const loadReport = () => {
+        setLd(true);
+        google.script.run.withSuccessHandler(r => {
+          const allInvoices = Array.isArray(r) ? r : [];
+
+          // Process and filter data
+          const processedData = allInvoices.filter(inv => {
+            if(!inv.createdDate || inv.status === 'Cancelled' || inv.status === 'Draft') return false;
+            return inv.createdDate.startsWith(reportMonth);
+          }).map(inv => {
+            let items = [];
+            try { items = JSON.parse(inv.items || '[]'); } catch(e) {}
+
+            // Check for metadata first
+            const meta = items.find(i => i.isMeta) || {};
+
+            let roomRent = 0;
+            let foodCharges = 0;
+            items.forEach(it => {
+              if (it.isMeta) return;
+              const desc = (it.description || '').toLowerCase();
+              const type = (it.type || '').toLowerCase();
+              if (type === 'room' || desc.includes('room rent') || desc.includes('combined room')) {
+                roomRent += parseFloat(it.amount) || 0;
+              } else {
+                foodCharges += parseFloat(it.amount) || 0;
+              }
+            });
+
+            let cgst = 0, sgst = 0;
+            if (inv.gstEnabled && inv.gstAmount > 0) {
+              cgst = parseFloat(inv.gstAmount) / 2;
+              sgst = parseFloat(inv.gstAmount) / 2;
+            }
+
+            return {
+              billNumber: inv.invoiceId || '-',
+              guestName: inv.guestName || '-',
+              companyName: meta.companyName || '-',
+              gst: inv.customerTIN || '-',
+              roomRent: roomRent,
+              fooding: foodCharges,
+              cgst: cgst,
+              sgst: sgst,
+              total: parseFloat(inv.totalAmount) || 0
+            };
+          });
+
+          setLd(false);
+          initT(processedData);
+        }).withFailureHandler(e => {
+          setLd(false);
+          Swal.fire({icon: 'error', text: e.message});
+        }).getAllInvoices();
+      };
+
+      const initT = (data) => {
+        if (tRef.current) { try { tRef.current.destroy(); tRef.current = null; $('#gstT').empty(); } catch(e){} }
+        setTimeout(() => {
+          try {
+            const t = $('#gstT').DataTable({
+              data,
+              destroy: true,
+              columns: [
+                {data: 'billNumber', title: 'Bill No.'},
+                {data: 'guestName', title: 'Guest Name'},
+                {data: 'companyName', title: 'Company Name'},
+                {data: 'gst', title: 'GST Number'},
+                {data: 'roomRent', title: 'Room Rent', render: d => fmtCur(d)},
+                {data: 'fooding', title: 'Food/Services', render: d => fmtCur(d)},
+                {data: 'sgst', title: 'SGST', render: d => fmtCur(d)},
+                {data: 'cgst', title: 'CGST', render: d => fmtCur(d)},
+                {data: 'total', title: 'Total Amount', render: d => fmtCur(d)}
+              ],
+              pageLength: 25,
+              responsive: true,
+              dom: 'Blfrtip',
+              buttons: [
+                {extend: 'csv', text: '<i class="fas fa-file-csv"></i> Download CSV', className: 'btn-success'}
+              ],
+              order: [[0, 'desc']]
+            });
+            tRef.current = t;
+          } catch(e) { console.error(e); }
+        }, 150);
+      };
+
+      return (
+        <div className="data-section">
+          <div className="section-header">
+            <h2><i className="fas fa-chart-pie"></i> Monthly GST Statement</h2>
+            <div className="form-group" style={{marginBottom: 0, display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <label style={{marginBottom: 0, fontWeight: 'bold', color: 'var(--navy-primary)'}}>Select Month:</label>
+              <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} style={{padding: '8px 12px', border: '2px solid #ced4da', borderRadius: '4px'}} />
+            </div>
+          </div>
+          {ld && <TableSkeleton rows={5} columns={9}/>}
+          <div style={{display: ld ? 'none' : 'block'}}>
+            <table id="gstT" className="display" style={{width:'100%'}}></table>
+          </div>
+        </div>
+      );
+    }
+
     function MainContent({activeMenu,user,role,onLogout}){
       switch(activeMenu){
         case 'dashboard': return <DashboardView user={user}/>;
@@ -3638,6 +3753,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         case 'customers': return <CustomersView user={user}/>;
                 case 'invoices': return <InvoicesView user={user}/>;
         case 'settings': return <SettingsView user={user} role={role} onLogout={onLogout}/>;
+        case 'gst-report': return <GstReportView user={user}/>;
                 default: return null;
       }
     }
