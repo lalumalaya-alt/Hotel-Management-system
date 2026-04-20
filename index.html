@@ -2095,6 +2095,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [editOrder,setEditOrder]=useState(null);
       const [searchRoom, setSearchRoom] = useState('');
       const [searchPeriod, setSearchPeriod] = useState('');
+      const [searchDate, setSearchDate] = useState('');
       const [orderType,setOrderType]=useState('checkin');
       const [walkinName,setWalkinName]=useState('');
       const CATEGORIES=['Breakfast','Lunch','Dinner','Snacks','FoodBeverage'];
@@ -2361,55 +2362,61 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
 
         <div style={{ background: '#fff', padding: '20px', borderRadius: '4px', border: '1px solid #ddd', marginBottom: '20px' }}>
           <h4 style={{ color: 'var(--navy-primary)', marginBottom: '15px' }}><i className="fas fa-search"></i> Search / View Active Orders</h4>
-          <div className="form-grid" style={{ marginBottom: '20px' }}>
-            <div className="form-group">
-              <label>Select Room</label>
-              <select value={searchRoom} onChange={e => setSearchRoom(e.target.value)}>
-                <option value="">-- All Rooms --</option>
-                {[...new Set(allOrders.filter(o => o.status === 'Active').map(o => o.roomNo))].map(rn => (
-                  <option key={rn} value={rn}>Room {rn}</option>
-                ))}
-              </select>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', alignItems: 'start' }}>
+            <div>
+              <div className="form-group">
+                <label>Date</label>
+                <input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Select Room</label>
+                <select value={searchRoom} onChange={e => setSearchRoom(e.target.value)}>
+                  <option value="">Please Select</option>
+                  {[...new Set(allOrders.filter(o => o.status === 'Active').map(o => o.roomNo))].map(rn => (
+                    <option key={rn} value={rn}>Room {rn}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Meal Period</label>
+                <select value={searchPeriod} onChange={e => setSearchPeriod(e.target.value)}>
+                  <option value="">Please Select</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label>Meal Period</label>
-              <select value={searchPeriod} onChange={e => setSearchPeriod(e.target.value)}>
-                <option value="">-- All Periods --</option>
-                {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
-              </select>
-            </div>
-          </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table className="dash-table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Room</th>
-                  <th>Meal Period</th>
-                  <th>Item</th>
-                  <th style={{textAlign: 'center'}}>Qty</th>
-                  <th style={{textAlign: 'right'}}>Amount</th>
-                  <th style={{textAlign: 'center'}}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod)).length > 0 ?
-                  allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod)).map((o, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 'bold' }}>{o.roomNo}</td>
-                      <td>{o.mealPeriod}</td>
-                      <td>{o.itemName}</td>
-                      <td style={{textAlign: 'center'}}>{o.quantity}</td>
-                      <td style={{ fontWeight: 'bold', color: 'var(--navy-primary)', textAlign: 'right' }}>{fmtCur(o.totalAmount)}</td>
-                      <td style={{textAlign: 'center'}}>
-                        <button type="button" className="action-icon delete-icon" onClick={() => delOrder(o)} title="Delete Order"><i className="fas fa-trash"></i></button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#999' }}><i className="fas fa-receipt" style={{fontSize: '24px', display: 'block', marginBottom: '10px', opacity: 0.5}}></i>No active orders match your search.</td></tr>
-                  )}
-              </tbody>
-            </table>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="dash-table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>Room</th>
+                    <th>Meal Period</th>
+                    <th>Item</th>
+                    <th style={{textAlign: 'center'}}>Qty</th>
+                    <th style={{textAlign: 'right'}}>Amount</th>
+                    <th style={{textAlign: 'center'}}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod) && (searchDate === '' || (o.orderDate && o.orderDate.startsWith(searchDate)))).length > 0 ?
+                    allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod) && (searchDate === '' || (o.orderDate && o.orderDate.startsWith(searchDate)))).map((o, i) => (
+                      <tr key={i}>
+                        <td style={{ fontWeight: 'bold' }}>{o.roomNo}</td>
+                        <td>{o.mealPeriod}</td>
+                        <td>{o.itemName}</td>
+                        <td style={{textAlign: 'center'}}>{o.quantity}</td>
+                        <td style={{ fontWeight: 'bold', color: 'var(--navy-primary)', textAlign: 'right' }}>{fmtCur(o.totalAmount)}</td>
+                        <td style={{textAlign: 'center'}}>
+                          <button type="button" className="action-icon delete-icon" onClick={() => delOrder(o)} title="Delete Order"><i className="fas fa-trash"></i></button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#999' }}><i className="fas fa-receipt" style={{fontSize: '24px', display: 'block', marginBottom: '10px', opacity: 0.5}}></i>No active orders match your search.</td></tr>
+                    )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
