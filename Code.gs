@@ -1641,7 +1641,9 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         let amt = parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0;
         let desc = (restData[i][REST_ITEM_NAME_COL] || '').toString();
         let qty = parseInt(restData[i][REST_QUANTITY_COL]) || 1;
-        selectedOrders.push({ rowIndex: i, orderId: oId, description: desc, amount: amt, quantity: qty });
+        let rate = parseFloat(restData[i][REST_RATE_COL]) || 0;
+        let cat = (restData[i][REST_MEAL_PERIOD_COL] || '').toString();
+        selectedOrders.push({ rowIndex: i, orderId: oId, description: desc, amount: amt, quantity: qty, rate: rate, category: cat });
         totalFooding += amt;
       }
     }
@@ -1696,7 +1698,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
          restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
       });
 
-      const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
+      const invoiceItems = selectedOrders.map(o => ({ description: o.description, category: o.category, quantity: o.quantity, rate: o.rate, amount: o.amount }));
 
       const invoiceRow = new Array(20).fill('');
       invoiceRow[0] = billNumber;
@@ -1769,6 +1771,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         billAmount,
         advancePaid: 0,
         netAmount: billAmount,
+        items: selectedOrders.map(o => ({ description: o.description, category: o.category, quantity: o.quantity, rate: o.rate, amount: o.amount })),
         hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo
       }
     };

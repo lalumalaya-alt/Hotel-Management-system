@@ -701,6 +701,7 @@
          amountPaid: meta.amountPaid || 0,
          balance: meta.balance || parseFloat(inv.totalAmount) || 0,
          dayByDay: meta.dayByDay || syntheticDayByDay,
+         items: items,
          notes: inv.notes || ''
       };
     };
@@ -2637,11 +2638,26 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const doPdf=()=>{
         const dayRows=(activeDayByDay||[]).map(row=>[fmtDShort(row.date),n2(row.rooms),n2(row.extraBed),n2(row.foodBev),n2(row.laundry),n2(row.dayTotal),'']);
         const totRow=['Totals',n2(totalRoomsCol),...cats.map(c=>n2(colTotals[c])),n2(liveSubtotal),''];
+
+        let dynamicTableBlock;
+        if (d.checkInId === 'Walk-in' || d.checkInId === '') {
+          const walkinTableBody = (d.items || []).map(it => [
+            {text: it.description, alignment: 'left'},
+            {text: it.category || 'FoodBeverage', alignment: 'left'},
+            {text: (it.quantity || 1).toString(), alignment: 'center'},
+            n2(it.rate || it.amount),
+            {text: n2(it.amount), bold: true}
+          ]);
+          dynamicTableBlock = {table:{headerRows:1,widths:['*','auto','auto','auto','auto'],body:[[{text:'Item Description',style:'th',alignment:'left'},{text:'Category',style:'th',alignment:'left'},{text:'Qty',style:'th',alignment:'center'},{text:'Rate',style:'th'},{text:'Amount',style:'th'}],...walkinTableBody]},fontSize:8};
+        } else {
+          dynamicTableBlock = {table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8};
+        }
+
         const doc={pageSize:'A4',pageOrientation:'landscape',pageMargins:[20,20,20,20],content:[
           {text:d.hotelName||'Hill View Eco Retreat',style:'hdr',alignment:'center'},{text:(d.hotelAddress||'')+' | '+(d.hotelPhone||'')+' | '+(d.hotelEmail||''),alignment:'center',fontSize:9,margin:[0,0,0,5]},
           d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
           {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
-          {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
+          {text:'\n'}, dynamicTableBlock,
           {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
           {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
           {columns:[{text:'Guest\'s Signature\n_______________',alignment:'center',fontSize:9},{text:'PLEASE DEPOSIT YOUR KEY',alignment:'center',fontSize:9,bold:true},{text:'Admin / Front Office\n_______________',alignment:'center',fontSize:9}]}
@@ -2676,10 +2692,19 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
               <tr><td>Room#</td><td>{d.numberOfRooms||1}</td></tr>
             </tbody></table></div>
           </div>
-          <table className="invoice-day-table"><thead><tr><th>Date</th><th>Rooms</th>{allCatHeaders.map(h=><th key={h}>{h}</th>)}<th>Days Total</th><th>Gr.Total</th></tr></thead>
-            <tbody>{activeDayByDay.map((row,i)=><tr key={i}><td style={{textAlign:'center'}}>{fmtDShort(row.date)}</td><td>{n2(row.rooms)}</td><td>{n2(row.extraBed)}</td><td>{n2(row.foodBev)}</td><td>{n2(row.laundry)}</td><td><strong>{n2(row.dayTotal)}</strong></td><td><strong></strong></td></tr>)}</tbody>
-            <tfoot><tr><td style={{textAlign:'center'}}><strong>Totals</strong></td><td><strong>{n2(totalRoomsCol)}</strong></td>{cats.map(c=><td key={c}><strong>{n2(colTotals[c])}</strong></td>)}<td><strong>{n2(liveSubtotal)}</strong></td><td></td></tr></tfoot>
-          </table>
+          {d.checkInId === 'Walk-in' || d.checkInId === '' ? (
+            <table className="invoice-day-table">
+              <thead><tr><th style={{textAlign:'left'}}>Item Description</th><th style={{textAlign:'left'}}>Category</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+              <tbody>
+                {(d.items || []).map((it, i) => (<tr key={i}><td style={{textAlign:'left'}}>{it.description}</td><td style={{textAlign:'left'}}>{it.category || 'FoodBeverage'}</td><td style={{textAlign:'center'}}>{it.quantity || 1}</td><td>{n2(it.rate || it.amount)}</td><td><strong>{n2(it.amount)}</strong></td></tr>))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="invoice-day-table"><thead><tr><th>Date</th><th>Rooms</th>{allCatHeaders.map(h=><th key={h}>{h}</th>)}<th>Days Total</th><th>Gr.Total</th></tr></thead>
+              <tbody>{activeDayByDay.map((row,i)=><tr key={i}><td style={{textAlign:'center'}}>{fmtDShort(row.date)}</td><td>{n2(row.rooms)}</td><td>{n2(row.extraBed)}</td><td>{n2(row.foodBev)}</td><td>{n2(row.laundry)}</td><td><strong>{n2(row.dayTotal)}</strong></td><td><strong></strong></td></tr>)}</tbody>
+              <tfoot><tr><td style={{textAlign:'center'}}><strong>Totals</strong></td><td><strong>{n2(totalRoomsCol)}</strong></td>{cats.map(c=><td key={c}><strong>{n2(colTotals[c])}</strong></td>)}<td><strong>{n2(liveSubtotal)}</strong></td><td></td></tr></tfoot>
+            </table>
+          )}
           <table className="invoice-totals-table"><tbody>
             <tr><td>Total Amount</td><td>{n2(liveSubtotal)}</td></tr>
             {liveDiscount>0&&<tr><td>Discount ({n2(d.discountPercent||0)}%)</td><td>- {n2(liveDiscount)}</td></tr>}
