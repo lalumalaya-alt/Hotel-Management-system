@@ -2095,12 +2095,14 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [editOrder,setEditOrder]=useState(null);
       const [searchRoom, setSearchRoom] = useState('');
       const [searchPeriod, setSearchPeriod] = useState('');
-      const [searchDate, setSearchDate] = useState('');
+      const [searchDate, setSearchDate] = useState(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); });
       const [orderType,setOrderType]=useState('checkin');
       const [walkinName,setWalkinName]=useState('');
       const CATEGORIES=['Breakfast','Lunch','Dinner','Snacks','FoodBeverage'];
       const CAT_LABELS={Breakfast:'Breakfast',Lunch:'Lunch',Dinner:'Dinner',Snacks:'Snacks',FoodBeverage:'Other Food & Beverage'};
       const [fd,setFd]=useState({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});
+
+      const isSearchActive = searchRoom !== '' || searchPeriod !== '' || searchDate !== '';
       const [menuItems,setMenuItems]=useState([]);
       const [orderItems,setOrderItems]=useState([]);
       const [selMenuItem,setSelMenuItem]=useState('');
@@ -2399,7 +2401,10 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
                   </tr>
                 </thead>
                 <tbody>
-                  {allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod) && (searchDate === '' || (o.orderDate && o.orderDate.startsWith(searchDate)))).length > 0 ?
+                {!isSearchActive ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}><i className="fas fa-search" style={{fontSize: '24px', display: 'block', marginBottom: '10px', opacity: 0.5}}></i>Please select a Date, Room, or Meal Period to view orders.</td></tr>
+                ) : (
+                  allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod) && (searchDate === '' || (o.orderDate && o.orderDate.startsWith(searchDate)))).length > 0 ?
                     allOrders.filter(o => o.status === 'Active' && (searchRoom === '' || o.roomNo === searchRoom) && (searchPeriod === '' || o.mealPeriod === searchPeriod) && (searchDate === '' || (o.orderDate && o.orderDate.startsWith(searchDate)))).map((o, i) => (
                       <tr key={i}>
                         <td style={{ fontWeight: 'bold' }}>{o.roomNo}</td>
@@ -2413,7 +2418,8 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
                       </tr>
                     )) : (
                       <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#999' }}><i className="fas fa-receipt" style={{fontSize: '24px', display: 'block', marginBottom: '10px', opacity: 0.5}}></i>No active orders match your search.</td></tr>
-                    )}
+                    )
+                )}
                 </tbody>
               </table>
             </div>
