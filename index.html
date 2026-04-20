@@ -2099,6 +2099,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [searchDate, setSearchDate] = useState(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); });
       const [orderType,setOrderType]=useState('checkin');
       const [walkinName,setWalkinName]=useState('');
+      const [walkinMobile, setWalkinMobile] = useState('');
       const CATEGORIES=['Breakfast','Lunch','Dinner','Snacks','FoodBeverage'];
       const CAT_LABELS={Breakfast:'Breakfast',Lunch:'Lunch',Dinner:'Dinner',Snacks:'Snacks',FoodBeverage:'Other Food & Beverage'};
       const [fd,setFd]=useState({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});
@@ -2192,7 +2193,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           finalCheckInId = selCheckIn;
         } else {
           if(!walkinName){Swal.fire({icon:'warning',text:'Enter a Customer Name.'});return;}
-          finalRoomNo = walkinName;
+          finalRoomNo = walkinMobile ? walkinName + ' (' + walkinMobile + ')' : walkinName;
           finalCheckInId = 'Walk-in';
         }
         if(orderItems.length === 0){Swal.fire({icon:'warning',text:'Add at least one item to the order.'});return;}
@@ -2229,7 +2230,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
 
       const delOrder=(ord)=>{Swal.fire({icon:'warning',title:'Delete Order?',text:'Delete order '+ord.orderId+'?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});loadOrders();}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteFoodOrder(ord.rowIndex);});};
 
-      const resetOrderForm=()=>{setEditOrder(null);setOrderType('checkin');setWalkinName('');setOrderItems([]);setSelRooms([]);setSelCheckIn('');setSelGuestName('');setFd({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});};
+      const resetOrderForm=()=>{setEditOrder(null);setOrderType('checkin');setWalkinName('');setWalkinMobile('');setOrderItems([]);setSelRooms([]);setSelCheckIn('');setSelGuestName('');setFd({category:'Lunch',description:'',amount:'',orderDate:new Date().toISOString().split('T')[0]});};
 
       const removeItem = (idx) => { setOrderItems(prev => prev.filter((_, i) => i !== idx)); };
 
@@ -2261,7 +2262,16 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
             </div>
 
             {orderType === 'table' ? (
-              <div className="form-group"><label>Customer Name (Walk-in) *</label><input value={walkinName} onChange={e=>setWalkinName(e.target.value)} required placeholder="e.g. John Doe"/></div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Customer Name (Walk-in) *</label>
+                  <input value={walkinName} onChange={e=>setWalkinName(e.target.value)} required placeholder="e.g. John Doe"/>
+                </div>
+                <div className="form-group">
+                  <label>Mobile Number</label>
+                  <input value={walkinMobile} onChange={e=>setWalkinMobile(e.target.value)} placeholder="e.g. 9876543210"/>
+                </div>
+              </div>
             ) : (
             <div className="form-group">
               <label>Select Rooms *</label>
