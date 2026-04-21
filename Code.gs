@@ -2123,7 +2123,7 @@ function processFullCheckout(checkInId, checkoutData) {
     for (let j = 1; j < roomsData.length; j++) {
       let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
       if (roomNosArr.indexOf(rn) !== -1) {
-        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Maintenance");
       }
     }
 
@@ -2496,7 +2496,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       for (let j = 1; j < roomsData.length; j++) {
         let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
         if (allRoomNosArr.includes(rn)) {
-          roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+          roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Maintenance");
         }
       }
 
