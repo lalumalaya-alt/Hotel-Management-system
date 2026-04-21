@@ -1207,7 +1207,7 @@ function getActiveCheckInsWithStats() {
 
           // Default minimum of 1 night for calculating
           let sDays = daysBetween(sStart, sEnd);
-          if (sDays < 1) sDays = 1;
+          if (isNaN(sDays) || sDays < 1) sDays = 1;
 
           let rate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
           let roomNos = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
@@ -1933,6 +1933,7 @@ function processFullCheckout(checkInId, checkoutData) {
       checkOutTime,
       billingFormat
     );
+    if (isNaN(nights) || nights < 1) { nights = 1; }
 
     // Calculate room rent using StaySegments if available
     let roomNosArr = roomNumbers.split(',').map(r => r.trim()).filter(r => r);
@@ -1972,7 +1973,7 @@ function processFullCheckout(checkInId, checkoutData) {
             let segEndDate = new Date(segEndDateStr);
             // Ensure minimum of 1 night for the overall stay, but 0-night segments are possible if swapped same day
             let segNights = daysBetween(segStartDate, segEndDate);
-            if (segNights < 0) segNights = 0;
+            if (isNaN(segNights) || segNights < 1) segNights = 1;
 
             let segRate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
             
@@ -2307,6 +2308,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
             checkOutTime,
             billingFormat
           );
+          if (isNaN(nights) || nights < 1) { nights = 1; }
           
           let staySegments = [];
           if (staySegmentsSheet) {
@@ -2343,7 +2345,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
                   let safeStartDate = new Date(sY + '-' + sM + '-' + sD + 'T00:00:00');
 
                   let segNights = daysBetween(safeStartDate, safeBillingDate);
-                  if (segNights < 0) segNights = 0;
+                  if (isNaN(segNights) || segNights < 1) segNights = 1;
 
                   let segRate = parseFloat(segmentsData[s][SEG_RATE_COL]) || 0;
                   
