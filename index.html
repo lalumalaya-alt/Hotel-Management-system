@@ -3620,20 +3620,60 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
             const maxVisible=4;
             const dateStr=fmtDate(cell.date.toISOString());
 
-            let occupiedSet = new Set();
-            dayBookings.forEach(b => {
-              if (b.status === 'Booked') {
-                const rs = (b.roomNo || '').split(',');
-                rs.forEach(r => occupiedSet.add(r.trim().toLowerCase()));
+            let availUI = null;
+            if (!cell.isOther && rooms.length > 0) {
+              const occupied = new Set();
+              dayBookings.forEach(bk => {
+                if (bk.status !== 'Cancelled') {
+                  (bk.roomNo || '').split(',').forEach(r => {
+                    const rn = r.trim();
+                    const match = rn.match(/(.+?)(?:\s*\((\d+)\))?$/);
+                    if (match && match[2]) {
+                      occupied.add(rn);
+                    } else {
+                      occupied.add(rn);
+                    }
+                  });
+                }
+              });
+
+              const availByType = {};
+              let totalAvail = 0;
+
+              rooms.forEach(rm => {
+                if ((rm.roomStatus || '').toLowerCase() !== 'maintenance' && !occupied.has(rm.roomNo.toString())) {
+                  availByType[rm.roomType] = (availByType[rm.roomType] || 0) + 1;
+                  totalAvail++;
+                }
+              });
+
+              occupied.forEach(occ => {
+                const match = occ.match(/(.+?)(?:\s*\((\d+)\))?$/);
+                if (match && match[2]) {
+                  const type = match[1].trim();
+                  const qty = parseInt(match[2], 10);
+                  if (availByType[type]) {
+                    availByType[type] -= qty;
+                    totalAvail -= qty;
+                  }
+                }
+              });
+
+              if (totalAvail <= 0) {
+                availUI = <div style={{ fontSize: '10px', textAlign: 'right', padding: '2px 4px', fontWeight: 'bold', color: 'var(--danger)' }}>Full</div>;
+              } else {
+                availUI = (
+                  <div style={{ fontSize: '9px', textAlign: 'right', padding: '2px 4px', lineHeight: '1.2', color: 'var(--success)', fontWeight: '600' }}>
+                    {Object.entries(availByType).filter(([_, qty]) => qty > 0).map(([type, qty]) => (
+                      <div key={type}>{qty} {type.substring(0, 3).toUpperCase()}</div>
+                    ))}
+                  </div>
+                );
               }
-            });
-            const totalRoomsCount = rooms.filter(r => (r.roomStatus || '').toLowerCase() !== 'maintenance').length;
-            const availableCount = totalRoomsCount - occupiedSet.size;
+            }
 
             return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
-              <div style={{ fontSize: '10px', textAlign: 'right', padding: '0 6px', fontWeight: 'bold', color: availableCount > 0 ? 'var(--success)' : 'var(--danger)' }}>
-                {availableCount > 0 ? availableCount + ' Free' : 'Full'}
-              </div>
+              {availUI}
               {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
               {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
             </div>);
