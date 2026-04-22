@@ -3564,11 +3564,12 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
 
     function CalendarView({user,role}){
       const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
+      const [rooms,setRooms]=useState([]);
       const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
       const isAdmin=role==='admin';
 
       useEffect(()=>{loadBookings();},[]);
-      const loadBookings=()=>{setLoading(true);google.script.run.withSuccessHandler(r=>{setLoading(false);const data=Array.isArray(r)?r:[];const filtered=isAdmin?data:data.filter(b=>b.email===user);setBookings(filtered);}).withFailureHandler(e=>{setLoading(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
+      const loadBookings=()=>{setLoading(true);google.script.run.withSuccessHandler(r=>{const data=Array.isArray(r)?r:[];const filtered=isAdmin?data:data.filter(b=>b.email===user);setBookings(filtered);google.script.run.withSuccessHandler(rm=>{setRooms(Array.isArray(rm)?rm:[]);setLoading(false);}).getAllRooms();}).withFailureHandler(e=>{setLoading(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
 
       const prevMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()-1);setCurrentDate(d);};
       const nextMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()+1);setCurrentDate(d);};
@@ -3618,7 +3619,21 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
             const cls=['calendar-cell'];if(cell.isOther)cls.push('other-month');if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
             const maxVisible=4;
             const dateStr=fmtDate(cell.date.toISOString());
+
+            let occupiedSet = new Set();
+            dayBookings.forEach(b => {
+              if (b.status === 'Booked') {
+                const rs = (b.roomNo || '').split(',');
+                rs.forEach(r => occupiedSet.add(r.trim().toLowerCase()));
+              }
+            });
+            const totalRoomsCount = rooms.filter(r => (r.roomStatus || '').toLowerCase() !== 'maintenance').length;
+            const availableCount = totalRoomsCount - occupiedSet.size;
+
             return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
+              <div style={{ fontSize: '10px', textAlign: 'right', padding: '0 6px', fontWeight: 'bold', color: availableCount > 0 ? 'var(--success)' : 'var(--danger)' }}>
+                {availableCount > 0 ? availableCount + ' Free' : 'Full'}
+              </div>
               {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
               {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
             </div>);
