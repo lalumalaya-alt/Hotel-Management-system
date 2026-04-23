@@ -3240,14 +3240,50 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},{extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},{extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}],order:[[2,'desc']]});
         $('#invT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();
           if(a==='view')setPreview(rd);else if(a==='edit'){setEdit(rd);setShow(true);}else if(a==='email')emailInv(rd);else if(a==='pdf')downloadInvoicePdf(rd);else if(a==='drive')savePdfToDriveHelper(rd);else if(a==='delete')delRec(rd);
-          else if (a === 'pay') {
+                    else if (a === 'pay') {
+            let parsedItems = [];
+            try { parsedItems = JSON.parse(rd.items || '[]'); } catch(e) {}
+            let meta = parsedItems.find(i => i.isMeta) || {};
+            let pending = meta.balance !== undefined ? meta.balance : rd.totalAmount;
+            let todayStr = new Date().toISOString().split('T')[0];
+
             Swal.fire({
-              icon: 'question',
-              title: 'Mark as Paid?',
-              text: `Confirm receiving payment for invoice ${rd.invoiceId}?`,
+              title: 'Record Payment',
+              html: `
+                <div style="text-align: left; font-size: 14px; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;">
+                  <strong>Invoice:</strong> ${rd.invoiceId}<br/>
+                  <strong>Total Amount:</strong> ${parseFloat(rd.totalAmount).toFixed(2)}<br/>
+                  <strong>Pending Balance:</strong> <span style="color:var(--danger); font-weight: bold; font-size: 16px;">${parseFloat(pending).toFixed(2)}</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 5px; font-size: 13px; font-weight: bold; color: #555;">Amount Paid Now</div>
+                <input type="number" step="0.01" id="pay-amt" class="swal2-input" placeholder="Amount Paid" value="${pending}" style="margin-top:0;">
+
+                <div style="text-align: left; margin-top: 15px; margin-bottom: 5px; font-size: 13px; font-weight: bold; color: #555;">Payment Date</div>
+                <input type="date" id="pay-date" class="swal2-input" value="${todayStr}" style="margin-top:0;">
+
+                <div style="text-align: left; margin-top: 15px; margin-bottom: 5px; font-size: 13px; font-weight: bold; color: #555;">Payment Mode</div>
+                <select id="pay-mode" class="swal2-input" style="margin-top:0;">
+                  <option>Cash</option><option>Card</option><option>Bank Transfer</option><option>UPI</option><option>Online</option>
+                </select>
+              `,
+              focusConfirm: false,
               showCancelButton: true,
-              confirmButtonText: 'Yes, Mark Paid',
-              confirmButtonColor: '#34a853'
+              confirmButtonText: '<i class="fas fa-save"></i> Save Payment',
+              confirmButtonColor: '#34a853',
+              preConfirm: () => {
+                const amt = document.getElementById('pay-amt').value;
+                const date = document.getElementById('pay-date').value;
+                const mode = document.getElementById('pay-mode').value;
+                if (!amt || parseFloat(amt) <= 0) {
+                  Swal.showValidationMessage('Enter a valid payment amount');
+                  return false;
+                }
+                if (!date) {
+                  Swal.showValidationMessage('Select a payment date');
+                  return false;
+                }
+                return { amount: parseFloat(amt), date, mode };
+              }
             }).then(r => {
               if (r.isConfirmed) {
                 Swal.fire({title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
@@ -3259,7 +3295,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
                   } else Swal.fire({icon: 'error', text: res.message});
                 }).withFailureHandler(e => {
                   Swal.close(); Swal.fire({icon: 'error', text: e.message});
-                }).markInvoicePaid(rd.rowIndex);
+                }).markInvoicePaid(rd.rowIndex, r.value);
               }
             });
           }});

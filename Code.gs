@@ -3862,16 +3862,47 @@ function reopenInvoice(rowIndex) {
   }
 }
 
-function markInvoicePaid(rowIndex) {
+function markInvoicePaid(rowIndex, paymentData) {
   try {
     const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
     if (!sheet) return { success: false, message: "Invoices sheet not found." };
     if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
 
-    sheet.getRange(rowIndex, INV_STATUS_COL + 1).setValue('Paid');
+    const totalAmount = parseFloat(sheet.getRange(rowIndex, INV_TOTAL_COL + 1).getValue()) || 0;
+    const itemsStr = sheet.getRange(rowIndex, INV_ITEMS_COL + 1).getValue();
+    let items = [];
+    try { items = JSON.parse(itemsStr || '[]'); } catch(e) {}
+
+    let metaIndex = items.findIndex(i => i.isMeta);
+    let meta = metaIndex >= 0 ? items[metaIndex] : { isMeta: true };
+
+    let prevPaid = parseFloat(meta.amountPaid) || 0;
+    let newPaid = prevPaid + (parseFloat(paymentData.amount) || 0);
+    let balance = totalAmount - newPaid;
+
+    meta.amountPaid = newPaid;
+    meta.balance = balance;
+    meta.paymentMode = paymentData.mode || meta.paymentMode || 'Cash';
+
+    if (metaIndex >= 0) {
+      items[metaIndex] = meta;
+    } else {
+      items.push(meta);
+    }
+
+    let newStatus = balance <= 0 ? 'Paid' : (newPaid > 0 ? 'Partial' : 'Unpaid');
+
+    let oldNotes = (sheet.getRange(rowIndex, INV_NOTES_COL + 1).getValue() || '').toString();
+    let pDate = paymentData.date || new Date().toISOString().split('T')[0];
+    let noteAddition = `Payment: ${paymentData.amount} via ${paymentData.mode} on ${pDate}`;
+    let newNotes = oldNotes ? oldNotes + '\n' + noteAddition : noteAddition;
+
+    sheet.getRange(rowIndex, INV_ITEMS_COL + 1).setValue(JSON.stringify(items));
+    sheet.getRange(rowIndex, INV_STATUS_COL + 1).setValue(newStatus);
+    sheet.getRange(rowIndex, INV_NOTES_COL + 1).setValue(newNotes);
     sheet.getRange(rowIndex, INV_UPDATED_AT_COL + 1).setValue(new Date().toISOString());
 
-    return { success: true, message: "Invoice marked as Paid successfully!" };
+    return { success: true, message: `Payment of ${paymentData.amount} recorded. Status is now ${newStatus}.` };
   } catch (err) {
     return { success: false, message: err.message };
   }
