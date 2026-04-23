@@ -3566,6 +3566,8 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
       const [rooms,setRooms]=useState([]);
       const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
+      const [startDate, setStartDate] = useState('');
+      const [endDate, setEndDate] = useState('');
       const isAdmin=role==='admin';
 
       useEffect(()=>{loadBookings();},[]);
@@ -3580,10 +3582,23 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const daysInMonth=new Date(year,month+1,0).getDate();
       const daysInPrevMonth=new Date(year,month,0).getDate();
 
-      const cells=[];
-      for(let i=firstDay-1;i>=0;i--)cells.push({day:daysInPrevMonth-i,isOther:true,date:new Date(year,month-1,daysInPrevMonth-i)});
-      for(let d=1;d<=daysInMonth;d++)cells.push({day:d,isOther:false,date:new Date(year,month,d)});
-      const rem=7-(cells.length%7);if(rem<7)for(let i=1;i<=rem;i++)cells.push({day:i,isOther:true,date:new Date(year,month+1,i)});
+      const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const cells = [];
+      let isRangeMode = false;
+      if (startDate && endDate && new Date(startDate) <= new Date(endDate)) {
+        isRangeMode = true;
+        let curr = new Date(startDate);
+        const endD = new Date(endDate);
+        while(curr <= endD) {
+          cells.push({ day: curr.getDate(), isOther: false, date: new Date(curr), dayName: dayNames[curr.getDay()] });
+          curr.setDate(curr.getDate() + 1);
+        }
+      } else {
+        for(let i=firstDay-1; i>=0; i--) cells.push({day: daysInPrevMonth-i, isOther: true, date: new Date(year, month-1, daysInPrevMonth-i)});
+        for(let d=1; d<=daysInMonth; d++) cells.push({day: d, isOther: false, date: new Date(year, month, d)});
+        const rem=7-(cells.length%7);
+        if(rem<7) for(let i=1; i<=rem; i++) cells.push({day: i, isOther: true, date: new Date(year, month+1, i)});
+      }
 
       const getBookingsForDate=(date)=>{
         const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
@@ -3599,7 +3614,6 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const isPast=(date)=>{const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());const t=new Date(today.getFullYear(),today.getMonth(),today.getDate());return d<t;};
       const isFuture=(date)=>{const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());const t=new Date(today.getFullYear(),today.getMonth(),today.getDate());return d>t;};
       const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
       const showMoreBookings=(dayBookings,dateStr)=>{
         const html=dayBookings.map(bk=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px" class="swal-bk-row" data-ticket="'+bk.ticketId+'"><span class="status-badge '+(bk.status==='Booked'?'status-booked':'status-checkedout')+'">'+bk.status+'</span> <strong>#'+bk.roomNo+'</strong> '+bk.guestName+'</div>').join('');
@@ -3612,8 +3626,15 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         <div className="calendar-header"><h3><i className="fas fa-calendar-alt" style={{marginRight:'10px'}}></i>{monthNames[month]} {year}</h3>
           <div className="calendar-nav"><button onClick={prevMonth}><i className="fas fa-chevron-left"></i></button><button onClick={goToday}>Today</button><button onClick={nextMonth}><i className="fas fa-chevron-right"></i></button></div>
         </div>
-        <div className="calendar-grid">
-          {dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
+        <div style={{ padding: '12px 20px', background: '#f8f9fa', borderBottom: '1px solid #ddd', display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <strong style={{color: 'var(--navy-primary)'}}><i className="fas fa-filter"></i> Custom Range:</strong>
+          <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px'}}/>
+          <span style={{color: '#666', fontWeight: 'bold'}}>to</span>
+          <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px'}}/>
+          <button className="btn btn-secondary btn-sm" onClick={() => {setStartDate(''); setEndDate('');}}>Clear</button>
+        </div>
+        <div className="calendar-grid" style={isRangeMode ? { display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '15px', background: '#f0f2f5' } : {}}>
+          {(!isRangeMode) && dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
           {cells.map((cell,idx)=>{
             const dayBookings=cell.isOther?[]:getBookingsForDate(cell.date);
             const cls=['calendar-cell'];if(cell.isOther)cls.push('other-month');if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
@@ -3672,7 +3693,11 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
               }
             }
 
-            return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
+            return(<div key={idx} className={cls.join(' ')} style={isRangeMode ? { width: 'calc(14.28% - 10px)', minWidth: '140px', border: '1px solid #ccc', borderRadius: '6px', overflow: 'hidden', background: 'white' } : {}}>
+              <div className="calendar-date">
+                {isRangeMode && <span style={{fontSize: '11px', fontWeight: 'normal', marginRight: '5px', color: '#888'}}>{cell.dayName}</span>}
+                {cell.day} {isRangeMode && monthNames[cell.date.getMonth()].substring(0,3)}
+              </div>
               {availUI}
               {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
               {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
