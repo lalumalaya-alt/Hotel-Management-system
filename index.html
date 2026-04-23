@@ -3227,11 +3227,42 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         setTimeout(()=>{try{$.fn.dataTable.ext.search=[];const t=$('#invT').DataTable({data,destroy:true,columns:[
           {data:'invoiceId',title:'Invoice #'},{data:'guestName',title:'Guest'},{data:'createdDate',title:'Date',render:d=>fmtDate(d)},{data:'dueDate',title:'Due',render:d=>fmtDate(d)},
           {data:'status',title:'Status',render:d=>`<span class="status-badge ${statusCls(d)}">${d}</span>`},{data:'currency',title:'Cur',render:d=>d||'INR'},{data:'totalAmount',title:'Total',render:(d,t,row)=>fmtCur(d,row.currency||'INR')},
-          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render:()=>'<button class="action-icon view-icon" data-action="view"><i class="fas fa-eye"></i></button><button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button><button class="action-icon" data-action="email" title="Email Invoice" style="color:#0074D9"><i class="fas fa-envelope"></i></button><button class="action-icon" data-action="pdf" style="color:#001f3f"><i class="fas fa-file-pdf"></i></button><button class="action-icon" data-action="drive" style="color:#34a853"><i class="fas fa-cloud-upload-alt"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>'}
+          {data:null,title:'Actions',orderable:false,className:'all',responsivePriority:1,render: (d, tp, row) => {
+  const s = (row.status || '').toLowerCase();
+  let btns = '<button class="action-icon view-icon" data-action="view"><i class="fas fa-eye"></i></button><button class="action-icon edit-icon" data-action="edit"><i class="fas fa-edit"></i></button>';
+  if (s === 'unpaid' || s === 'partial' || s === 'overdue' || s === 'sent') {
+    btns += '<button class="action-icon" data-action="pay" title="Mark as Paid" style="color:var(--success)"><i class="fas fa-check-circle"></i></button>';
+  }
+  btns += '<button class="action-icon" data-action="email" title="Email Invoice" style="color:#0074D9"><i class="fas fa-envelope"></i></button><button class="action-icon" data-action="pdf" style="color:#001f3f"><i class="fas fa-file-pdf"></i></button><button class="action-icon" data-action="drive" style="color:#34a853"><i class="fas fa-cloud-upload-alt"></i></button><button class="action-icon delete-icon" data-action="delete"><i class="fas fa-trash"></i></button>';
+  return btns;
+}}
         ],pageLength:10,lengthMenu:[[10,25,50,-1],[10,25,50,"All"]],responsive:true,dom:'Blfrtip',buttons:[
           {extend:'csv',text:'<i class="fas fa-file-csv"></i> CSV',exportOptions:{columns:':not(:last-child)'}},{extend:'pdf',text:'<i class="fas fa-file-pdf"></i> PDF',exportOptions:{columns:':not(:last-child)'}},{extend:'print',text:'<i class="fas fa-print"></i> Print',exportOptions:{columns:':not(:last-child)'}}],order:[[2,'desc']]});
         $('#invT').off('click','.action-icon').on('click','.action-icon',function(){const a=$(this).data('action');const tr=$(this).closest('tr');const rd=t.row(tr.hasClass('child')?tr.prev():tr).data();
-          if(a==='view')setPreview(rd);else if(a==='edit'){setEdit(rd);setShow(true);}else if(a==='email')emailInv(rd);else if(a==='pdf')downloadInvoicePdf(rd);else if(a==='drive')savePdfToDriveHelper(rd);else if(a==='delete')delRec(rd);});
+          if(a==='view')setPreview(rd);else if(a==='edit'){setEdit(rd);setShow(true);}else if(a==='email')emailInv(rd);else if(a==='pdf')downloadInvoicePdf(rd);else if(a==='drive')savePdfToDriveHelper(rd);else if(a==='delete')delRec(rd);
+          else if (a === 'pay') {
+            Swal.fire({
+              icon: 'question',
+              title: 'Mark as Paid?',
+              text: `Confirm receiving payment for invoice ${rd.invoiceId}?`,
+              showCancelButton: true,
+              confirmButtonText: 'Yes, Mark Paid',
+              confirmButtonColor: '#34a853'
+            }).then(r => {
+              if (r.isConfirmed) {
+                Swal.fire({title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                google.script.run.withSuccessHandler(res => {
+                  Swal.close();
+                  if (res.success) {
+                    Swal.fire({icon: 'success', text: res.message, timer: 2000, showConfirmButton: false});
+                    load();
+                  } else Swal.fire({icon: 'error', text: res.message});
+                }).withFailureHandler(e => {
+                  Swal.close(); Swal.fire({icon: 'error', text: e.message});
+                }).markInvoicePaid(rd.rowIndex);
+              }
+            });
+          }});
         tRef.current=t;}catch(e){console.error(e);}},150);};
       const delRec=(rec)=>{Swal.fire({icon:'warning',title:'Delete?',text:'Delete invoice '+rec.invoiceId+'?',showCancelButton:true,confirmButtonColor:'#ea4335',confirmButtonText:'Delete'}).then(r=>{if(r.isConfirmed)google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',text:res.message,timer:2000,showConfirmButton:false});setTimeout(load,100);}else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>Swal.fire({icon:'error',text:e.message})).deleteInvoice(rec.rowIndex);});};
       const emailInv=(inv)=>{if(!inv.email)return Swal.fire({icon:'warning',text:'No email address on this invoice.'});Swal.fire({icon:'question',title:'Email Invoice?',text:'Send invoice '+inv.invoiceId+' to '+inv.email+'?',showCancelButton:true,confirmButtonColor:'#001f3f',confirmButtonText:'Send Email'}).then(r=>{if(r.isConfirmed){Swal.fire({title:'Sending email...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(res=>{Swal.close();if(res.success)Swal.fire({icon:'success',text:res.message,timer:3000,showConfirmButton:false});else Swal.fire({icon:'error',text:res.message});}).withFailureHandler(e=>{Swal.close();Swal.fire({icon:'error',text:e.message});}).emailInvoice(inv.invoiceId);}});};
@@ -3244,7 +3275,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         {!ld&&<div className="filters-section"><div className="filters-header"><h3><i className="fas fa-filter"></i> Filters</h3><button className="btn btn-secondary btn-sm" onClick={clearF}><i className="fas fa-times-circle"></i> Clear</button></div><div className="filters-grid">
           <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> From</label><input type="date" className="filter-input" value={filters.dateFrom} onChange={e=>setFilters({...filters,dateFrom:e.target.value})}/></div>
           <div className="filter-group"><label><i className="fas fa-calendar-alt"></i> To</label><input type="date" className="filter-input" value={filters.dateTo} onChange={e=>setFilters({...filters,dateTo:e.target.value})}/></div>
-          <div className="filter-group"><label><i className="fas fa-check-circle"></i> Status</label><select className="filter-input" value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All</option><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option><option>Cancelled</option></select></div>
+          <div className="filter-group"><label><i className="fas fa-check-circle"></i> Status</label><select className="filter-input" value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}><option value="">All</option><option>Unpaid</option><option>Partial</option><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option><option>Cancelled</option></select></div>
         </div></div>}
         {ld&&<TableSkeleton rows={5} columns={7}/>}<div style={{display:ld?'none':'block'}}><table id="invT" className="display" style={{width:'100%'}}></table></div>
         {show&&<InvoiceModal invoice={edit} onClose={()=>{setShow(false);setEdit(null);}} onSave={load} user={user}/>}

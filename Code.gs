@@ -3862,6 +3862,21 @@ function reopenInvoice(rowIndex) {
   }
 }
 
+function markInvoicePaid(rowIndex) {
+  try {
+    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Invoices sheet not found." };
+    if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
+
+    sheet.getRange(rowIndex, INV_STATUS_COL + 1).setValue('Paid');
+    sheet.getRange(rowIndex, INV_UPDATED_AT_COL + 1).setValue(new Date().toISOString());
+
+    return { success: true, message: "Invoice marked as Paid successfully!" };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
 function checkOverdueInvoices() {
   try {
     const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
