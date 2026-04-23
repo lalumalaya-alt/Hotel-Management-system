@@ -3663,9 +3663,9 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
                 availUI = <div style={{ fontSize: '10px', textAlign: 'right', padding: '2px 4px', fontWeight: 'bold', color: 'var(--danger)' }}>Full</div>;
               } else {
                 availUI = (
-                  <div style={{ fontSize: '9px', textAlign: 'right', padding: '2px 4px', lineHeight: '1.2', color: 'var(--success)', fontWeight: '600' }}>
+                  <div style={{ fontSize: '10px', textAlign: 'right', padding: '2px 4px', lineHeight: '1.3', color: 'var(--success)', fontWeight: '600', display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '4px' }}>
                     {Object.entries(availByType).filter(([_, qty]) => qty > 0).map(([type, qty]) => (
-                      <div key={type}>{qty} {type.substring(0, 3).toUpperCase()}</div>
+                      <span key={type}>{qty} {type}</span>
                     ))}
                   </div>
                 );
