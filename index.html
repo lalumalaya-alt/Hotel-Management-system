@@ -3630,9 +3630,6 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       if(loading)return <div className="data-section"><TableSkeleton rows={5} columns={7}/></div>;
 
       return(<div className="data-section"><div className="calendar-container">
-        <div className="calendar-header"><h3><i className="fas fa-calendar-alt" style={{marginRight:'10px'}}></i>{monthNames[month]} {year}</h3>
-          <div className="calendar-nav"><button onClick={prevMonth}><i className="fas fa-chevron-left"></i></button><button onClick={goToday}>Today</button><button onClick={nextMonth}><i className="fas fa-chevron-right"></i></button></div>
-        </div>
         <div style={{ padding: '12px 20px', background: '#f8f9fa', borderBottom: '1px solid #ddd', display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
           <strong style={{color: 'var(--navy-primary)'}}><i className="fas fa-filter"></i> Custom Range:</strong>
           <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px'}}/>
