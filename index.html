@@ -3566,8 +3566,15 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
       const [rooms,setRooms]=useState([]);
       const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
-      const [startDate, setStartDate] = useState('');
-      const [endDate, setEndDate] = useState('');
+      const [startDate, setStartDate] = useState(() => {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      });
+      const [endDate, setEndDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 30); // Defaults to a 30-day rolling view
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      });
       const isAdmin=role==='admin';
 
       useEffect(()=>{loadBookings();},[]);
@@ -3631,7 +3638,12 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
           <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px'}}/>
           <span style={{color: '#666', fontWeight: 'bold'}}>to</span>
           <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{padding: '6px 10px', border: '1px solid #ccc', borderRadius: '4px'}}/>
-          <button className="btn btn-secondary btn-sm" onClick={() => {setStartDate(''); setEndDate('');}}>Clear</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => {
+            const d = new Date();
+            setStartDate(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+            d.setDate(d.getDate() + 30);
+            setEndDate(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+          }}><i className="fas fa-sync-alt"></i> Reset to Next 30 Days</button>
         </div>
         <div className="calendar-grid" style={isRangeMode ? { display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '15px', background: '#f0f2f5' } : {}}>
           {(!isRangeMode) && dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
