@@ -167,6 +167,7 @@ const CI_BILL_TO_COL        = 30;
 const CI_DISCOUNT_COL       = 31;
 const CI_STATUS_COL         = 32;
 const CI_CREATED_AT_COL     = 33;
+const CI_BILLING_FORMAT_COL = 34;
 
 // RESTAURANT sheet columns (0-based)
 const REST_ORDER_ID_COL          = 0;
@@ -193,23 +194,18 @@ const REST_BILLED_CHECKIN_COL    = REST_BILLED_CHECKIN_ID_COL;
 // CUSTOMERS sheet columns (0-based)
 const CUST_ID_COL           = 0;
 const CUST_NAME_COL         = 1;
-const CUST_PHONE_COL        = 2;
-const CUST_EMAIL_COL        = 3;
-const CUST_ADDRESS_COL      = 4;
-const CUST_CITY_COL         = 5;
-const CUST_STATE_COL        = 6;
-const CUST_COUNTRY_COL      = 7;
-const CUST_PINCODE_COL      = 8;
-const CUST_DOB_COL          = 9;
-const CUST_ANNIV_COL        = 10;
-const CUST_GENDER_COL       = 11;
-const CUST_MARITAL_COL      = 12;
-const CUST_IDENTITY_COL     = 13;
-const CUST_LINKED_USER_COL  = 14;
-const CUST_NOTES_COL        = 15;
-const CUST_CREATED_AT_COL   = 16;
-const CUST_COMPANY_COL      = 17;
-const CUST_GST_COL          = 18;
+const CUST_COMPANY_COL      = 2;
+const CUST_GST_COL          = 3;
+const CUST_IDENTITY_COL     = 4;
+const CUST_PHONE_COL        = 5;
+const CUST_EMAIL_COL        = 6;
+const CUST_ADDRESS_COL      = 7;
+const CUST_CITY_COL         = 8;
+const CUST_STATE_COL        = 9;
+const CUST_PINCODE_COL      = 10;
+const CUST_COUNTRY_COL      = 11;
+const CUST_LINKED_USER_COL  = 12;
+const CUST_CREATED_AT_COL   = 13;
 
 /***************************************************
  * WEB APP ENTRY POINT
@@ -331,6 +327,40 @@ function daysBetween(d1, d2) {
   let days = Math.round(diff / (1000 * 3600 * 24));
   return days;
 }
+
+// Calculate stay duration based on billing format
+function calculateStayDuration(checkInDateStr, checkInTimeStr, checkoutDateObj, checkOutTimeStr, billingFormat) {
+  let ciDate = new Date(checkInDateStr);
+  if (isNaN(ciDate.getTime())) return 1;
+
+  if (billingFormat === '24-Hour') {
+    // Need full Date-Time objects
+    let ciFullDate = new Date(checkInDateStr);
+    if (checkInTimeStr) {
+      let timeParts = checkInTimeStr.split(':');
+      if (timeParts.length >= 2) {
+        ciFullDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+      }
+    }
+
+    let coFullDate = new Date(checkoutDateObj);
+    if (checkOutTimeStr) {
+      let timeParts = checkOutTimeStr.split(':');
+      if (timeParts.length >= 2) {
+        coFullDate.setHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0, 0);
+      }
+    }
+
+    let diffMs = coFullDate.getTime() - ciFullDate.getTime();
+    let hours = diffMs / (1000 * 60 * 60);
+    return Math.max(1, Math.ceil(hours / 24));
+  } else {
+    // Standard format - calendar days
+    let days = daysBetween(ciDate, checkoutDateObj);
+    return days < 1 ? 1 : days;
+  }
+}
+
 
 /**
  * Sequential ID generator using SETTINGS sheet as counter store.
@@ -952,6 +982,10 @@ function generateInvoiceHtml(invoiceData) {
  * CHECK-IN FUNCTIONS
  ***************************************************/
 
+function generateCustomerId() {
+  return "CUST-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+}
+
 function generateCheckInId() {
   const ss = SpreadsheetApp.openById(SS_ID);
   const setSheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
@@ -1035,7 +1069,8 @@ function addCheckIn(checkInData) {
       checkInData.billTo || 'Individual',
       parseFloat(checkInData.discountPercent) || 0,
       'Active',
-      now
+      now,
+      checkInData.billingFormat || 'Standard'
     ]);
 
     // If linked to advance booking, update booking status
@@ -1111,10 +1146,14 @@ function addCheckIn(checkInData) {
         name: checkInData.guestName,
         phone: checkInData.mobile,
         email: checkInData.email,
-        address: checkInData.address,
         companyName: checkInData.companyName,
         gstNumber: checkInData.gstNumber,
-        identityProof: checkInData.identityProof
+        identityProof: checkInData.identityProof,
+        address: checkInData.address,
+        city: checkInData.city,
+        state: checkInData.state,
+        pinCode: checkInData.pinCode,
+        country: checkInData.country
       });
     } catch(syncErr) {
       Logger.log("Silent customer sync fail: " + syncErr.message);
@@ -1168,7 +1207,7 @@ function getActiveCheckInsWithStats() {
 
           // Default minimum of 1 night for calculating
           let sDays = daysBetween(sStart, sEnd);
-          if (sDays < 1) sDays = 1;
+          if (isNaN(sDays) || sDays < 1) sDays = 1;
 
           let rate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
           let roomNos = (segmentsData[i][SEG_ROOM_NOS_COL] || '').toString();
@@ -1182,13 +1221,8 @@ function getActiveCheckInsWithStats() {
         }
       }
 
-      // Calculate nightsStayed
-      let ciDate = new Date(ci.checkInDate);
-      if (isNaN(ciDate.getTime())) ciDate = now; // Fallback
-      let days = daysBetween(ciDate, now);
-      if (days < 1) days = 1;
-
-      const nightsStayed = days;
+      // Calculate nightsStayed based on billing format
+      const nightsStayed = calculateStayDuration(ci.checkInDate, ci.checkInTime, now, null, ci.billingFormat);
 
       // Calculate liveRoomRent
       let liveRoomRent = 0;
@@ -1276,7 +1310,8 @@ function getAllCheckIns() {
         billTo: (row[CI_BILL_TO_COL] || 'Individual').toString(),
         discountPercent: parseFloat(row[CI_DISCOUNT_COL]) || 0,
         status: (row[CI_STATUS_COL] || 'Active').toString(),
-        createdAt: (row[CI_CREATED_AT_COL] || '').toString()
+        createdAt: (row[CI_CREATED_AT_COL] || '').toString(),
+        billingFormat: (row[CI_BILLING_FORMAT_COL] || 'Standard').toString()
       });
     }
     return checkIns;
@@ -1334,7 +1369,8 @@ function getCheckInByRoomNo(roomNo) {
             gstType: 'Excluding', fixRoomRent: 'No', fixRoomRentAmount: 0,
             billTo: 'Individual',
             discountPercent: parseFloat(bData[i][DISCOUNT_COL]) || 0,
-            status: 'Active', createdAt: '', isFromBooking: true
+            status: 'Active', createdAt: '', isFromBooking: true,
+            billingFormat: 'Standard'
           };
         }
       }
@@ -1415,10 +1451,11 @@ function updateCheckIn(rowIndex, checkInData) {
       parseInt(checkInData.extraPerson) || 0, checkInData.foodPlan || 'None',
       checkInData.gstType || 'Excluding', checkInData.fixRoomRent || 'No',
       parseFloat(checkInData.fixRoomRentAmount) || 0, checkInData.billTo || 'Individual',
-      parseFloat(checkInData.discountPercent) || 0, existingStatus, existingCreatedAt
+      parseFloat(checkInData.discountPercent) || 0, existingStatus, existingCreatedAt,
+      checkInData.billingFormat || 'Standard'
     ];
 
-    sheet.getRange(rowIndex, 1, 1, 34).setValues([row]);
+    sheet.getRange(rowIndex, 1, 1, 35).setValues([row]);
     SpreadsheetApp.flush();
     return { success: true, message: "Check-in updated successfully." };
   } catch (e) {
@@ -1638,7 +1675,9 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         let amt = parseFloat(restData[i][REST_TOTAL_AMOUNT_COL]) || 0;
         let desc = (restData[i][REST_ITEM_NAME_COL] || '').toString();
         let qty = parseInt(restData[i][REST_QUANTITY_COL]) || 1;
-        selectedOrders.push({ rowIndex: i, orderId: oId, description: desc, amount: amt, quantity: qty });
+        let rate = parseFloat(restData[i][REST_RATE_COL]) || 0;
+        let cat = (restData[i][REST_MEAL_PERIOD_COL] || '').toString();
+        selectedOrders.push({ rowIndex: i, orderId: oId, description: desc, amount: amt, quantity: qty, rate: rate, category: cat });
         totalFooding += amt;
       }
     }
@@ -1646,18 +1685,23 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
     if (selectedOrders.length === 0) return { success: false, message: "No active orders found." };
 
     // 2. Billing Math
+    let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
+    let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
+
+    let taxDivisor = checkoutData.gstType === 'Including' ? (1 + ((sgstPercent + cgstPercent) / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalFooding = totalFooding / taxDivisor;
+      selectedOrders.forEach(o => {
+        o.amount = o.amount / taxDivisor;
+      });
+    }
+
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
     let discountAmount = totalFooding * (discountPercent / 100);
     let afterDiscount = totalFooding - discountAmount;
 
-    let sgstPercent = parseFloat(checkoutData.sgstPercent) || 0;
-    let cgstPercent = parseFloat(checkoutData.cgstPercent) || 0;
-    let sgstAmount = 0, cgstAmount = 0;
-
-    if (checkoutData.gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    }
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
 
     let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let paymentMode = checkoutData.paymentMode || 'Cash';
@@ -1678,42 +1722,44 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
       }
     } catch (e) {}
 
-    const billNumber = generateInvoiceId();
+    const billNumber = generateBillNumber();
     const nowStr = new Date().toISOString();
 
     // 3. Database Updates
-    selectedOrders.forEach(o => {
-       restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
-       restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
-    });
+    if (!checkoutData.isPreview) {
+      selectedOrders.forEach(o => {
+         restSheet.getRange(o.rowIndex + 1, REST_STATUS_COL + 1).setValue("Billed");
+         restSheet.getRange(o.rowIndex + 1, REST_BILLED_CHECKIN_ID_COL + 1).setValue(billNumber);
+      });
 
-    const invoiceItems = selectedOrders.map(o => ({ description: `${o.description} (x${o.quantity})`, amount: o.amount }));
+      const invoiceItems = selectedOrders.map(o => ({ description: o.description, category: o.category, quantity: o.quantity, rate: o.rate, amount: o.amount }));
 
-    const invoiceRow = new Array(20).fill('');
-    invoiceRow[0] = billNumber;
-    invoiceRow[1] = guestName;
-    invoiceRow[2] = "";
-    invoiceRow[3] = "";
-    invoiceRow[4] = "";
-    invoiceRow[5] = defaultCurrency;
-    invoiceRow[6] = nowStr;
-    invoiceRow[7] = nowStr;
-    invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
-    invoiceRow[9] = JSON.stringify(invoiceItems);
-    invoiceRow[10] = totalFooding;
-    invoiceRow[11] = true;
-    invoiceRow[12] = sgstPercent + cgstPercent;
-    invoiceRow[13] = sgstAmount + cgstAmount;
-    invoiceRow[14] = discountAmount;
-    invoiceRow[15] = billAmount;
-    invoiceRow[16] = "Walk-in POS Bill";
-    invoiceRow[17] = "";
-    invoiceRow[18] = "System";
-    invoiceRow[19] = nowStr;
+      const invoiceRow = new Array(20).fill('');
+      invoiceRow[0] = billNumber;
+      invoiceRow[1] = guestName;
+      invoiceRow[2] = "";
+      invoiceRow[3] = "";
+      invoiceRow[4] = "";
+      invoiceRow[5] = defaultCurrency;
+      invoiceRow[6] = nowStr;
+      invoiceRow[7] = nowStr;
+      invoiceRow[8] = checkoutData.paymentStatus === 'Credit' ? 'Unpaid' : (checkoutData.paymentStatus === 'Partial' ? 'Partial' : 'Paid');
+      invoiceRow[9] = JSON.stringify(invoiceItems);
+      invoiceRow[10] = totalFooding;
+      invoiceRow[11] = true;
+      invoiceRow[12] = sgstPercent + cgstPercent;
+      invoiceRow[13] = sgstAmount + cgstAmount;
+      invoiceRow[14] = discountAmount;
+      invoiceRow[15] = billAmount;
+      invoiceRow[16] = "Walk-in POS Bill";
+      invoiceRow[17] = "";
+      invoiceRow[18] = "System";
+      invoiceRow[19] = nowStr;
 
-    invSheet.appendRow(invoiceRow);
+      invSheet.appendRow(invoiceRow);
 
-    SpreadsheetApp.flush();
+      SpreadsheetApp.flush();
+    }
 
     // 5. Construct invoiceData for frontend
     let syntheticDayByDay = [{
@@ -1728,7 +1774,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
 
     return {
       success: true,
-      message: "Walk-in Checkout completed successfully.",
+      message: checkoutData.isPreview ? "Preview generated." : "Walk-in Checkout completed successfully.",
       invoiceData: {
         billNumber,
         checkInId: "Walk-in",
@@ -1759,6 +1805,7 @@ function processWalkinCheckout(guestName, orderIds, checkoutData) {
         billAmount,
         advancePaid: 0,
         netAmount: billAmount,
+        items: selectedOrders.map(o => ({ description: o.description, category: o.category, quantity: o.quantity, rate: o.rate, amount: o.amount })),
         hotelName, hotelAddress, hotelPhone, hotelEmail, hotelTIN, hotelLogo
       }
     };
@@ -1877,9 +1924,16 @@ function processFullCheckout(checkInId, checkoutData) {
     const checkInTime = (ci[CI_CHECKIN_TIME_COL] || '14:00').toString();
     const actualCheckOutDate = checkoutData.checkOutDate ? new Date(checkoutData.checkOutDate) : new Date();
     const checkOutTime = checkoutData.checkOutTime || (ci[CI_CHECKOUT_TIME_COL] || '12:00').toString();
+    const billingFormat = (ci[CI_BILLING_FORMAT_COL] || 'Standard').toString();
 
-    let nights = daysBetween(checkInDate, actualCheckOutDate);
-    if (nights < 1) nights = 1;
+    let nights = calculateStayDuration(
+      ci[CI_CHECKIN_DATE_COL],
+      ci[CI_CHECKIN_TIME_COL],
+      actualCheckOutDate,
+      checkOutTime,
+      billingFormat
+    );
+    if (isNaN(nights) || nights < 1) { nights = 1; }
 
     // Calculate room rent using StaySegments if available
     let roomNosArr = roomNumbers.split(',').map(r => r.trim()).filter(r => r);
@@ -1919,7 +1973,7 @@ function processFullCheckout(checkInId, checkoutData) {
             let segEndDate = new Date(segEndDateStr);
             // Ensure minimum of 1 night for the overall stay, but 0-night segments are possible if swapped same day
             let segNights = daysBetween(segStartDate, segEndDate);
-            if (segNights < 0) segNights = 0;
+            if (isNaN(segNights) || segNights < 1) segNights = 1;
 
             let segRate = parseFloat(segmentsData[i][SEG_RATE_COL]) || 0;
             
@@ -2003,6 +2057,20 @@ function processFullCheckout(checkInId, checkoutData) {
     // Calculate global Extra Bed total before subtotal
     let totalExtraBedCalculated = nights * extraPerson * DEFAULT_EXTRA_PERSON_RATE;
 
+    let taxDivisor = gstType === 'Including' ? (1 + (gstPercent / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalRoomRent = totalRoomRent / taxDivisor;
+      totalFooding = totalFooding / taxDivisor;
+      totalExtraBed = totalExtraBed / taxDivisor;
+      totalOtherServices = totalOtherServices / taxDivisor;
+      totalExtraBedCalculated = totalExtraBedCalculated / taxDivisor;
+      dailyRoomRate = dailyRoomRate / taxDivisor;
+
+      staySegments.forEach(s => { s.rate = s.rate / taxDivisor; });
+      foodOrders.forEach(o => { o.amount = o.amount / taxDivisor; });
+      Object.keys(categoryTotals).forEach(k => { categoryTotals[k] = categoryTotals[k] / taxDivisor; });
+    }
+
     let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountAmount = subtotal * (discountPercent / 100);
     let afterDiscount = subtotal - discountAmount;
@@ -2010,12 +2078,9 @@ function processFullCheckout(checkInId, checkoutData) {
     // CGST + SGST (each half of total GST)
     let sgstPercent = gstPercent / 2;
     let cgstPercent = gstPercent / 2;
-    let sgstAmount = 0, cgstAmount = 0;
-    if (gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    }
-    // If Including, GST is already in the price — no extra charge
+
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
 
     let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advancePaid;
@@ -2061,7 +2126,7 @@ function processFullCheckout(checkInId, checkoutData) {
 
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
       
-      let dailyEpCharge = extraPerson * DEFAULT_EXTRA_PERSON_RATE;
+      let dailyEpCharge = (extraPerson * DEFAULT_EXTRA_PERSON_RATE) / taxDivisor;
       dayCats.ExtraBed += dailyEpCharge;
 
       foodOrders.forEach(o => {
@@ -2099,7 +2164,7 @@ function processFullCheckout(checkInId, checkoutData) {
     for (let j = 1; j < roomsData.length; j++) {
       let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
       if (roomNosArr.indexOf(rn) !== -1) {
-        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+        roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Maintenance");
       }
     }
 
@@ -2112,6 +2177,23 @@ function processFullCheckout(checkInId, checkoutData) {
           break;
         }
       }
+    }
+
+    try {
+      syncCustomerProfile({
+        name: guestName,
+        phone: mobile,
+        email: email,
+        address: address,
+        city: city,
+        state: state,
+        pinCode: pinCode,
+        country: country,
+        companyName: companyName,
+        gstNumber: gstNumber
+      });
+    } catch(syncErr) {
+      Logger.log("Customer Sync Checkout Error: " + syncErr.message);
     }
 
     SpreadsheetApp.flush();
@@ -2217,8 +2299,16 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
              latestCheckInTime = (ciData[i][CI_CHECKIN_TIME_COL] || '14:00').toString();
           }
 
-          let nights = daysBetween(cidDate, actualCheckOutDate);
-          if (nights < 1) nights = 1;
+          const billingFormat = (ciData[i][CI_BILLING_FORMAT_COL] || 'Standard').toString();
+          let checkOutTime = (ciData[i][CI_CHECKOUT_TIME_COL] || '12:00').toString();
+          let nights = calculateStayDuration(
+            ciData[i][CI_CHECKIN_DATE_COL],
+            ciData[i][CI_CHECKIN_TIME_COL],
+            actualCheckOutDate,
+            checkOutTime,
+            billingFormat
+          );
+          if (isNaN(nights) || nights < 1) { nights = 1; }
           
           let staySegments = [];
           if (staySegmentsSheet) {
@@ -2255,7 +2345,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
                   let safeStartDate = new Date(sY + '-' + sM + '-' + sD + 'T00:00:00');
 
                   let segNights = daysBetween(safeStartDate, safeBillingDate);
-                  if (segNights < 0) segNights = 0;
+                  if (isNaN(segNights) || segNights < 1) segNights = 1;
 
                   let segRate = parseFloat(segmentsData[s][SEG_RATE_COL]) || 0;
                   
@@ -2353,6 +2443,19 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     if (combinedNights < 1) combinedNights = 1;
     let totalExtraBedCalculated = combinedNights * (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
 
+    let taxDivisor = primaryGuestData.gstType === 'Including' ? (1 + (gstPercent / 100)) : 1;
+    if (taxDivisor > 1) {
+      totalRoomRent = totalRoomRent / taxDivisor;
+      totalFooding = totalFooding / taxDivisor;
+      totalExtraBed = totalExtraBed / taxDivisor;
+      totalOtherServices = totalOtherServices / taxDivisor;
+      totalExtraBedCalculated = totalExtraBedCalculated / taxDivisor;
+
+      allSegments.forEach(s => { s.rate = s.rate / taxDivisor; });
+      foodOrders.forEach(o => { o.amount = o.amount / taxDivisor; });
+      Object.keys(categoryTotals).forEach(k => { categoryTotals[k] = categoryTotals[k] / taxDivisor; });
+    }
+
     // 3. Billing Math
     let subtotal = totalRoomRent + totalFooding + totalExtraBed + totalOtherServices + totalExtraBedCalculated;
     let discountPercent = parseFloat(checkoutData.discountPercent) || 0;
@@ -2361,11 +2464,9 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
 
     let sgstPercent = gstPercent / 2;
     let cgstPercent = gstPercent / 2;
-    let sgstAmount = 0, cgstAmount = 0;
-    if (primaryGuestData.gstType === 'Excluding') {
-      sgstAmount = afterDiscount * (sgstPercent / 100);
-      cgstAmount = afterDiscount * (cgstPercent / 100);
-    }
+
+    let sgstAmount = afterDiscount * (sgstPercent / 100);
+    let cgstAmount = afterDiscount * (cgstPercent / 100);
 
     let billAmount = afterDiscount + sgstAmount + cgstAmount;
     let netAmount = billAmount - advanceToApply;
@@ -2413,7 +2514,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
       
-      let dailyEpCharge = (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
+      let dailyEpCharge = ((parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE) / taxDivisor;
       dayCats.ExtraBed += dailyEpCharge;
 
       foodOrders.forEach(o => {
@@ -2444,7 +2545,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
       for (let j = 1; j < roomsData.length; j++) {
         let rn = (roomsData[j][ROOM_NO_COL] || '').toString();
         if (allRoomNosArr.includes(rn)) {
-          roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Available");
+          roomsSheet.getRange(j + 1, ROOM_STATUS_COL + 1).setValue("Maintenance");
         }
       }
 
@@ -2592,6 +2693,11 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         phone: primaryGuestData.mobile,
         name: primaryGuestData.guestName,
         email: primaryGuestData.email,
+        address: primaryGuestData.address,
+        city: primaryGuestData.city,
+        state: primaryGuestData.state,
+        pinCode: primaryGuestData.pinCode,
+        country: primaryGuestData.country,
         companyName: primaryGuestData.companyName,
         gstNumber: primaryGuestData.gstNumber
       });
@@ -3199,6 +3305,9 @@ function getAllCustomers() {
         rowIndex: i + 1,
         customerId: (row[CUST_ID_COL] || '').toString(),
         name: (row[CUST_NAME_COL] || '').toString(),
+        companyName: (row[CUST_COMPANY_COL] || '').toString(),
+        gstNumber: (row[CUST_GST_COL] || '').toString(),
+        identityProof: (row[CUST_IDENTITY_COL] || '').toString(),
         phone: (row[CUST_PHONE_COL] || '').toString(),
         email: (row[CUST_EMAIL_COL] || '').toString(),
         address: (row[CUST_ADDRESS_COL] || '').toString(),
@@ -3206,16 +3315,8 @@ function getAllCustomers() {
         state: (row[CUST_STATE_COL] || '').toString(),
         pinCode: (row[CUST_PINCODE_COL] || '').toString(),
         country: (row[CUST_COUNTRY_COL] || '').toString(),
-        dob: (row[CUST_DOB_COL] || '').toString(),
-        anniversary: (row[CUST_ANNIV_COL] || '').toString(),
-        gender: (row[CUST_GENDER_COL] || '').toString(),
-        maritalStatus: (row[CUST_MARITAL_COL] || '').toString(),
-        identityProof: (row[CUST_IDENTITY_COL] || '').toString(),
-        notes: (row[CUST_NOTES_COL] || '').toString(),
-        createdAt: (row[CUST_CREATED_AT_COL] || '').toString(),
         linkedUsername: (row[CUST_LINKED_USER_COL] || '').toString(),
-        companyName: (row[CUST_COMPANY_COL] || '').toString(),
-        gstNumber: (row[CUST_GST_COL] || '').toString()
+        createdAt: (row[CUST_CREATED_AT_COL] || '').toString()
       });
     }
     return customers;
@@ -3271,81 +3372,63 @@ function addCustomer(customerData) {
 
 function syncCustomerProfile(guestData) {
   try {
-    if (!guestData || !guestData.phone) return; // phone is our key identifier
+    // The phone number is the strict unique identifier. If missing, abort sync.
+    if (!guestData || !guestData.phone) return;
+
+    initDataStructure(); // Ensure the 14-column schema is active
+
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(CUSTOMERS_SHEET_NAME);
     if (!sheet) return;
-    
+
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
-    let existingRow = null;
-    
-    // Find matching phone
     const incomingPhone = String(guestData.phone).trim();
+
+    // 1. Search for existing customer by Mobile Number
     for (let i = 1; i < data.length; i++) {
       let existingPhone = String(data[i][CUST_PHONE_COL] || '').trim();
       if (existingPhone === incomingPhone) {
         rowIndex = i + 1;
-        existingRow = data[i];
         break;
       }
     }
-    
+
     if (rowIndex > -1) {
-      // Update existing blanks or newly provided values
-      if (!(existingRow[CUST_NAME_COL] || '').toString().trim() && guestData.name) {
-        sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(guestData.name);
-      }
-      if (!(existingRow[CUST_EMAIL_COL] || '').toString().trim() && guestData.email) {
-        sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
-      }
-      if (guestData.companyName && !(existingRow[CUST_COMPANY_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
-      }
-      if (guestData.gstNumber && !(existingRow[CUST_GST_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
-      }
-      if (guestData.address && !(existingRow[CUST_ADDRESS_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(guestData.address);
-      }
-      if (guestData.city && !(existingRow[CUST_CITY_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(guestData.city);
-      }
-      if (guestData.state && !(existingRow[CUST_STATE_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(guestData.state);
-      }
-      if (guestData.pinCode && !(existingRow[CUST_PINCODE_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(guestData.pinCode);
-      }
-      if (guestData.country && !(existingRow[CUST_COUNTRY_COL] || '').toString().trim()) {
-        sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(guestData.country);
-      }
+      // 2. UPDATE EXISTING: Aggressively overwrite old data with new data if provided during checkout
+      if (guestData.name) sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(guestData.name);
+      if (guestData.companyName) sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(guestData.companyName);
+      if (guestData.gstNumber) sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(guestData.gstNumber);
+      if (guestData.identityProof) sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(guestData.identityProof);
+      if (guestData.email) sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(guestData.email);
+      if (guestData.address) sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(guestData.address);
+      if (guestData.city) sheet.getRange(rowIndex, CUST_CITY_COL + 1).setValue(guestData.city);
+      if (guestData.state) sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(guestData.state);
+      if (guestData.pinCode) sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(guestData.pinCode);
+      if (guestData.country) sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(guestData.country);
     } else {
-      // Append new
-      const newId = generateCustomerId();
-      const row = new Array(19).fill(''); // 19 headers per schema
+      // 3. CREATE NEW: No matching mobile number found, build a fresh 14-column row
+      const newId = "CUST-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random() * 900 + 100);
+      const row = new Array(14).fill('');
+
       row[CUST_ID_COL] = newId;
       row[CUST_NAME_COL] = guestData.name || '';
-      row[CUST_PHONE_COL] = guestData.phone || '';
+      row[CUST_COMPANY_COL] = guestData.companyName || '';
+      row[CUST_GST_COL] = guestData.gstNumber || '';
+      row[CUST_IDENTITY_COL] = guestData.identityProof || '';
+      row[CUST_PHONE_COL] = incomingPhone;
       row[CUST_EMAIL_COL] = guestData.email || '';
       row[CUST_ADDRESS_COL] = guestData.address || '';
       row[CUST_CITY_COL] = guestData.city || '';
       row[CUST_STATE_COL] = guestData.state || '';
-      row[CUST_COUNTRY_COL] = guestData.country || '';
       row[CUST_PINCODE_COL] = guestData.pinCode || '';
-      row[CUST_DOB_COL] = ''; 
-      row[CUST_ANNIV_COL] = '';
-      row[CUST_GENDER_COL] = '';
-      row[CUST_MARITAL_COL] = '';
-      row[CUST_IDENTITY_COL] = guestData.identityProof || '';
+      row[CUST_COUNTRY_COL] = guestData.country || '';
       row[CUST_LINKED_USER_COL] = '';
-      row[CUST_NOTES_COL] = '';
       row[CUST_CREATED_AT_COL] = new Date().toISOString();
-      row[CUST_COMPANY_COL] = guestData.companyName || '';
-      row[CUST_GST_COL] = guestData.gstNumber || '';
       
       sheet.appendRow(row);
     }
+    SpreadsheetApp.flush();
   } catch (e) {
     Logger.log("Customer Sync Error: " + e.message);
   }
@@ -3359,6 +3442,9 @@ function updateCustomer(rowIndex, customerData) {
     if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
 
     if (customerData.name !== undefined) sheet.getRange(rowIndex, CUST_NAME_COL + 1).setValue(customerData.name);
+    if (customerData.companyName !== undefined) sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(customerData.companyName);
+    if (customerData.gstNumber !== undefined) sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(customerData.gstNumber);
+    if (customerData.identityProof !== undefined) sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(customerData.identityProof);
     if (customerData.phone !== undefined) sheet.getRange(rowIndex, CUST_PHONE_COL + 1).setValue(customerData.phone);
     if (customerData.email !== undefined) sheet.getRange(rowIndex, CUST_EMAIL_COL + 1).setValue(customerData.email);
     if (customerData.address !== undefined) sheet.getRange(rowIndex, CUST_ADDRESS_COL + 1).setValue(customerData.address);
@@ -3366,14 +3452,6 @@ function updateCustomer(rowIndex, customerData) {
     if (customerData.state !== undefined) sheet.getRange(rowIndex, CUST_STATE_COL + 1).setValue(customerData.state);
     if (customerData.pinCode !== undefined) sheet.getRange(rowIndex, CUST_PINCODE_COL + 1).setValue(customerData.pinCode);
     if (customerData.country !== undefined) sheet.getRange(rowIndex, CUST_COUNTRY_COL + 1).setValue(customerData.country);
-    if (customerData.dob !== undefined) sheet.getRange(rowIndex, CUST_DOB_COL + 1).setValue(customerData.dob);
-    if (customerData.anniversary !== undefined) sheet.getRange(rowIndex, CUST_ANNIV_COL + 1).setValue(customerData.anniversary);
-    if (customerData.gender !== undefined) sheet.getRange(rowIndex, CUST_GENDER_COL + 1).setValue(customerData.gender);
-    if (customerData.maritalStatus !== undefined) sheet.getRange(rowIndex, CUST_MARITAL_COL + 1).setValue(customerData.maritalStatus);
-    if (customerData.identityProof !== undefined) sheet.getRange(rowIndex, CUST_IDENTITY_COL + 1).setValue(customerData.identityProof);
-    if (customerData.notes !== undefined) sheet.getRange(rowIndex, CUST_NOTES_COL + 1).setValue(customerData.notes);
-    if (customerData.companyName !== undefined) sheet.getRange(rowIndex, CUST_COMPANY_COL + 1).setValue(customerData.companyName);
-    if (customerData.gstNumber !== undefined) sheet.getRange(rowIndex, CUST_GST_COL + 1).setValue(customerData.gstNumber);
 
     return { success: true, message: "Customer updated successfully." };
   } catch (err) {
@@ -3784,6 +3862,52 @@ function reopenInvoice(rowIndex) {
   }
 }
 
+function markInvoicePaid(rowIndex, paymentData) {
+  try {
+    const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
+    if (!sheet) return { success: false, message: "Invoices sheet not found." };
+    if (rowIndex <= 1) return { success: false, message: "Invalid row index." };
+
+    const totalAmount = parseFloat(sheet.getRange(rowIndex, INV_TOTAL_COL + 1).getValue()) || 0;
+    const itemsStr = sheet.getRange(rowIndex, INV_ITEMS_COL + 1).getValue();
+    let items = [];
+    try { items = JSON.parse(itemsStr || '[]'); } catch(e) {}
+
+    let metaIndex = items.findIndex(i => i.isMeta);
+    let meta = metaIndex >= 0 ? items[metaIndex] : { isMeta: true };
+
+    let prevPaid = parseFloat(meta.amountPaid) || 0;
+    let newPaid = prevPaid + (parseFloat(paymentData.amount) || 0);
+    let balance = totalAmount - newPaid;
+
+    meta.amountPaid = newPaid;
+    meta.balance = balance;
+    meta.paymentMode = paymentData.mode || meta.paymentMode || 'Cash';
+
+    if (metaIndex >= 0) {
+      items[metaIndex] = meta;
+    } else {
+      items.push(meta);
+    }
+
+    let newStatus = balance <= 0 ? 'Paid' : (newPaid > 0 ? 'Partial' : 'Unpaid');
+
+    let oldNotes = (sheet.getRange(rowIndex, INV_NOTES_COL + 1).getValue() || '').toString();
+    let pDate = paymentData.date || new Date().toISOString().split('T')[0];
+    let noteAddition = `Payment: ${paymentData.amount} via ${paymentData.mode} on ${pDate}`;
+    let newNotes = oldNotes ? oldNotes + '\n' + noteAddition : noteAddition;
+
+    sheet.getRange(rowIndex, INV_ITEMS_COL + 1).setValue(JSON.stringify(items));
+    sheet.getRange(rowIndex, INV_STATUS_COL + 1).setValue(newStatus);
+    sheet.getRange(rowIndex, INV_NOTES_COL + 1).setValue(newNotes);
+    sheet.getRange(rowIndex, INV_UPDATED_AT_COL + 1).setValue(new Date().toISOString());
+
+    return { success: true, message: `Payment of ${paymentData.amount} recorded. Status is now ${newStatus}.` };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
 function checkOverdueInvoices() {
   try {
     const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName(INVOICES_SHEET_NAME);
@@ -4046,8 +4170,8 @@ function initDataStructure() {
     { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Extra Person", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount", "Discount Percent"] },
     { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "Discount", "TotalAmount", "Notes", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
     { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "GSTDefaultPercent", "NextInvoiceNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
-    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Name", "Phone", "Email", "Address", "City", "State", "Country", "Zip Code", "DOB", "Anniversary", "Gender", "Marital Status", "Identity Proof", "Linked Username", "Notes", "Created Date", "Company Name", "GST Number"] },
-    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Room Pax Breakdown", "Advance Paid", "Payment Method", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
+    { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Linked Username", "Created Date"] },
+    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Room Pax Breakdown", "Advance Paid", "Payment Method", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At", "Billing Format"] },
     { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "MealPeriod", "ItemName", "Quantity", "Rate", "TotalAmount", "Status", "BilledCheckInID", "AddedBy"] },
     { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] },
     { sheetName: MENU_SHEET_NAME, headers: ["ItemName", "FoodCategory", "DefaultPrice"] }
