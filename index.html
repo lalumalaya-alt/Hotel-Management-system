@@ -415,9 +415,6 @@
                   <label class="form-label text-muted small fw-bold">Source Of Payment</label>
                   <select class="form-select form-select-lg" id="expSource" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="COUNTER">COUNTER</option>
-                    <option value="MD SIR">MD SIR</option>
-                    <option value="MALAYA">MALAYA</option>
                   </select>
                 </div>
 
@@ -600,9 +597,6 @@
               <label class="form-label fw-bold">Source Of Payment</label>
               <select class="form-select form-select-lg" id="mpSource">
                 <option value="" selected disabled>Please Select</option>
-                <option value="COUNTER">COUNTER</option>
-                <option value="MD SIR">MD SIR</option>
-                <option value="MALAYA">MALAYA</option>
               </select>
             </div>
 
@@ -644,6 +638,7 @@
         populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
         populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
         populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
+        populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
       }).getDropdownSettings();
     }
 
