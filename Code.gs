@@ -548,29 +548,35 @@ function getDropdownSettings() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Settings');
   if (!sheet) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [] };
   }
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [] };
   }
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  const data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
 
   const paymentStatus = [];
   const modeOfPayment = [];
   const entryBy = [];
+  const roomDescriptions = [];
+  const foodDescriptions = [];
 
   data.forEach(row => {
     if (row[0] && row[0].toString().trim() !== '') paymentStatus.push(row[0].toString().trim());
     if (row[1] && row[1].toString().trim() !== '') modeOfPayment.push(row[1].toString().trim());
     if (row[2] && row[2].toString().trim() !== '') entryBy.push(row[2].toString().trim());
+    if (row[4] && row[4].toString().trim() !== '') roomDescriptions.push(row[4].toString().trim());
+    if (row[5] && row[5].toString().trim() !== '') foodDescriptions.push(row[5].toString().trim());
   });
 
   return {
     paymentStatus: paymentStatus,
     modeOfPayment: modeOfPayment,
-    entryBy: entryBy
+    entryBy: entryBy,
+    roomDescriptions: roomDescriptions,
+    foodDescriptions: foodDescriptions
   };
 }

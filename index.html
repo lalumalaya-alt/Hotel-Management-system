@@ -638,6 +638,9 @@
 
     function loadDropdownSettings() {
       google.script.run.withSuccessHandler(function(settings) {
+        window.roomDescriptions = settings.roomDescriptions || [];
+        window.foodDescriptions = settings.foodDescriptions || [];
+
         populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
         populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
         populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
@@ -696,26 +699,14 @@
       
       let options = '<option value="" selected disabled>Please Select</option>';
       
-      if (type === 'ROOM') {
-        options += `
-          <option value="Stationary">Stationary</option>
-          <option value="Staff Advance">Staff Advance</option>
-          <option value="Staff Salary">Staff Salary</option>
-          <option value="Malaya">Malaya</option>
-          <option value="MD Sir">MD Sir</option>
-          <option value="Other">Other</option>
-        `;
-      } else if (type === 'FOOD') {
-        options += `
-          <option value="Vegetable">Vegetable</option>
-          <option value="Grocery">Grocery</option>
-          <option value="Non Veg/ Veg">Non Veg/ Veg</option>
-          <option value="Gas">Gas</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Other">Other</option>
-        `;
-      } else {
-        options = '<option value="" selected disabled>Please Select Type First</option>';
+      if (type === 'ROOM' && window.roomDescriptions) {
+        window.roomDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
+      } else if (type === 'FOOD' && window.foodDescriptions) {
+        window.foodDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
       }
       
       desc.innerHTML = options;
@@ -1043,28 +1034,16 @@
       const type = document.getElementById('reportExpenseType').value;
       const desc = document.getElementById('reportExpenseDesc');
       
-      let options = '<option value="" selected>Please Select</option>';
+      let options = '<option value="">All Descriptions</option>';
       
-      if (type === 'ROOM') {
-        options += `
-          <option value="Stationary">Stationary</option>
-          <option value="Staff Advance">Staff Advance</option>
-          <option value="Staff Salary">Staff Salary</option>
-          <option value="Malaya">Malaya</option>
-          <option value="MD Sir">MD Sir</option>
-          <option value="Other">Other</option>
-        `;
-      } else if (type === 'FOOD') {
-        options += `
-          <option value="Vegetable">Vegetable</option>
-          <option value="Grocery">Grocery</option>
-          <option value="Non Veg/ Veg">Non Veg/ Veg</option>
-          <option value="Gas">Gas</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Other">Other</option>
-        `;
-      } else {
-        options = '<option value="" selected disabled>Please Select Type First</option>';
+      if (type === 'ROOM' && window.roomDescriptions) {
+        window.roomDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
+      } else if (type === 'FOOD' && window.foodDescriptions) {
+        window.foodDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
       }
       
       desc.innerHTML = options;
