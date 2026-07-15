@@ -341,27 +341,18 @@
                   <label class="form-label text-muted small fw-bold">Payment Status</label>
                   <select class="form-select form-select-lg" id="incPaymentStatus" onchange="handleIncomePaymentStatusChange()" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="PAID">PAID</option>
-                    <option value="ADVANCE">ADVANCE</option>
-                    <option value="UNPAID">UNPAID</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
                   <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
                   <select class="form-select form-select-lg" id="incModeOfPayment">
                     <option value="" selected disabled>Please Select</option>
-                    <option value="CASH">CASH</option>
-                    <option value="UPI">UPI</option>
-                    <option value="CARD">CARD</option>
-                    <option value="ONLINE">ONLINE</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
                   <label class="form-label text-muted small fw-bold">Entry By</label>
                   <select class="form-select form-select-lg" id="incEntryBy" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="JOHN">JOHN</option>
-                    <option value="AJAY">AJAY</option>
                   </select>
                 </div>
 
@@ -417,9 +408,6 @@
                   <label class="form-label text-muted small fw-bold">Payment Status</label>
                   <select class="form-select form-select-lg" id="expPaymentStatus" onchange="handleExpensePaymentStatusChange()" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="PAID">PAID</option>
-                    <option value="ADVANCE">ADVANCE</option>
-                    <option value="UNPAID">UNPAID</option>
                   </select>
                 </div>
 
@@ -437,18 +425,12 @@
                   <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
                   <select class="form-select form-select-lg" id="expModeOfPayment">
                     <option value="" selected disabled>Please Select</option>
-                    <option value="CASH">CASH</option>
-                    <option value="UPI">UPI</option>
-                    <option value="CARD">CARD</option>
-                    <option value="ONLINE">ONLINE</option>
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
                   <label class="form-label text-muted small fw-bold">Entry By</label>
                   <select class="form-select form-select-lg" id="expEntryBy" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="JOHN">JOHN</option>
-                    <option value="AJAY">AJAY</option>
                   </select>
                 </div>
 
@@ -611,10 +593,6 @@
               <label class="form-label fw-bold">Mode Of Payment</label>
               <select class="form-select form-select-lg" id="mpMode" required>
                 <option value="" selected disabled>Please Select</option>
-                <option value="CASH">CASH</option>
-                <option value="UPI">UPI</option>
-                <option value="CARD">CARD</option>
-                <option value="ONLINE">ONLINE</option>
               </select>
             </div>
 
@@ -644,6 +622,7 @@
     function getToday() { return new Date().toISOString().split('T')[0]; }
     
     // Set default dates
+
     document.addEventListener("DOMContentLoaded", () => {
       const today = getToday();
       const currentMonth = today.substring(0, 7); // Extracts YYYY-MM
@@ -654,7 +633,36 @@
       document.getElementById('reportMonth').value = currentMonth;
       refreshDashboard();
       toggleClearBtn();
+      loadDropdownSettings();
     });
+
+    function loadDropdownSettings() {
+      google.script.run.withSuccessHandler(function(settings) {
+        populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
+        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
+        populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
+      }).getDropdownSettings();
+    }
+
+    function populateDropdowns(elementIds, optionsArray) {
+      elementIds.forEach(id => {
+        const selectEl = document.getElementById(id);
+        if (selectEl) {
+          // Keep the first option
+          const defaultOption = selectEl.options[0];
+          selectEl.innerHTML = '';
+          selectEl.appendChild(defaultOption);
+
+          optionsArray.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            selectEl.appendChild(option);
+          });
+        }
+      });
+    }
+
 
     function toggleClearBtn() {
       // Small timeout to allow active class to change

@@ -540,3 +540,37 @@ function closeFinancialYear() {
     return { success: false, message: error.toString() };
   }
 }
+
+/**
+ * Reads dropdown settings from the "Settings" sheet
+ */
+function getDropdownSettings() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Settings');
+  if (!sheet) {
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [] };
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [] };
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+
+  const paymentStatus = [];
+  const modeOfPayment = [];
+  const entryBy = [];
+
+  data.forEach(row => {
+    if (row[0] && row[0].toString().trim() !== '') paymentStatus.push(row[0].toString().trim());
+    if (row[1] && row[1].toString().trim() !== '') modeOfPayment.push(row[1].toString().trim());
+    if (row[2] && row[2].toString().trim() !== '') entryBy.push(row[2].toString().trim());
+  });
+
+  return {
+    paymentStatus: paymentStatus,
+    modeOfPayment: modeOfPayment,
+    entryBy: entryBy
+  };
+}
