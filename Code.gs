@@ -22,7 +22,7 @@ function setup() {
     incomeSheet = ss.insertSheet('Income');
   }
   const incomeHeaders = [
-    'Date', 'Entry Number', 'Room Number', 'Other', 
+    'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Other',
     'Room Rent', 'Fooding', 'Total', 'Payment Status', 'Mode Of Payment', 
     'Entry By', 'Payment Date'
   ];
@@ -76,6 +76,7 @@ function addIncome(data) {
       data.date,
       data.entryNumber,
       data.roomNumber,
+      data.coffeePepper,
       data.other,
       roomRent,
       fooding,
@@ -311,6 +312,7 @@ function getUnpaidIncome(monthValue = '') {
       date: r['Date'] ? formatDateToLocal(new Date(r['Date'])) : '',
       entryNumber: r['Entry Number'],
       roomNumber: r['Room Number'],
+      coffeePepper: r['Coffee / Black Pepper'],
       roomRent: r['Room Rent'],
       fooding: r['Fooding'],
       total: r['Total'],
@@ -393,6 +395,7 @@ function getReportData(category, monthValue, expenseType = '', expenseDesc = '')
           date: r['Date'] ? formatDateToLocal(new Date(r['Date'])) : '',
           entryNumber: r['Entry Number'],
           roomNumber: r['Room Number'],
+          coffeePepper: r['Coffee / Black Pepper'],
           other: r['Other'],
           roomRent: r['Room Rent'],
           fooding: r['Fooding'],
@@ -548,15 +551,15 @@ function getDropdownSettings() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Settings');
   if (!sheet) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [] };
   }
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [] };
   }
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+  const data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
 
   const paymentStatus = [];
   const modeOfPayment = [];
@@ -564,6 +567,7 @@ function getDropdownSettings() {
   const roomDescriptions = [];
   const foodDescriptions = [];
   const sourceOfPayment = [];
+  const coffeePepperOptions = [];
 
   data.forEach(row => {
     if (row[0] && row[0].toString().trim() !== '') paymentStatus.push(row[0].toString().trim());
@@ -572,6 +576,7 @@ function getDropdownSettings() {
     if (row[4] && row[4].toString().trim() !== '') roomDescriptions.push(row[4].toString().trim());
     if (row[5] && row[5].toString().trim() !== '') foodDescriptions.push(row[5].toString().trim());
     if (row[6] && row[6].toString().trim() !== '') sourceOfPayment.push(row[6].toString().trim());
+    if (row[7] && row[7].toString().trim() !== '') coffeePepperOptions.push(row[7].toString().trim());
   });
 
   return {
@@ -580,6 +585,7 @@ function getDropdownSettings() {
     entryBy: entryBy,
     roomDescriptions: roomDescriptions,
     foodDescriptions: foodDescriptions,
-    sourceOfPayment: sourceOfPayment
+    sourceOfPayment: sourceOfPayment,
+    coffeePepperOptions: coffeePepperOptions
   };
 }

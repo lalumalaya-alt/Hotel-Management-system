@@ -317,6 +317,12 @@
                   <input type="text" class="form-control form-control-lg" id="incRoomNum">
                 </div>
                 <div class="col-md-6 col-12">
+                  <label class="form-label text-muted small fw-bold">Coffee / Black Pepper</label>
+                  <select class="form-select form-select-lg" id="incCoffeePepper">
+                    <option value="" selected disabled>Please Select</option>
+                  </select>
+                </div>
+                <div class="col-md-6 col-12">
                   <label class="form-label text-muted small fw-bold">Other</label>
                   <input type="text" class="form-control form-control-lg" id="incOther">
                 </div>
@@ -642,6 +648,7 @@
         populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
         populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
         populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
+        populateDropdowns(['incCoffeePepper'], settings.coffeePepperOptions);
       }).getDropdownSettings();
     }
 
@@ -744,6 +751,7 @@
         date: document.getElementById('incDate').value,
         entryNumber: document.getElementById('incEntryNum').value,
         roomNumber: document.getElementById('incRoomNum').value,
+        coffeePepper: document.getElementById('incCoffeePepper').value,
         other: document.getElementById('incOther').value,
         roomRent: document.getElementById('incRoomRent').value,
         fooding: document.getElementById('incFooding').value,
