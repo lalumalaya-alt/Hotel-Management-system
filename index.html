@@ -317,6 +317,18 @@
                   <input type="text" class="form-control form-control-lg" id="incRoomNum">
                 </div>
                 <div class="col-md-6 col-12">
+                  <label class="form-label text-muted small fw-bold">Coffee / Black Pepper</label>
+                  <select class="form-select form-select-lg" id="incCoffeePepper">
+                    <option value="" selected disabled>Please Select</option>
+                  </select>
+                </div>
+                <div class="col-md-6 col-12">
+                  <label class="form-label text-muted small fw-bold">Gst/Ngst</label>
+                  <select class="form-select form-select-lg" id="incGstNgst">
+                    <option value="" selected disabled>Please Select</option>
+                  </select>
+                </div>
+                <div class="col-md-6 col-12">
                   <label class="form-label text-muted small fw-bold">Other</label>
                   <input type="text" class="form-control form-control-lg" id="incOther">
                 </div>
@@ -341,27 +353,18 @@
                   <label class="form-label text-muted small fw-bold">Payment Status</label>
                   <select class="form-select form-select-lg" id="incPaymentStatus" onchange="handleIncomePaymentStatusChange()" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="PAID">PAID</option>
-                    <option value="ADVANCE">ADVANCE</option>
-                    <option value="UNPAID">UNPAID</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
                   <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
                   <select class="form-select form-select-lg" id="incModeOfPayment">
                     <option value="" selected disabled>Please Select</option>
-                    <option value="CASH">CASH</option>
-                    <option value="UPI">UPI</option>
-                    <option value="CARD">CARD</option>
-                    <option value="ONLINE">ONLINE</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
                   <label class="form-label text-muted small fw-bold">Entry By</label>
                   <select class="form-select form-select-lg" id="incEntryBy" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="JOHN">JOHN</option>
-                    <option value="AJAY">AJAY</option>
                   </select>
                 </div>
 
@@ -417,9 +420,6 @@
                   <label class="form-label text-muted small fw-bold">Payment Status</label>
                   <select class="form-select form-select-lg" id="expPaymentStatus" onchange="handleExpensePaymentStatusChange()" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="PAID">PAID</option>
-                    <option value="ADVANCE">ADVANCE</option>
-                    <option value="UNPAID">UNPAID</option>
                   </select>
                 </div>
 
@@ -427,9 +427,6 @@
                   <label class="form-label text-muted small fw-bold">Source Of Payment</label>
                   <select class="form-select form-select-lg" id="expSource" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="COUNTER">COUNTER</option>
-                    <option value="MD SIR">MD SIR</option>
-                    <option value="MALAYA">MALAYA</option>
                   </select>
                 </div>
 
@@ -437,18 +434,12 @@
                   <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
                   <select class="form-select form-select-lg" id="expModeOfPayment">
                     <option value="" selected disabled>Please Select</option>
-                    <option value="CASH">CASH</option>
-                    <option value="UPI">UPI</option>
-                    <option value="CARD">CARD</option>
-                    <option value="ONLINE">ONLINE</option>
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
                   <label class="form-label text-muted small fw-bold">Entry By</label>
                   <select class="form-select form-select-lg" id="expEntryBy" required>
                     <option value="" selected disabled>Please Select</option>
-                    <option value="JOHN">JOHN</option>
-                    <option value="AJAY">AJAY</option>
                   </select>
                 </div>
 
@@ -564,9 +555,12 @@
         <div class="card">
           <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold">Detailed Report</h5>
-            <div class="input-group w-auto" style="max-width: 250px;">
-              <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search"></i></span>
-              <input type="text" class="form-control border-start-0 bg-light" id="searchReport" placeholder="Search..." onkeyup="filterReportTable()">
+            <div class="d-flex align-items-center gap-2">
+              <div class="input-group w-auto" style="max-width: 250px;">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search"></i></span>
+                <input type="text" class="form-control border-start-0 bg-light" id="searchReport" placeholder="Search..." onkeyup="filterReportTable()">
+              </div>
+              <button class="btn btn-success" onclick="exportReportToExcel()"><i class="fa-solid fa-file-excel me-1"></i> Export</button>
             </div>
           </div>
           <div class="card-body p-0">
@@ -611,10 +605,6 @@
               <label class="form-label fw-bold">Mode Of Payment</label>
               <select class="form-select form-select-lg" id="mpMode" required>
                 <option value="" selected disabled>Please Select</option>
-                <option value="CASH">CASH</option>
-                <option value="UPI">UPI</option>
-                <option value="CARD">CARD</option>
-                <option value="ONLINE">ONLINE</option>
               </select>
             </div>
 
@@ -622,9 +612,6 @@
               <label class="form-label fw-bold">Source Of Payment</label>
               <select class="form-select form-select-lg" id="mpSource">
                 <option value="" selected disabled>Please Select</option>
-                <option value="COUNTER">COUNTER</option>
-                <option value="MD SIR">MD SIR</option>
-                <option value="MALAYA">MALAYA</option>
               </select>
             </div>
 
@@ -644,6 +631,7 @@
     function getToday() { return new Date().toISOString().split('T')[0]; }
     
     // Set default dates
+
     document.addEventListener("DOMContentLoaded", () => {
       const today = getToday();
       const currentMonth = today.substring(0, 7); // Extracts YYYY-MM
@@ -654,7 +642,42 @@
       document.getElementById('reportMonth').value = currentMonth;
       refreshDashboard();
       toggleClearBtn();
+      loadDropdownSettings();
     });
+
+    function loadDropdownSettings() {
+      google.script.run.withSuccessHandler(function(settings) {
+        window.roomDescriptions = settings.roomDescriptions || [];
+        window.foodDescriptions = settings.foodDescriptions || [];
+
+        populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
+        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
+        populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
+        populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
+        populateDropdowns(['incCoffeePepper'], settings.coffeePepperOptions);
+        populateDropdowns(['incGstNgst'], settings.gstNgstOptions);
+      }).getDropdownSettings();
+    }
+
+    function populateDropdowns(elementIds, optionsArray) {
+      elementIds.forEach(id => {
+        const selectEl = document.getElementById(id);
+        if (selectEl) {
+          // Keep the first option
+          const defaultOption = selectEl.options[0];
+          selectEl.innerHTML = '';
+          selectEl.appendChild(defaultOption);
+
+          optionsArray.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            selectEl.appendChild(option);
+          });
+        }
+      });
+    }
+
 
     function toggleClearBtn() {
       // Small timeout to allow active class to change
@@ -688,26 +711,14 @@
       
       let options = '<option value="" selected disabled>Please Select</option>';
       
-      if (type === 'ROOM') {
-        options += `
-          <option value="Stationary">Stationary</option>
-          <option value="Staff Advance">Staff Advance</option>
-          <option value="Staff Salary">Staff Salary</option>
-          <option value="Malaya">Malaya</option>
-          <option value="MD Sir">MD Sir</option>
-          <option value="Other">Other</option>
-        `;
-      } else if (type === 'FOOD') {
-        options += `
-          <option value="Vegetable">Vegetable</option>
-          <option value="Grocery">Grocery</option>
-          <option value="Non Veg/ Veg">Non Veg/ Veg</option>
-          <option value="Gas">Gas</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Other">Other</option>
-        `;
-      } else {
-        options = '<option value="" selected disabled>Please Select Type First</option>';
+      if (type === 'ROOM' && window.roomDescriptions) {
+        window.roomDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
+      } else if (type === 'FOOD' && window.foodDescriptions) {
+        window.foodDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
       }
       
       desc.innerHTML = options;
@@ -747,6 +758,8 @@
         date: document.getElementById('incDate').value,
         entryNumber: document.getElementById('incEntryNum').value,
         roomNumber: document.getElementById('incRoomNum').value,
+        coffeePepper: document.getElementById('incCoffeePepper').value,
+        gstNgst: document.getElementById('incGstNgst').value,
         other: document.getElementById('incOther').value,
         roomRent: document.getElementById('incRoomRent').value,
         fooding: document.getElementById('incFooding').value,
@@ -867,6 +880,8 @@
           <th>Date</th>
           <th>Entry No.</th>
           <th>Room No.</th>
+          <th>Coffee/ Black Pepper</th>
+          <th>Gst/Ngst</th>
           <th>Room Rent</th>
           <th>Fooding</th>
           <th>Total</th>
@@ -905,6 +920,8 @@
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
+            <td>${row.coffeePepper || '-'}</td>
+            <td>${row.gstNgst || '-'}</td>
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>
             <td class="fw-bold">₹${row.total || 0}</td>
@@ -1035,28 +1052,16 @@
       const type = document.getElementById('reportExpenseType').value;
       const desc = document.getElementById('reportExpenseDesc');
       
-      let options = '<option value="" selected>Please Select</option>';
+      let options = '<option value="">All Descriptions</option>';
       
-      if (type === 'ROOM') {
-        options += `
-          <option value="Stationary">Stationary</option>
-          <option value="Staff Advance">Staff Advance</option>
-          <option value="Staff Salary">Staff Salary</option>
-          <option value="Malaya">Malaya</option>
-          <option value="MD Sir">MD Sir</option>
-          <option value="Other">Other</option>
-        `;
-      } else if (type === 'FOOD') {
-        options += `
-          <option value="Vegetable">Vegetable</option>
-          <option value="Grocery">Grocery</option>
-          <option value="Non Veg/ Veg">Non Veg/ Veg</option>
-          <option value="Gas">Gas</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Other">Other</option>
-        `;
-      } else {
-        options = '<option value="" selected disabled>Please Select Type First</option>';
+      if (type === 'ROOM' && window.roomDescriptions) {
+        window.roomDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
+      } else if (type === 'FOOD' && window.foodDescriptions) {
+        window.foodDescriptions.forEach(opt => {
+          options += `<option value="${opt}">${opt}</option>`;
+        });
       }
       
       desc.innerHTML = options;
@@ -1086,6 +1091,8 @@
           <th>Date</th>
           <th>Entry No.</th>
           <th>Room No.</th>
+          <th>Coffee/ Black Pepper</th>
+          <th>Gst/Ngst</th>
           <th>Other</th>
           <th>Room Rent</th>
           <th>Fooding</th>
@@ -1146,6 +1153,8 @@
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
+            <td>${row.coffeePepper || '-'}</td>
+            <td>${row.gstNgst || '-'}</td>
             <td>${row.other || '-'}</td>
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>
@@ -1182,6 +1191,7 @@
       }
     }
 
+
     // Financial Year Closing
     function closeFinancialYearConfirm() {
       if(confirm('WARNING: Are you sure you want to close the Financial Year? This action will permanently archive all previous financial year records to a separate sheet and DELETE them from the active dashboard. This action cannot be undone.')) {
@@ -1201,6 +1211,54 @@
           .closeFinancialYear();
       }
     }
+
+    function exportReportToExcel() {
+      const table = document.getElementById('reportTable');
+      if (!table) return;
+
+      const category = document.getElementById('reportCategory').value || 'Report';
+      const month = document.getElementById('reportMonth').value || 'All';
+      const filename = `Report_${category}_${month}.csv`;
+
+      let csv = [];
+      const rows = table.querySelectorAll('tr');
+
+      // If table is empty or just has the placeholder
+      if (rows.length <= 2 && rows[1] && rows[1].innerText.includes('Select category to load data')) {
+        alert('No data to export.');
+        return;
+      }
+
+      for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll('td, th');
+
+        // Skip placeholder rows
+        if (cols.length === 1 && cols[0].innerText.includes('Select category to load data')) continue;
+        if (cols.length === 1 && cols[0].innerText.includes('Loading...')) continue;
+        if (cols.length === 1 && cols[0].innerText.includes('No records found')) continue;
+
+        for (let j = 0; j < cols.length; j++) {
+          let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/,/g, ''); // Escape newlines and commas
+          row.push('"' + data + '"');
+        }
+        csv.push(row.join(','));
+      }
+
+      if (csv.length === 0 || (csv.length === 1 && rows[0].querySelectorAll('th').length > 0)) {
+         alert('No data to export.');
+         return;
+      }
+
+      const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+      const downloadLink = document.createElement('a');
+      downloadLink.download = filename;
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
   </script>
 </body>
 </html>
