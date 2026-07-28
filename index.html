@@ -323,6 +323,12 @@
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
+                  <label class="form-label text-muted small fw-bold">Gst/Ngst</label>
+                  <select class="form-select form-select-lg" id="incGstNgst">
+                    <option value="" selected disabled>Please Select</option>
+                  </select>
+                </div>
+                <div class="col-md-6 col-12">
                   <label class="form-label text-muted small fw-bold">Other</label>
                   <input type="text" class="form-control form-control-lg" id="incOther">
                 </div>
@@ -649,6 +655,7 @@
         populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
         populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
         populateDropdowns(['incCoffeePepper'], settings.coffeePepperOptions);
+        populateDropdowns(['incGstNgst'], settings.gstNgstOptions);
       }).getDropdownSettings();
     }
 
@@ -752,6 +759,7 @@
         entryNumber: document.getElementById('incEntryNum').value,
         roomNumber: document.getElementById('incRoomNum').value,
         coffeePepper: document.getElementById('incCoffeePepper').value,
+        gstNgst: document.getElementById('incGstNgst').value,
         other: document.getElementById('incOther').value,
         roomRent: document.getElementById('incRoomRent').value,
         fooding: document.getElementById('incFooding').value,
@@ -873,6 +881,7 @@
           <th>Entry No.</th>
           <th>Room No.</th>
           <th>Coffee/ Black Pepper</th>
+          <th>Gst/Ngst</th>
           <th>Room Rent</th>
           <th>Fooding</th>
           <th>Total</th>
@@ -912,6 +921,7 @@
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
             <td>${row.coffeePepper || '-'}</td>
+            <td>${row.gstNgst || '-'}</td>
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>
             <td class="fw-bold">₹${row.total || 0}</td>
@@ -1082,6 +1092,7 @@
           <th>Entry No.</th>
           <th>Room No.</th>
           <th>Coffee/ Black Pepper</th>
+          <th>Gst/Ngst</th>
           <th>Other</th>
           <th>Room Rent</th>
           <th>Fooding</th>
@@ -1143,6 +1154,7 @@
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
             <td>${row.coffeePepper || '-'}</td>
+            <td>${row.gstNgst || '-'}</td>
             <td>${row.other || '-'}</td>
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>

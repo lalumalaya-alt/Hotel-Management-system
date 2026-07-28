@@ -21,7 +21,7 @@ function setup() {
   if (!incomeSheet) {
     incomeSheet = ss.insertSheet('Income');
     const incomeHeaders = [
-      'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Other',
+      'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Gst/Ngst', 'Other',
       'Room Rent', 'Fooding', 'Total', 'Payment Status', 'Mode Of Payment',
       'Entry By', 'Payment Date'
     ];
@@ -29,13 +29,23 @@ function setup() {
     incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setFontWeight('bold');
   } else {
     // Migration: Check if 'Coffee / Black Pepper' exists, if not insert it after 'Room Number'
-    const headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
-    const roomNumIndex = headers.indexOf('Room Number');
-    const coffeeIndex = headers.indexOf('Coffee / Black Pepper');
+    let headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
+    let roomNumIndex = headers.indexOf('Room Number');
+    let coffeeIndex = headers.indexOf('Coffee / Black Pepper');
 
     if (roomNumIndex !== -1 && coffeeIndex === -1) {
       incomeSheet.insertColumnAfter(roomNumIndex + 1);
       incomeSheet.getRange(1, roomNumIndex + 2).setValue('Coffee / Black Pepper').setFontWeight('bold');
+      headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0]; // reload headers
+    }
+
+    // Migration: Check if 'Gst/Ngst' exists, if not insert it after 'Coffee / Black Pepper'
+    coffeeIndex = headers.indexOf('Coffee / Black Pepper');
+    const gstNgstIndex = headers.indexOf('Gst/Ngst');
+
+    if (coffeeIndex !== -1 && gstNgstIndex === -1) {
+      incomeSheet.insertColumnAfter(coffeeIndex + 1);
+      incomeSheet.getRange(1, coffeeIndex + 2).setValue('Gst/Ngst').setFontWeight('bold');
     }
   }
 
@@ -87,6 +97,7 @@ function addIncome(data) {
       data.entryNumber,
       data.roomNumber,
       data.coffeePepper,
+      data.gstNgst,
       data.other,
       roomRent,
       fooding,
@@ -323,6 +334,7 @@ function getUnpaidIncome(monthValue = '') {
       entryNumber: r['Entry Number'],
       roomNumber: r['Room Number'],
       coffeePepper: r['Coffee / Black Pepper'],
+      gstNgst: r['Gst/Ngst'],
       roomRent: r['Room Rent'],
       fooding: r['Fooding'],
       total: r['Total'],
@@ -406,6 +418,7 @@ function getReportData(category, monthValue, expenseType = '', expenseDesc = '')
           entryNumber: r['Entry Number'],
           roomNumber: r['Room Number'],
           coffeePepper: r['Coffee / Black Pepper'],
+          gstNgst: r['Gst/Ngst'],
           other: r['Other'],
           roomRent: r['Room Rent'],
           fooding: r['Fooding'],
@@ -561,15 +574,15 @@ function getDropdownSettings() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Settings');
   if (!sheet) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [], gstNgstOptions: [] };
   }
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) {
-    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [] };
+    return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [], gstNgstOptions: [] };
   }
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
+  const data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
 
   const paymentStatus = [];
   const modeOfPayment = [];
@@ -578,6 +591,7 @@ function getDropdownSettings() {
   const foodDescriptions = [];
   const sourceOfPayment = [];
   const coffeePepperOptions = [];
+  const gstNgstOptions = [];
 
   data.forEach(row => {
     if (row[0] && row[0].toString().trim() !== '') paymentStatus.push(row[0].toString().trim());
@@ -587,6 +601,7 @@ function getDropdownSettings() {
     if (row[5] && row[5].toString().trim() !== '') foodDescriptions.push(row[5].toString().trim());
     if (row[6] && row[6].toString().trim() !== '') sourceOfPayment.push(row[6].toString().trim());
     if (row[7] && row[7].toString().trim() !== '') coffeePepperOptions.push(row[7].toString().trim());
+    if (row[8] && row[8].toString().trim() !== '') gstNgstOptions.push(row[8].toString().trim());
   });
 
   return {
@@ -596,6 +611,7 @@ function getDropdownSettings() {
     roomDescriptions: roomDescriptions,
     foodDescriptions: foodDescriptions,
     sourceOfPayment: sourceOfPayment,
-    coffeePepperOptions: coffeePepperOptions
+    coffeePepperOptions: coffeePepperOptions,
+    gstNgstOptions: gstNgstOptions
   };
 }
