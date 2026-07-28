@@ -20,14 +20,24 @@ function setup() {
   let incomeSheet = ss.getSheetByName('Income');
   if (!incomeSheet) {
     incomeSheet = ss.insertSheet('Income');
+    const incomeHeaders = [
+      'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Other',
+      'Room Rent', 'Fooding', 'Total', 'Payment Status', 'Mode Of Payment',
+      'Entry By', 'Payment Date'
+    ];
+    incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setValues([incomeHeaders]);
+    incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setFontWeight('bold');
+  } else {
+    // Migration: Check if 'Coffee / Black Pepper' exists, if not insert it after 'Room Number'
+    const headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
+    const roomNumIndex = headers.indexOf('Room Number');
+    const coffeeIndex = headers.indexOf('Coffee / Black Pepper');
+
+    if (roomNumIndex !== -1 && coffeeIndex === -1) {
+      incomeSheet.insertColumnAfter(roomNumIndex + 1);
+      incomeSheet.getRange(1, roomNumIndex + 2).setValue('Coffee / Black Pepper').setFontWeight('bold');
+    }
   }
-  const incomeHeaders = [
-    'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Other',
-    'Room Rent', 'Fooding', 'Total', 'Payment Status', 'Mode Of Payment', 
-    'Entry By', 'Payment Date'
-  ];
-  incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setValues([incomeHeaders]);
-  incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setFontWeight('bold');
 
   // Setup Expenses Sheet
   let expenseSheet = ss.getSheetByName('Expenses');
