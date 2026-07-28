@@ -543,9 +543,12 @@
         <div class="card">
           <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold">Detailed Report</h5>
-            <div class="input-group w-auto" style="max-width: 250px;">
-              <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search"></i></span>
-              <input type="text" class="form-control border-start-0 bg-light" id="searchReport" placeholder="Search..." onkeyup="filterReportTable()">
+            <div class="d-flex align-items-center gap-2">
+              <div class="input-group w-auto" style="max-width: 250px;">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search"></i></span>
+                <input type="text" class="form-control border-start-0 bg-light" id="searchReport" placeholder="Search..." onkeyup="filterReportTable()">
+              </div>
+              <button class="btn btn-success" onclick="exportReportToExcel()"><i class="fa-solid fa-file-excel me-1"></i> Export</button>
             </div>
           </div>
           <div class="card-body p-0">
@@ -1164,6 +1167,7 @@
       }
     }
 
+
     // Financial Year Closing
     function closeFinancialYearConfirm() {
       if(confirm('WARNING: Are you sure you want to close the Financial Year? This action will permanently archive all previous financial year records to a separate sheet and DELETE them from the active dashboard. This action cannot be undone.')) {
@@ -1183,6 +1187,54 @@
           .closeFinancialYear();
       }
     }
+
+    function exportReportToExcel() {
+      const table = document.getElementById('reportTable');
+      if (!table) return;
+
+      const category = document.getElementById('reportCategory').value || 'Report';
+      const month = document.getElementById('reportMonth').value || 'All';
+      const filename = `Report_${category}_${month}.csv`;
+
+      let csv = [];
+      const rows = table.querySelectorAll('tr');
+
+      // If table is empty or just has the placeholder
+      if (rows.length <= 2 && rows[1] && rows[1].innerText.includes('Select category to load data')) {
+        alert('No data to export.');
+        return;
+      }
+
+      for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll('td, th');
+
+        // Skip placeholder rows
+        if (cols.length === 1 && cols[0].innerText.includes('Select category to load data')) continue;
+        if (cols.length === 1 && cols[0].innerText.includes('Loading...')) continue;
+        if (cols.length === 1 && cols[0].innerText.includes('No records found')) continue;
+
+        for (let j = 0; j < cols.length; j++) {
+          let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/,/g, ''); // Escape newlines and commas
+          row.push('"' + data + '"');
+        }
+        csv.push(row.join(','));
+      }
+
+      if (csv.length === 0 || (csv.length === 1 && rows[0].querySelectorAll('th').length > 0)) {
+         alert('No data to export.');
+         return;
+      }
+
+      const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+      const downloadLink = document.createElement('a');
+      downloadLink.download = filename;
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
   </script>
 </body>
 </html>
