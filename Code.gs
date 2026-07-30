@@ -514,6 +514,10 @@ function markIncomePaid(data) {
     const paidCol = headers.indexOf('Paid Amount') + 1;
     const dueCol = headers.indexOf('Due Amount') + 1;
 
+    if (statusCol <= 0 || modeCol <= 0 || dateCol <= 0 || totalCol <= 0 || paidCol <= 0 || dueCol <= 0) {
+      throw new Error("Could not find required columns in the sheet headers. Please ensure 'Paid Amount' and 'Due Amount' exist in Row 1.");
+    }
+
     const currentTotal = parseFloat(sheet.getRange(data.rowIndex, totalCol).getValue()) || 0;
     const currentPaid = parseFloat(sheet.getRange(data.rowIndex, paidCol).getValue()) || 0;
 
