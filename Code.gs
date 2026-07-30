@@ -22,7 +22,7 @@ function setup() {
     incomeSheet = ss.insertSheet('Income');
     const incomeHeaders = [
       'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Gst/Ngst', 'Other',
-      'Room Rent', 'Fooding', 'Total', 'Payment Status', 'Mode Of Payment',
+      'Room Rent', 'Fooding', 'Total', 'Paid Amount', 'Due Amount', 'Payment Status', 'Mode Of Payment',
       'Entry By', 'Payment Date'
     ];
     incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setValues([incomeHeaders]);
@@ -46,6 +46,39 @@ function setup() {
     if (coffeeIndex !== -1 && gstNgstIndex === -1) {
       incomeSheet.insertColumnAfter(coffeeIndex + 1);
       incomeSheet.getRange(1, coffeeIndex + 2).setValue('Gst/Ngst').setFontWeight('bold');
+      headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
+    }
+
+    // Migration: Check if 'Paid Amount' and 'Due Amount' exist
+    const totalIndex = headers.indexOf('Total');
+    const paidIndex = headers.indexOf('Paid Amount');
+
+    if (totalIndex !== -1 && paidIndex === -1) {
+      incomeSheet.insertColumnsAfter(totalIndex + 1, 2);
+      incomeSheet.getRange(1, totalIndex + 2).setValue('Paid Amount').setFontWeight('bold');
+      incomeSheet.getRange(1, totalIndex + 3).setValue('Due Amount').setFontWeight('bold');
+
+      // Auto-fill existing rows
+      const lastRow = incomeSheet.getLastRow();
+      if (lastRow > 1) {
+        const dataRange = incomeSheet.getRange(2, 1, lastRow - 1, incomeSheet.getLastColumn());
+        const sheetData = dataRange.getValues();
+        const newHeaders = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
+        const statusIdx = newHeaders.indexOf('Payment Status');
+        const totalIdx = newHeaders.indexOf('Total');
+
+        for (let i = 0; i < sheetData.length; i++) {
+          const status = sheetData[i][statusIdx];
+          const totalVal = parseFloat(sheetData[i][totalIdx]) || 0;
+          if (status === 'PAID' || status === 'ADVANCE') {
+            incomeSheet.getRange(i + 2, totalIndex + 2).setValue(totalVal);
+            incomeSheet.getRange(i + 2, totalIndex + 3).setValue(0);
+          } else {
+            incomeSheet.getRange(i + 2, totalIndex + 2).setValue(0);
+            incomeSheet.getRange(i + 2, totalIndex + 3).setValue(totalVal);
+          }
+        }
+      }
     }
   }
 
@@ -92,6 +125,13 @@ function addIncome(data) {
     
     const paymentDate = (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') ? data.date : '';
     
+    let paidAmount = 0;
+    let dueAmount = total;
+    if (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') {
+      paidAmount = total;
+      dueAmount = 0;
+    }
+
     const rowData = [
       data.date,
       data.entryNumber,
@@ -102,6 +142,8 @@ function addIncome(data) {
       roomRent,
       fooding,
       total,
+      paidAmount,
+      dueAmount,
       data.paymentStatus,
       data.modeOfPayment,
       data.entryBy,
@@ -320,7 +362,7 @@ function getUnpaidIncome(monthValue = '') {
     }
 
     const unpaid = data.filter(r => {
-      if (r['Payment Status'] !== 'UNPAID') return false;
+      if (r['Payment Status'] !== 'UNPAID' && r['Payment Status'] !== 'PARTIAL') return false;
       if (monthValue) {
         const d = parseDate(r['Date']);
         if (!d || d.getMonth() !== targetMonth || d.getFullYear() !== targetYear) {
@@ -335,9 +377,12 @@ function getUnpaidIncome(monthValue = '') {
       roomNumber: r['Room Number'],
       coffeePepper: r['Coffee / Black Pepper'],
       gstNgst: r['Gst/Ngst'],
+      other: r['Other'],
       roomRent: r['Room Rent'],
       fooding: r['Fooding'],
       total: r['Total'],
+      paidAmount: r['Paid Amount'],
+      dueAmount: r['Due Amount'],
       entryBy: r['Entry By']
     }));
     return { success: true, data: unpaid };
@@ -423,6 +468,8 @@ function getReportData(category, monthValue, expenseType = '', expenseDesc = '')
           roomRent: r['Room Rent'],
           fooding: r['Fooding'],
           total: r['Total'],
+          paidAmount: r['Paid Amount'],
+          dueAmount: r['Due Amount'],
           paymentStatus: r['Payment Status'],
           modeOfPayment: r['Mode Of Payment'],
           entryBy: r['Entry By'],
@@ -458,10 +505,35 @@ function markIncomePaid(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Income');
-    // Columns: Payment Status (8), Mode Of Payment (9), Payment Date (11)
-    sheet.getRange(data.rowIndex, 8).setValue('PAID');
-    sheet.getRange(data.rowIndex, 9).setValue(data.modeOfPayment);
-    sheet.getRange(data.rowIndex, 11).setValue(data.paymentDate);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    const statusCol = headers.indexOf('Payment Status') + 1;
+    const modeCol = headers.indexOf('Mode Of Payment') + 1;
+    const dateCol = headers.indexOf('Payment Date') + 1;
+    const totalCol = headers.indexOf('Total') + 1;
+    const paidCol = headers.indexOf('Paid Amount') + 1;
+    const dueCol = headers.indexOf('Due Amount') + 1;
+
+    const currentTotal = parseFloat(sheet.getRange(data.rowIndex, totalCol).getValue()) || 0;
+    const currentPaid = parseFloat(sheet.getRange(data.rowIndex, paidCol).getValue()) || 0;
+
+    const newPaidAmount = parseFloat(data.paidAmount) || 0;
+    const totalPaid = currentPaid + newPaidAmount;
+    let newDue = currentTotal - totalPaid;
+
+    if (newDue < 0) newDue = 0; // Prevent negative due
+
+    let newStatus = 'PARTIAL';
+    if (newDue <= 0) {
+      newStatus = 'PAID';
+    }
+
+    sheet.getRange(data.rowIndex, paidCol).setValue(totalPaid);
+    sheet.getRange(data.rowIndex, dueCol).setValue(newDue);
+    sheet.getRange(data.rowIndex, statusCol).setValue(newStatus);
+    sheet.getRange(data.rowIndex, modeCol).setValue(data.modeOfPayment);
+    sheet.getRange(data.rowIndex, dateCol).setValue(data.paymentDate);
+
     return { success: true, message: 'Saved successfully' };
   } catch (error) {
     return { success: false, message: error.toString() };

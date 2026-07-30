@@ -596,6 +596,10 @@
             <input type="hidden" id="mpRowIndex">
             <input type="hidden" id="mpType">
             
+            <div class="mb-3" id="mpPaidAmountDiv">
+              <label class="form-label fw-bold text-primary">Paid Amount</label>
+              <input type="number" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
+            </div>
             <div class="mb-3">
               <label class="form-label fw-bold">Payment Date</label>
               <input type="date" class="form-control form-control-lg" id="mpDate" required>
@@ -880,11 +884,11 @@
           <th>Date</th>
           <th>Entry No.</th>
           <th>Room No.</th>
-          <th>Coffee/ Black Pepper</th>
-          <th>Gst/Ngst</th>
+          <th>Other</th>
           <th>Room Rent</th>
           <th>Fooding</th>
           <th>Total</th>
+          <th>Due Amount</th>
           <th class="text-end">Action</th>
         `;
         google.script.run.withSuccessHandler(res => {
@@ -920,13 +924,14 @@
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
-            <td>${row.coffeePepper || '-'}</td>
-            <td>${row.gstNgst || '-'}</td>
+            <td>${row.other || '-'}</td>
+
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>
             <td class="fw-bold">₹${row.total || 0}</td>
+            <td class="fw-bold text-danger">₹${row.dueAmount || 0}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}')">
+              <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}', ${row.dueAmount || 0})">
                 Mark Paid
               </button>
             </td>
@@ -938,7 +943,7 @@
             <td>${row.description || '-'}</td>
             <td class="fw-bold">₹${row.amount || 0}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}')">
+              <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}', ${row.dueAmount || 0})">
                 Mark Paid
               </button>
             </td>
@@ -957,19 +962,29 @@
       }
     }
 
-    function openMarkPaidModal(rowIndex, type) {
+    function openMarkPaidModal(rowIndex, type, dueAmount = 0) {
+      document.getElementById('markPaidForm').reset();
       document.getElementById('mpRowIndex').value = rowIndex;
       document.getElementById('mpType').value = type;
       
       const sourceDiv = document.getElementById('mpSourceDiv');
+      const paidAmountDiv = document.getElementById('mpPaidAmountDiv');
+      const paidAmountInput = document.getElementById('mpPaidAmount');
+
       if (type === 'EXPENSE') {
         sourceDiv.style.display = 'block';
         document.getElementById('mpSource').required = true;
+        paidAmountDiv.style.display = 'none';
+        paidAmountInput.required = false;
       } else {
         sourceDiv.style.display = 'none';
         document.getElementById('mpSource').required = false;
+        paidAmountDiv.style.display = 'block';
+        paidAmountInput.required = true;
+        paidAmountInput.value = dueAmount;
       }
       
+      document.getElementById('mpDate').value = getToday();
       markPaidModal = new bootstrap.Modal(document.getElementById('markPaidModal'));
       markPaidModal.show();
     }
@@ -980,9 +995,10 @@
       
       const type = document.getElementById('mpType').value;
       const data = {
-        rowIndex: parseInt(document.getElementById('mpRowIndex').value),
+        rowIndex: parseInt(document.getElementById('mpRowIndex').value, 10),
+        modeOfPayment: document.getElementById('mpMode').value,
         paymentDate: document.getElementById('mpDate').value,
-        modeOfPayment: document.getElementById('mpMode').value
+        paidAmount: document.getElementById('mpPaidAmount').value
       };
       
       if (type === 'EXPENSE') {
