@@ -86,14 +86,47 @@ function setup() {
   let expenseSheet = ss.getSheetByName('Expenses');
   if (!expenseSheet) {
     expenseSheet = ss.insertSheet('Expenses');
+    const expenseHeaders = [
+      'Date', 'Type', 'Description', 'Details', 'Amount', 'Paid Amount', 'Due Amount',
+      'Payment Status', 'Source Of Payment', 'Mode Of Payment',
+      'Entry By', 'Payment Date'
+    ];
+    expenseSheet.getRange(1, 1, 1, expenseHeaders.length).setValues([expenseHeaders]);
+    expenseSheet.getRange(1, 1, 1, expenseHeaders.length).setFontWeight('bold');
+  } else {
+    // Migration: Check if 'Paid Amount' and 'Due Amount' exist
+    const expHeaders = expenseSheet.getRange(1, 1, 1, expenseSheet.getLastColumn()).getValues()[0];
+    const amountIndex = expHeaders.indexOf('Amount');
+    const expPaidIndex = expHeaders.indexOf('Paid Amount');
+
+    if (amountIndex !== -1 && expPaidIndex === -1) {
+      expenseSheet.insertColumnsAfter(amountIndex + 1, 2);
+      expenseSheet.getRange(1, amountIndex + 2).setValue('Paid Amount').setFontWeight('bold');
+      expenseSheet.getRange(1, amountIndex + 3).setValue('Due Amount').setFontWeight('bold');
+
+      // Auto-fill existing rows
+      const lastRow = expenseSheet.getLastRow();
+      if (lastRow > 1) {
+        const dataRange = expenseSheet.getRange(2, 1, lastRow - 1, expenseSheet.getLastColumn());
+        const sheetData = dataRange.getValues();
+        const newHeaders = expenseSheet.getRange(1, 1, 1, expenseSheet.getLastColumn()).getValues()[0];
+        const statusIdx = newHeaders.indexOf('Payment Status');
+        const amountIdx = newHeaders.indexOf('Amount');
+
+        for (let i = 0; i < sheetData.length; i++) {
+          const status = sheetData[i][statusIdx];
+          const amountVal = parseFloat(sheetData[i][amountIdx]) || 0;
+          if (status === 'PAID' || status === 'ADVANCE') {
+            expenseSheet.getRange(i + 2, amountIndex + 2).setValue(amountVal);
+            expenseSheet.getRange(i + 2, amountIndex + 3).setValue(0);
+          } else {
+            expenseSheet.getRange(i + 2, amountIndex + 2).setValue(0);
+            expenseSheet.getRange(i + 2, amountIndex + 3).setValue(amountVal);
+          }
+        }
+      }
+    }
   }
-  const expenseHeaders = [
-    'Date', 'Type', 'Description', 'Details', 'Amount', 
-    'Payment Status', 'Source Of Payment', 'Mode Of Payment', 
-    'Entry By', 'Payment Date'
-  ];
-  expenseSheet.getRange(1, 1, 1, expenseHeaders.length).setValues([expenseHeaders]);
-  expenseSheet.getRange(1, 1, 1, expenseHeaders.length).setFontWeight('bold');
 }
 
 /**
@@ -169,12 +202,21 @@ function addExpense(data) {
     const amount = parseFloat(data.amount) || 0;
     const paymentDate = (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') ? data.date : '';
     
+    let paidAmount = 0;
+    let dueAmount = amount;
+    if (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') {
+      paidAmount = amount;
+      dueAmount = 0;
+    }
+
     const rowData = [
       data.date,
       data.type,
       data.description,
       data.details,
       amount,
+      paidAmount,
+      dueAmount,
       data.paymentStatus,
       data.sourceOfPayment,
       data.modeOfPayment,
@@ -406,7 +448,7 @@ function getUnpaidExpenses(monthValue = '') {
     }
 
     const unpaid = data.filter(r => {
-      if (r['Payment Status'] !== 'UNPAID') return false;
+      if (r['Payment Status'] !== 'UNPAID' && r['Payment Status'] !== 'PARTIAL') return false;
       if (monthValue) {
         const d = parseDate(r['Date']);
         if (!d || d.getMonth() !== targetMonth || d.getFullYear() !== targetYear) {
@@ -420,6 +462,8 @@ function getUnpaidExpenses(monthValue = '') {
       type: r['Type'],
       description: r['Description'],
       amount: r['Amount'],
+      paidAmount: r['Paid Amount'],
+      dueAmount: r['Due Amount'],
       entryBy: r['Entry By']
     }));
     return { success: true, data: unpaid };
@@ -552,11 +596,41 @@ function markExpensePaid(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Expenses');
-    // Columns: Payment Status (6), Source Of Payment (7), Mode Of Payment (8), Payment Date (10)
-    sheet.getRange(data.rowIndex, 6).setValue('PAID');
-    sheet.getRange(data.rowIndex, 7).setValue(data.sourceOfPayment);
-    sheet.getRange(data.rowIndex, 8).setValue(data.modeOfPayment);
-    sheet.getRange(data.rowIndex, 10).setValue(data.paymentDate);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    const statusCol = headers.indexOf('Payment Status') + 1;
+    const sourceCol = headers.indexOf('Source Of Payment') + 1;
+    const modeCol = headers.indexOf('Mode Of Payment') + 1;
+    const dateCol = headers.indexOf('Payment Date') + 1;
+    const amountCol = headers.indexOf('Amount') + 1;
+    const paidCol = headers.indexOf('Paid Amount') + 1;
+    const dueCol = headers.indexOf('Due Amount') + 1;
+
+    if (statusCol <= 0 || sourceCol <= 0 || modeCol <= 0 || dateCol <= 0 || amountCol <= 0 || paidCol <= 0 || dueCol <= 0) {
+      throw new Error("Could not find required columns in the sheet headers. Please ensure 'Paid Amount' and 'Due Amount' exist in Row 1.");
+    }
+
+    const currentTotal = parseFloat(sheet.getRange(data.rowIndex, amountCol).getValue()) || 0;
+    const currentPaid = parseFloat(sheet.getRange(data.rowIndex, paidCol).getValue()) || 0;
+
+    const newPaidAmount = parseFloat(data.paidAmount) || 0;
+    const totalPaid = currentPaid + newPaidAmount;
+    let newDue = currentTotal - totalPaid;
+
+    if (newDue < 0) newDue = 0; // Prevent negative due
+
+    let newStatus = 'PARTIAL';
+    if (newDue <= 0) {
+      newStatus = 'PAID';
+    }
+
+    sheet.getRange(data.rowIndex, paidCol).setValue(totalPaid);
+    sheet.getRange(data.rowIndex, dueCol).setValue(newDue);
+    sheet.getRange(data.rowIndex, statusCol).setValue(newStatus);
+    sheet.getRange(data.rowIndex, sourceCol).setValue(data.sourceOfPayment);
+    sheet.getRange(data.rowIndex, modeCol).setValue(data.modeOfPayment);
+    sheet.getRange(data.rowIndex, dateCol).setValue(data.paymentDate);
+
     return { success: true, message: 'Saved successfully' };
   } catch (error) {
     return { success: false, message: error.toString() };

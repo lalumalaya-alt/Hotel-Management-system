@@ -901,6 +901,7 @@
           <th>Type</th>
           <th>Description</th>
           <th>Amount</th>
+          <th>Due Amount</th>
           <th class="text-end">Action</th>
         `;
         google.script.run.withSuccessHandler(res => {
@@ -942,6 +943,7 @@
             <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
             <td class="fw-bold">₹${row.amount || 0}</td>
+            <td class="fw-bold text-danger">₹${row.dueAmount || 0}</td>
             <td class="text-end">
               <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}', ${row.dueAmount || 0})">
                 Mark Paid
@@ -974,16 +976,15 @@
       if (type === 'EXPENSE') {
         sourceDiv.style.display = 'block';
         document.getElementById('mpSource').required = true;
-        paidAmountDiv.style.display = 'none';
-        paidAmountInput.required = false;
       } else {
         sourceDiv.style.display = 'none';
         document.getElementById('mpSource').required = false;
-        paidAmountDiv.style.display = 'block';
-        paidAmountInput.required = true;
-        paidAmountInput.value = dueAmount;
       }
       
+      paidAmountDiv.style.display = 'block';
+      paidAmountInput.required = true;
+      paidAmountInput.value = dueAmount;
+
       document.getElementById('mpDate').value = getToday();
       markPaidModal = new bootstrap.Modal(document.getElementById('markPaidModal'));
       markPaidModal.show();
