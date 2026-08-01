@@ -3563,15 +3563,51 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
 
     function CalendarView({user,role}){
       const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
+      const [rooms, setRooms] = useState([]);
+      const [checkIns, setCheckIns] = useState([]);
       const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
       const isAdmin=role==='admin';
 
       useEffect(()=>{loadBookings();},[]);
-      const loadBookings=()=>{setLoading(true);google.script.run.withSuccessHandler(r=>{setLoading(false);const data=Array.isArray(r)?r:[];const filtered=isAdmin?data:data.filter(b=>b.email===user);setBookings(filtered);}).withFailureHandler(e=>{setLoading(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
+      const loadBookings=()=>{
+        setLoading(true);
+        const pBookings = new Promise((resolve, reject) => {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllBookings();
+        });
+        const pRooms = new Promise((resolve, reject) => {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllRooms();
+        });
+        const pCheckIns = new Promise((resolve, reject) => {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllCheckIns();
+        });
+
+        Promise.all([pBookings, pRooms, pCheckIns]).then(([bData, rData, cData]) => {
+          setLoading(false);
+          const data = Array.isArray(bData) ? bData : [];
+          // Availability should always be global, remove isAdmin filter
+          setBookings(data);
+          setRooms(Array.isArray(rData) ? rData : []);
+          setCheckIns(Array.isArray(cData) ? cData : []);
+        }).catch(e => {
+          setLoading(false);
+          Swal.fire({icon:'error',text:e.message});
+        });
+      };
 
       const prevMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()-1);setCurrentDate(d);};
       const nextMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()+1);setCurrentDate(d);};
       const goToday=()=>setCurrentDate(new Date());
+
+
+      // Baseline Inventory Math
+      const baselineInventory = {};
+      const roomToTypeMap = {};
+      rooms.forEach(r => {
+        if (r.status !== 'Maintenance' && r.roomType) {
+          baselineInventory[r.roomType] = (baselineInventory[r.roomType] || 0) + 1;
+          roomToTypeMap[r.roomNo] = r.roomType;
+        }
+      });
 
       const year=currentDate.getFullYear();const month=currentDate.getMonth();
       const firstDay=new Date(year,month,1).getDay();
@@ -3583,13 +3619,75 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       for(let d=1;d<=daysInMonth;d++)cells.push({day:d,isOther:false,date:new Date(year,month,d)});
       const rem=7-(cells.length%7);if(rem<7)for(let i=1;i<=rem;i++)cells.push({day:i,isOther:true,date:new Date(year,month+1,i)});
 
-      const getBookingsForDate=(date)=>{
-        const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
-        const dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
-        return bookings.filter(b=>{if(!b.checkIn||!b.checkOut)return false;const ci=new Date(b.checkIn);const co=new Date(b.checkOut);
-        // Exclude the actual check-out day block from occupancy maps
-        const actualCheckoutStart = new Date(co.getFullYear(), co.getMonth(), co.getDate());
-        return ci < dayEnd && actualCheckoutStart > dayStart;});
+      const getAvailabilityForDate = (date) => {
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+
+        // Clone baseline
+        const availability = { ...baselineInventory };
+
+        // Subtract Active Check-Ins
+        checkIns.forEach(ci => {
+          if (!ci.checkInDate) return;
+          const ciDate = new Date(ci.checkInDate);
+          const coDate = ci.checkOutDate ? new Date(ci.checkOutDate) : new Date(dayEnd.getFullYear() + 1, 0, 1);
+
+          // Using same actualCheckout logic as before: room is free on the checkout day afternoon
+          const actualCheckoutStart = new Date(coDate.getFullYear(), coDate.getMonth(), coDate.getDate());
+
+          if (ciDate < dayEnd && actualCheckoutStart > dayStart) {
+            if (ci.roomNumbers) {
+              const rNums = ci.roomNumbers.split(',').map(s => s.trim());
+              rNums.forEach(num => {
+                const type = roomToTypeMap[num];
+                if (type && availability[type] !== undefined) {
+                  availability[type]--;
+                }
+              });
+            }
+          }
+        });
+
+        // Subtract Advance Bookings
+        bookings.forEach(b => {
+          if (b.status !== 'Booked' && b.status !== 'Confirmed') return;
+          if (!b.checkIn || !b.checkOut) return;
+
+          const ciDate = new Date(b.checkIn);
+          const coDate = new Date(b.checkOut);
+          const actualCheckoutStart = new Date(coDate.getFullYear(), coDate.getMonth(), coDate.getDate());
+
+          if (ciDate < dayEnd && actualCheckoutStart > dayStart) {
+            if (b.roomNo) {
+              const roomStr = String(b.roomNo).trim();
+
+              // Handle format like "Standard (2)"
+              const typeMatch = roomStr.match(/([a-zA-Z\s]+)\s*\((\d+)\)/);
+              if (typeMatch) {
+                const type = typeMatch[1].trim();
+                const qty = parseInt(typeMatch[2], 10);
+                if (availability[type] !== undefined) {
+                  availability[type] -= qty;
+                }
+              } else {
+                // Handle format like "105" (physical room)
+                const nums = roomStr.split(',').map(s => s.trim());
+                nums.forEach(num => {
+                  const type = roomToTypeMap[num];
+                  if (type && availability[type] !== undefined) {
+                    availability[type]--;
+                  }
+                });
+              }
+            }
+          }
+        });
+
+        return Object.keys(availability).map(type => ({
+          type,
+          count: availability[type]
+        }));
       };
 
       const today=new Date();
@@ -3599,9 +3697,9 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-      const showMoreBookings=(dayBookings,dateStr)=>{
-        const html=dayBookings.map(bk=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px" class="swal-bk-row" data-ticket="'+bk.ticketId+'"><span class="status-badge '+(bk.status==='Booked'?'status-booked':'status-checkedout')+'">'+bk.status+'</span> <strong>#'+bk.roomNo+'</strong> '+bk.guestName+'</div>').join('');
-        Swal.fire({title:'Bookings on '+dateStr,html:'<div style="max-height:300px;overflow-y:auto">'+html+'</div>',showConfirmButton:false,showCloseButton:true,width:420,didOpen:()=>{document.querySelectorAll('.swal-bk-row').forEach(el=>{el.addEventListener('click',()=>{const tid=el.getAttribute('data-ticket');const bk=dayBookings.find(b=>b.ticketId===tid);if(bk){Swal.close();setSelectedBooking(bk);}});});}});
+      const showMoreAvailability=(availability,dateStr)=>{
+        const html=availability.map(avail=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;"><span>'+avail.type+'</span> <strong style="color:'+(avail.count<=0?'red':'var(--navy-accent)')+'">'+avail.count+' available</strong></div>').join('');
+        Swal.fire({title:'Availability on '+dateStr,html:'<div style="max-height:300px;overflow-y:auto">'+html+'</div>',showConfirmButton:true,showCloseButton:true,width:420});
       };
 
       if(loading)return <div className="data-section"><TableSkeleton rows={5} columns={7}/></div>;
@@ -3613,13 +3711,17 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         <div className="calendar-grid">
           {dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
           {cells.map((cell,idx)=>{
-            const dayBookings=cell.isOther?[]:getBookingsForDate(cell.date);
+            const dailyAvailability = cell.isOther ? [] : getAvailabilityForDate(cell.date);
             const cls=['calendar-cell'];if(cell.isOther)cls.push('other-month');if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
             const maxVisible=4;
             const dateStr=fmtDate(cell.date.toISOString());
             return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
-              {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
-              {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
+              {dailyAvailability.slice(0,maxVisible).map((avail,i)=>(
+                <div key={i} className={'calendar-booking'} style={{backgroundColor: 'transparent', color: avail.count <= 0 ? 'red' : 'var(--navy-accent)', fontWeight: 'bold', padding: '2px 4px', borderLeft: 'none', margin: '2px 0'}}>
+                  {avail.type}: {avail.count}
+                </div>
+              ))}
+              {dailyAvailability.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreAvailability(dailyAvailability,dateStr)}>+{dailyAvailability.length-maxVisible} more</div>}
             </div>);
           })}
         </div>
