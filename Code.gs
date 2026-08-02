@@ -66,7 +66,6 @@ const BOOKING_GST_TYPE_COL = 22;
 const BOOKING_FIX_RENT_COL = 23;
 const BOOKING_FIX_RENT_AMT_COL = 24;
 const BOOKING_DISC_PCT_COL = 25; // Added back to prevent ReferenceError in Booking.gs
-const BOOKING_BILLING_MODE_COL = 26;
 
 // LOGIN sheet columns (0-based)
 const LOGIN_USERNAME_COL   = 0;
@@ -168,7 +167,6 @@ const CI_BILL_TO_COL        = 30;
 const CI_DISCOUNT_COL       = 31;
 const CI_STATUS_COL         = 32;
 const CI_CREATED_AT_COL     = 33;
-const CI_BILLING_MODE_COL   = 34;
 
 // RESTAURANT sheet columns (0-based)
 const REST_ORDER_ID_COL          = 0;
@@ -328,33 +326,6 @@ function daysBetween(d1, d2) {
   let days = Math.round(diff / (1000 * 3600 * 24));
   return days;
 }
-function calculateNights(checkInDateStr, checkInTimeStr, checkOutDateStr, checkOutTimeStr, billingMode) {
-  if (billingMode === '24-Hour') {
-    let checkIn = new Date(checkInDateStr);
-    let checkOut = new Date(checkOutDateStr);
-
-    // Parse time
-    if (checkInTimeStr) {
-      let parts = checkInTimeStr.split(':');
-      checkIn.setHours(parseInt(parts[0]) || 0, parseInt(parts[1]) || 0, 0, 0);
-    }
-    if (checkOutTimeStr) {
-      let parts = checkOutTimeStr.split(':');
-      checkOut.setHours(parseInt(parts[0]) || 0, parseInt(parts[1]) || 0, 0, 0);
-    }
-
-    let diffMs = checkOut.getTime() - checkIn.getTime();
-    if (isNaN(diffMs) || diffMs <= 0) return 1;
-
-    let nights = Math.ceil(diffMs / 86400000);
-    return nights < 1 ? 1 : nights;
-  } else {
-    // Standard calendar day logic
-    let nights = daysBetween(new Date(checkInDateStr), new Date(checkOutDateStr));
-    return nights < 1 ? 1 : nights;
-  }
-}
-
 
 /**
  * Sequential ID generator using SETTINGS sheet as counter store.
@@ -454,11 +425,10 @@ function bookRoom(bookingDetails) {
     let tax = parseFloat(bookingDetails.tax || "0") || 0;
     let paymentMethod = bookingDetails.paymentMethod || "Cash";
 
-    let nights = calculateNights(bookingDetails.checkIn, bookingDetails.checkInTime, bookingDetails.checkOut, bookingDetails.checkOutTime, billingMode);
+    let nights = daysBetween(checkInDate, checkOutDate);
     if (nights < 1) nights = 1;
 
     let discountPercent = parseFloat(bookingDetails.discountPercent || "0") || 0; 
-    let billingMode = bookingDetails.billingMode || "Standard";
     let discount = (totalRoomRate * totalRoomsCount * nights * discountPercent) / 100;
 
     let roomNosStr = roomNosArr.join(', ');
@@ -784,9 +754,8 @@ function updateBooking(rowIndex, bookingData) {
       }
     });
 
-    let checkInTimeStr = bookingData.checkInTime !== undefined ? bookingData.checkInTime : (row[BOOKING_CHECKIN_TIME_COL] || "14:00").toString();
-    let checkOutTimeStr = bookingData.checkOutTime !== undefined ? bookingData.checkOutTime : (row[BOOKING_CHECKOUT_TIME_COL] || "12:00").toString();
-    let nights = calculateNights(checkInDate.toISOString(), checkInTimeStr, checkOutDate.toISOString(), checkOutTimeStr, billingMode);
+    let nights = daysBetween(checkInDate, checkOutDate);
+    if (nights < 1) nights = 1;
     const totalRoomRate = bookingData.roomRate !== undefined ? parseFloat(bookingData.roomRate) : existingRate;
     const finalAmount = bookingData.totalAmount !== undefined ? parseFloat(bookingData.totalAmount) : 0;
     const tax = bookingData.tax !== undefined ? parseFloat(bookingData.tax) : 0;
@@ -1219,9 +1188,7 @@ function getActiveCheckInsWithStats() {
       // Calculate nightsStayed
       let ciDate = new Date(ci.checkInDate);
       if (isNaN(ciDate.getTime())) ciDate = now; // Fallback
-      let billingMode = (ciData[i][CI_BILLING_MODE_COL] || "Standard").toString();
-      let ciTime = (ciData[i][CI_CHECKIN_TIME_COL] || "14:00").toString();
-      let days = calculateNights(ciDate.toISOString(), ciTime, now.toISOString(), "", billingMode);
+      let days = daysBetween(ciDate, now);
       if (days < 1) days = 1;
 
       const nightsStayed = days;
@@ -1924,8 +1891,7 @@ function processFullCheckout(checkInId, checkoutData) {
     const actualCheckOutDate = checkoutData.checkOutDate ? new Date(checkoutData.checkOutDate) : new Date();
     const checkOutTime = checkoutData.checkOutTime || (ci[CI_CHECKOUT_TIME_COL] || '12:00').toString();
 
-    let billingMode = (ci[CI_BILLING_MODE_COL] || "Standard").toString();
-    let nights = calculateNights(checkInDate.toISOString(), checkInTime, actualCheckOutDate.toISOString(), checkOutTime, billingMode);
+    let nights = daysBetween(checkInDate, actualCheckOutDate);
     if (nights < 1) nights = 1;
 
     // Calculate room rent using StaySegments if available
@@ -2092,9 +2058,7 @@ function processFullCheckout(checkInId, checkoutData) {
     // Build day-by-day data for invoice
     let dayByDay = [];
     let grandRunning = 0;
-    let calendarDaysSpan = daysBetween(checkInDate, actualCheckOutDate) + 1;
-    if (nights === 1 && calendarDaysSpan === 1) calendarDaysSpan = 2;
-    for (let d = 0; d < calendarDaysSpan; d++) {
+    for (let d = 0; d < nights; d++) {
       let dayDate = new Date(checkInDate);
       dayDate.setDate(dayDate.getDate() + d);
       let y = dayDate.getFullYear();
@@ -2103,8 +2067,8 @@ function processFullCheckout(checkInId, checkoutData) {
       let dateStr = y + '-' + m + '-' + dt;
 
       // Find applicable segment rate for this specific day
-      let dayRoom = (d < nights) ? dailyRoomRate : 0; // fallback
-      if (staySegments.length > 0 && d < nights) {
+      let dayRoom = dailyRoomRate; // fallback
+      if (staySegments.length > 0) {
         // Find segment active on this day. If multiple, take the last one started that day.
         for (let s = staySegments.length - 1; s >= 0; s--) {
           let seg = staySegments[s];
@@ -2294,9 +2258,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
              latestCheckInTime = (ciData[i][CI_CHECKIN_TIME_COL] || '14:00').toString();
           }
 
-          let ciBillingMode = (ciData[i][CI_BILLING_MODE_COL] || "Standard").toString();
-          let cidTime = (ciData[i][CI_CHECKIN_TIME_COL] || "14:00").toString();
-          let nights = calculateNights(cidDate.toISOString(), cidTime, actualCheckOutDate.toISOString(), checkOutTime, ciBillingMode);
+          let nights = daysBetween(cidDate, actualCheckOutDate);
           if (nights < 1) nights = 1;
           
           let staySegments = [];
@@ -2473,9 +2435,8 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     // 5. Build Synthetic DayByDay for PDF
     let dayByDay = [];
     let grandRunning = 0;
-    let calendarDaysSpan = daysBetween(earliestCheckInDate, actualCheckOutDate) + 1;
-    if (combinedNights === 1 && calendarDaysSpan === 1) calendarDaysSpan = 2;
-    for (let d = 0; d < calendarDaysSpan; d++) {
+
+    for (let d = 0; d < combinedNights; d++) {
       let dayDate = new Date(earliestCheckInDate);
       dayDate.setDate(dayDate.getDate() + d);
       let y = dayDate.getFullYear();
@@ -2501,7 +2462,6 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
           dayRoom += seg.rate;
         }
       });
-      if (d >= combinedNights) dayRoom = 0;
       
       let dayCats = { ExtraBed: 0, FoodBeverage: 0, Laundry: 0 };
       
@@ -2715,7 +2675,6 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
         roomTypes: combinedRoomTypes.join(', '), 
         numberOfRooms: allRoomNosArr.length,
         pax: totalPax, 
-        billingMode: (primaryGuestData.billingMode || "Standard"),
         extraPerson: 0, 
         foodPlan: "Multiple", 
         billTo: primaryGuestData.billTo,
@@ -4113,11 +4072,11 @@ function initDataStructure() {
   const config = [
     { sheetName: LOGIN_SHEET_NAME, headers: ["Username", "Password", "Role"] },
     { sheetName: ROOMS_SHEET_NAME, headers: ["Room No", "Room Type", "Room Rate", "Room Status"] },
-    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Extra Person", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount", "Discount Percent", "Billing Mode"] },
+    { sheetName: BOOKINGS_SHEET_NAME, headers: ["Ticket ID", "Room No", "Guest Name", "Phone", "Email", "Check-In", "Check-Out", "Status", "Room Rate", "Discount", "Tax", "Payment Method", "Total Amount", "Payment Status", "Amount Paid", "CheckIn Time", "CheckOut Time", "Food Plan", "Extra Person", "Advance Paid", "Num Rooms", "Linked CheckIn", "GST Type", "Fix Rent", "Fix Rent Amount", "Discount Percent"] },
     { sheetName: INVOICES_SHEET_NAME, headers: ["InvoiceID", "GuestName", "Phone", "Email", "CustomerTIN", "Currency", "CreatedDate", "DueDate", "Status", "Items", "SubTotal", "GSTEnabled", "GSTPercent", "GSTAmount", "Discount", "TotalAmount", "Notes", "PDFDriveLink", "CreatedBy", "UpdatedAt"] },
     { sheetName: SETTINGS_SHEET_NAME, headers: ["HotelName", "HotelAddress", "HotelPhone", "HotelEmail", "HotelTIN", "LogoFileId", "LogoUrl", "GSTDefaultPercent", "NextInvoiceNum", "PDFDriveFolderId", "LogoDriveFolderId", "NextCheckInNum", "NextBillNum"] },
     { sheetName: CUSTOMERS_SHEET_NAME, headers: ["Customer ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Linked Username", "Created Date"] },
-    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Room Pax Breakdown", "Advance Paid", "Payment Method", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At", "Billing Mode"] },
+    { sheetName: CHECKIN_SHEET_NAME, headers: ["CheckIn ID", "Linked Ticket ID", "Guest Name", "Company Name", "GST Number", "Identity Proof", "Mobile", "Email", "Village/Street", "City", "State", "Pin Code", "Country", "Purpose of Visit", "Check-In Date", "Check-In Time", "Check-Out Date", "Check-Out Time", "Room Numbers", "Room Types", "Number of Rooms", "Pax", "Room Pax Breakdown", "Advance Paid", "Payment Method", "Extra Person", "Food Plan", "GST Type", "Fix Room Rent", "Fix Room Rent Amount", "Bill To", "Discount Percent", "Status", "Created At"] },
     { sheetName: RESTAURANT_SHEET_NAME, headers: ["OrderID", "CheckInID", "RoomNo", "Date", "MealPeriod", "ItemName", "Quantity", "Rate", "TotalAmount", "Status", "BilledCheckInID", "AddedBy"] },
     { sheetName: STAY_SEGMENTS_SHEET_NAME, headers: ["Segment ID", "CheckIn ID", "Room Numbers", "Rate", "Pax", "Start Date", "End Date", "Created By", "Timestamp"] },
     { sheetName: MENU_SHEET_NAME, headers: ["ItemName", "FoodCategory", "DefaultPrice"] }
