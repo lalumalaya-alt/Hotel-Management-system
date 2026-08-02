@@ -2435,7 +2435,7 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     // 5. Build Synthetic DayByDay for PDF
     let dayByDay = [];
     let grandRunning = 0;
-    
+
     for (let d = 0; d < combinedNights; d++) {
       let dayDate = new Date(earliestCheckInDate);
       dayDate.setDate(dayDate.getDate() + d);
