@@ -744,7 +744,7 @@
       const doc={pageSize:'A4',pageOrientation:'landscape',pageMargins:[20,20,20,20],content:[
         {text:d.hotelName||'Hill View Eco Retreat',style:'hdr',alignment:'center'},{text:(d.hotelAddress||'')+' | '+(d.hotelPhone||'')+' | '+(d.hotelEmail||''),alignment:'center',fontSize:9,margin:[0,0,0,5]},
         d.hotelTIN?{text:'GSTIN: '+d.hotelTIN,alignment:'center',fontSize:9,margin:[0,0,0,8]}:{text:'',margin:[0,0,0,8]},
-        {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
+        {columns:[{width:'60%',text:[{text:'Guest: ',bold:true},d.guestName+'\n',d.companyName?{text:'Company: '+d.companyName+'\n'}:'',(d.address || d.city || d.state || d.pinCode || d.country)?{text:'Address: '+[d.address, d.city, d.state ? d.state + (d.pinCode ? '-' + d.pinCode : '') : d.pinCode, d.country].filter(Boolean).join(', ')+'\n'}:'',d.gstNumber?{text:'GSTIN: '+d.gstNumber+'\n'}:'',{text:'Mobile: '+(d.mobile||'-')+'\n'}],fontSize:10},{width:'40%',table:{widths:['auto','*'],body:[['Bill No#',d.billNumber||''],['GR No',d.checkInId||''],['Check In',fmtD(d.checkInDate)+' '+d.checkInTime],['Check Out',fmtD(d.checkOutDate)+' '+d.checkOutTime],['Plan',planLabel(d.foodPlan)],['Billing Mode',d.billingMode||'Standard'],['Pax#',(d.pax||1).toString()],['Room#',(d.numberOfRooms||1).toString()]]},fontSize:9}]},
         {text:'\n'},{table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:[[{text:'Date',style:'th'},{text:'Rooms',style:'th'},{text:'E.Bed',style:'th'},{text:'Fds&Bvg',style:'th'},{text:'Laundry',style:'th'},{text:'Day Total',style:'th'},{text:'',style:'th'}],...dayRows,totRow.map((v,i)=>i===0?{text:v,bold:true}:{text:v,bold:true})]},fontSize:8},
         {text:'\n'},{columns:[{width:'60%',text:''},{width:'40%',table:{widths:['*','auto'],body:[['Total Amount',{text:n2(liveSubtotal),alignment:'right'}],['Discount ('+n2(d.discountPercent||0)+'%)',{text:'- '+n2(liveDiscount),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'SGST '+n2(d.sgstPercent||0)+'%',{text:n2(liveSgst),alignment:'right'}],[(d.gstType==='Including'?'(Incl) ':'')+'CGST '+n2(d.cgstPercent||0)+'%',{text:n2(liveCgst),alignment:'right'}],['Bill Amount',{text:n2(liveBillAmount),alignment:'right',bold:true}],['Less Advance',{text:'- '+n2(liveAdvance),alignment:'right'}],[{text:'Net Amount',bold:true},{text:n2(liveNetAmount),alignment:'right',bold:true,fontSize:12}]]},fontSize:10}]},
         {text:'\nRooms: '+(d.roomNumbers||''),fontSize:9,margin:[0,5,0,0]},{text:numToWords(liveBillAmount),italics:true,fontSize:10,margin:[0,5,0,20]},
@@ -994,7 +994,7 @@
 
         <div style={{width:'100%', marginBottom:'30px'}}>
           <div className="dash-table-card">
-            <h3><i className="fas fa-file-invoice-dollar"></i> Today's Daily Sales & Collections</h3>
+            <h3><i className="fas fa-file-invoice-dollar"></i> Today's Daily Sales (Paid Invoices)</h3>
             <div style={{overflowX:'auto'}}>
               <table className="dash-table" style={{width:'100%'}}>
                 <thead>
@@ -1003,8 +1003,7 @@
                     <th>Guest</th>
                     <th style={{textAlign:'right'}}>Room Rent</th>
                     <th style={{textAlign:'right'}}>Food &amp; Services</th>
-                    <th style={{textAlign:'right', color:'var(--success-color)'}}>Advance</th>
-                    <th style={{textAlign:'right'}}>Total Collected</th>
+                    <th style={{textAlign:'right'}}>Total Sales</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1014,12 +1013,11 @@
                       <td style={{fontWeight:600}}>{r.guestName}</td>
                       <td style={{textAlign:'right'}}>{fmtCur(r.roomRent)}</td>
                       <td style={{textAlign:'right'}}>{fmtCur(r.foodRevenue)}</td>
-                      <td style={{textAlign:'right', fontWeight: r.advanceCollected > 0 ? 'bold' : 'normal', color: r.advanceCollected > 0 ? 'var(--success-color)' : 'inherit'}}>{fmtCur(r.advanceCollected || 0)}</td>
                       <td style={{textAlign:'right', fontWeight:600, color:'var(--navy-primary)'}}>{fmtCur(r.totalSales)}</td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan="6" style={{textAlign:'center', color:'#999', padding:'30px'}}>
+                      <td colSpan="5" style={{textAlign:'center', color:'#999', padding:'30px'}}>
                         <i className="fas fa-inbox" style={{fontSize:'24px', display:'block', marginBottom:'8px', color:'#ccc'}}></i>
                         No paid invoices today
                       </td>
@@ -1032,7 +1030,6 @@
                       <td colSpan="2" style={{textAlign:'right'}}>Grand Total:</td>
                       <td style={{textAlign:'right'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.roomRent, 0))}</td>
                       <td style={{textAlign:'right'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.foodRevenue, 0))}</td>
-                      <td style={{textAlign:'right', color:'var(--success-color)'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + (r.advanceCollected || 0), 0))}</td>
                       <td style={{textAlign:'right', color:'var(--navy-primary)'}}>{fmtCur(todaysPaidSales.reduce((sum, r) => sum + r.totalSales, 0))}</td>
                     </tr>
                   </tfoot>
@@ -1213,10 +1210,18 @@ return (ci < cCo && co > cCi);
       const submit=(e)=>{e.preventDefault();if(selectedCount===0){Swal.fire({icon:'warning',text:'Please select at least one room'});return;}setSv(true);
         const roomNosStr = Object.entries(selectedRoomsByType).map(([type, qty]) => `${type} (${qty})`).join(', ');
         const calcTotals = calcTotal();
-        const payload={...fd, roomNos:roomNosStr, roomRate:(combinedRate/selectedCount), totalAmount:calcTotals?.total||0, tax:calcTotals?.tax||0};
+        const payload={...fd, roomNos:roomNosStr, roomRate:(combinedRate/selectedCount), totalAmount:calcTotals?.total||0, tax:calcTotals?.tax||0, billingMode:fd.billingMode};
         if(isEdit){google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).updateBooking(booking.rowIndex,payload);}
         else{google.script.run.withSuccessHandler(r=>{setSv(false);if(r.success){Swal.fire({icon:'success',text:r.message,timer:2500,showConfirmButton:false});onClose();setTimeout(onBooked,100);}else Swal.fire({icon:'error',text:r.message});}).withFailureHandler(err=>{setSv(false);Swal.fire({icon:'error',text:err.message});}).bookRoom(payload);}};
-      const calcTotal=()=>{if(!fd.checkIn||!fd.checkOut)return null;const ci=new Date(fd.checkIn);const co=new Date(fd.checkOut);if(isNaN(ci)||isNaN(co)||co<=ci)return null;let n=Math.ceil((co-ci)/(1000*3600*24));if(n<1)n=1;const epCharge = (parseInt(fd.extraPerson) || 0) * 500 * n;const base=(combinedRate*n) + epCharge;const d=(parseFloat(fd.discountPercent)||0)*base/100;const sub=base-d;let t=0;if(fd.gstType==='Including'){t=sub-(sub/(1+0.16));}else if(fd.gstType==='Excluding'){t=sub*0.16;}return{nights:n,base,epCharge,disc:d,tax:t,total:fd.gstType==='Excluding'?sub+t:sub};};
+      const calcTotal=()=>{if(!fd.checkIn||!fd.checkOut)return null;const ci=new Date(fd.checkIn);const co=new Date(fd.checkOut);if(isNaN(ci)||isNaN(co)||co<=ci)return null;let n=Math.ceil((co-ci)/(1000*3600*24));
+        if(fd.billingMode==="24-Hour" && fd.checkInTime && fd.checkOutTime) {
+            const exactCi=new Date(fd.checkIn+"T"+fd.checkInTime);
+            const exactCo=new Date(fd.checkOut+"T"+fd.checkOutTime);
+            if(!isNaN(exactCi) && !isNaN(exactCo)) {
+                n=Math.ceil((exactCo-exactCi)/86400000);
+            }
+        }
+        if(n<1)n=1;const epCharge = (parseInt(fd.extraPerson) || 0) * 500 * n;const base=(combinedRate*n) + epCharge;const d=(parseFloat(fd.discountPercent)||0)*base/100;const sub=base-d;let t=0;if(fd.gstType==='Including'){t=sub-(sub/(1+0.16));}else if(fd.gstType==='Excluding'){t=sub*0.16;}return{nights:n,base,epCharge,disc:d,tax:t,total:fd.gstType==='Excluding'?sub+t:sub};};
       const ct=calcTotal();
       return(<div className="modal-overlay" onClick={onClose}><div className="modal modal-wide" onClick={e=>e.stopPropagation()}><div className="modal-header"><h3><i className={`fas ${isEdit?'fa-edit':'fa-calendar-plus'}`}></i> {isEdit?'Edit':'New Advance'} Booking</h3><button className="close-btn" onClick={onClose}><i className="fas fa-times"></i></button></div><div className="modal-body"><form onSubmit={submit}>
         <div className="form-grid">
@@ -1238,6 +1243,7 @@ return (ci < cCo && co > cCi);
           <div className="form-group"><label>Mode of Payment</label><select value={fd.paymentMethod} onChange={e=>setFd({...fd,paymentMethod:e.target.value})}><option value="">Please Select</option><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Online</option><option>UPI</option></select></div>
           <div className="form-group"><label>Food Plan</label><select value={fd.foodPlan} onChange={e=>setFd({...fd,foodPlan:e.target.value})}><option value="None">None</option><option value="Including Breakfast">Including Breakfast</option><option value="Including Breakfast and Dinner">Including Breakfast and Dinner</option></select></div>
           <div className="form-group"><label>Discount (%)</label><input type="number" step="0.01" min="0" max="100" value={fd.discountPercent} onChange={e=>setFd({...fd,discountPercent:e.target.value})}/></div>
+          <div className="form-group"><label>Billing Mode</label><select value={fd.billingMode} onChange={e=>setFd({...fd,billingMode:e.target.value})}><option value="Standard">Standard</option><option value="24-Hour">24-Hour</option></select></div>
           <div className="form-group"><label>GST Type</label><select value={fd.gstType} onChange={e=>setFd({...fd,gstType:e.target.value})}><option>Excluding</option><option>Including</option><option>None</option></select></div>
         </div>
         {ct&&<div className="totals-section" style={{marginTop:'15px'}}><div className="totals-row"><span>Combined Room Rate x {ct.nights} night(s)</span><span>{fmtCur(ct.base - (ct.epCharge || 0))}</span></div>{(ct.epCharge > 0) && <div className="totals-row"><span>Extra Person Charge</span><span>{fmtCur(ct.epCharge)}</span></div>}{ct.disc>0&&<div className="totals-row"><span>Discount ({fd.discountPercent}%)</span><span style={{color:'var(--danger)'}}>- {fmtCur(ct.disc)}</span></div>}{ct.tax>0&&<div className="totals-row"><span>GST (16%) {fd.gstType==='Including'?'(Incl)':''}</span><span>{fmtCur(ct.tax)}</span></div>}<div className="totals-row grand-total"><span>Estimated Total</span><span>{fmtCur(ct.total)}</span></div>{parseFloat(fd.advancePaid)>0&&<div className="totals-row"><span>Advance Paid</span><span style={{color:'var(--success)'}}>- {fmtCur(parseFloat(fd.advancePaid))}</span></div>}</div>}
@@ -1294,7 +1300,7 @@ return (ci < cCo && co > cCi);
       const [saving,setSaving]=useState(false);
       const tRef=useRef(null);
       const [updateRec,setUpdateRec]=useState(null);
-      const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});
+      const [fd,setFd]=useState({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0,billingMode:'Standard'});
       const [activeCis, setActiveCis] = useState([]);
       const [showModal, setShowModal] = useState(false);
       const [customers, setCustomers] = useState([]);
@@ -1622,7 +1628,7 @@ const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.g
 
       const resetForm=()=>{setFd({guestName:'',companyName:'',gstNumber:'',identityProof:'',mobile:'',email:'',address:'',city:'',state:'',pinCode:'',country:'',purposeOfVisit:'',checkInDate:new Date().toISOString().split('T')[0],checkInTime:'14:00',checkOutDate:'',checkOutTime:'12:00',pax:1,roomPaxBreakdown:'',advancePaid:0,paymentMethod:'',extraPerson:0,foodPlan:'None',gstType:'Excluding',fixRoomRentAmount:'',billTo:'Individual',discountPercent:0});setSelectedRooms([]);setLinkedBooking(null);setSelAdvBkId('');setEditRowIndex(null);setSelCust('');};
 
-      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0,city:ci.city||'',state:ci.state||'',pinCode:ci.pinCode||'',country:ci.country||'',roomPaxBreakdown:ci.roomPaxBreakdown||'',paymentMethod:ci.paymentMethod||''});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
+      const handleEdit=(ci)=>{setFd({...ci,checkInDate:ci.checkInDate?ci.checkInDate.split('T')[0]:'',checkOutDate:ci.checkOutDate?ci.checkOutDate.split('T')[0]:'',checkInTime:ci.checkInTime||'14:00',checkOutTime:ci.checkOutTime||'12:00',fixRoomRentAmount:ci.fixRoomRentAmount||'',discountPercent:ci.discountPercent||0,billingMode:ci.billingMode||'Standard',city:ci.city||'',state:ci.state||'',pinCode:ci.pinCode||'',country:ci.country||'',roomPaxBreakdown:ci.roomPaxBreakdown||'',paymentMethod:ci.paymentMethod||''});setSelectedRooms(ci.roomNumbers?ci.roomNumbers.split(','):[]);setLinkedBooking({ticketId:ci.linkedTicketId});setEditRowIndex(ci.rowIndex);setMode('walkin');setShowModal(true);};
 
 
       const submit=(e)=>{e.preventDefault();
@@ -1644,7 +1650,7 @@ const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.g
         setSaving(true);Swal.fire({title:'Processing Check-In...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
         
         const payload = {
-          linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,city:fd.city,state:fd.state,pinCode:fd.pinCode,country:fd.country,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,roomPaxBreakdown:fd.roomPaxBreakdown,advancePaid:fd.advancePaid,paymentMethod:fd.paymentMethod,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRentAmount?'Yes':'No',fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent
+          linkedTicketId:linkedBooking?linkedBooking.ticketId:'',guestName:fd.guestName,companyName:fd.companyName,gstNumber:fd.gstNumber,identityProof:fd.identityProof,mobile:fd.mobile,email:fd.email,address:fd.address,city:fd.city,state:fd.state,pinCode:fd.pinCode,country:fd.country,purposeOfVisit:fd.purposeOfVisit,checkInDate:fd.checkInDate,checkInTime:fd.checkInTime,checkOutDate:fd.checkOutDate,checkOutTime:fd.checkOutTime,roomNumbers:selectedRooms.join(','),pax:fd.pax,roomPaxBreakdown:fd.roomPaxBreakdown,advancePaid:fd.advancePaid,paymentMethod:fd.paymentMethod,extraPerson:fd.extraPerson,foodPlan:fd.foodPlan,gstType:fd.gstType,fixRoomRent:fd.fixRoomRentAmount?'Yes':'No',fixRoomRentAmount:fd.fixRoomRentAmount,billTo:fd.billTo,discountPercent:fd.discountPercent,billingMode:fd.billingMode
         };
 
         if (editRowIndex) {
@@ -1801,6 +1807,7 @@ const actualCiOutStart = new Date(ciOut.getFullYear(), ciOut.getMonth(), ciOut.g
             <div className="form-group"><label>GST</label><select value={fd.gstType} onChange={e=>setFd({...fd,gstType:e.target.value})}><option value="Excluding">Excluding GST</option><option value="Including">Including GST</option></select></div>
             <div className="form-group"><label>Bill To</label><select value={fd.billTo} onChange={e=>setFd({...fd,billTo:e.target.value})}><option value="Individual">Individual</option><option value="Company">Company</option><option value="Agent">Agent</option></select></div>
             <div className="form-group"><label>Discount %</label><input type="number" step="0.01" min="0" max="100" value={fd.discountPercent} onChange={e=>setFd({...fd,discountPercent:e.target.value})}/></div>
+            <div className="form-group"><label>Billing Mode</label><select value={fd.billingMode} onChange={e=>setFd({...fd,billingMode:e.target.value})}><option value="Standard">Standard</option><option value="24-Hour">24-Hour</option></select></div>
             <div className="form-group"><label>Fixed Rent Amount ({APP_CURRENCY})</label><input type="number" step="0.01" min="0" placeholder="Leave blank for standard rent" value={fd.fixRoomRentAmount} onChange={e=>setFd({...fd,fixRoomRentAmount:e.target.value})}/></div>
           </div>
 
@@ -2701,6 +2708,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
               <tr><td>Check In</td><td>{fmtD(d.checkInDate)} {d.checkInTime||''}</td></tr>
               <tr><td>Check Out</td><td>{fmtD(d.checkOutDate)} {d.checkOutTime||''}</td></tr>
               <tr><td>Plan</td><td>{planLabel(d.foodPlan)}</td></tr>
+              <tr><td>Billing Mode</td><td>{d.billingMode||"Standard"}</td></tr>
               <tr><td>Pax#</td><td>{d.pax||1}</td></tr>
               <tr><td>Room#</td><td>{d.numberOfRooms||1}</td></tr>
             </tbody></table></div>
@@ -3566,51 +3574,15 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
 
     function CalendarView({user,role}){
       const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
-      const [rooms, setRooms] = useState([]);
-      const [checkIns, setCheckIns] = useState([]);
       const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
       const isAdmin=role==='admin';
 
       useEffect(()=>{loadBookings();},[]);
-      const loadBookings=()=>{
-        setLoading(true);
-        const pBookings = new Promise((resolve, reject) => {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllBookings();
-        });
-        const pRooms = new Promise((resolve, reject) => {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllRooms();
-        });
-        const pCheckIns = new Promise((resolve, reject) => {
-          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAllCheckIns();
-        });
-
-        Promise.all([pBookings, pRooms, pCheckIns]).then(([bData, rData, cData]) => {
-          setLoading(false);
-          const data = Array.isArray(bData) ? bData : [];
-          // Availability should always be global, remove isAdmin filter
-          setBookings(data);
-          setRooms(Array.isArray(rData) ? rData : []);
-          setCheckIns(Array.isArray(cData) ? cData : []);
-        }).catch(e => {
-          setLoading(false);
-          Swal.fire({icon:'error',text:e.message});
-        });
-      };
+      const loadBookings=()=>{setLoading(true);google.script.run.withSuccessHandler(r=>{setLoading(false);const data=Array.isArray(r)?r:[];const filtered=isAdmin?data:data.filter(b=>b.email===user);setBookings(filtered);}).withFailureHandler(e=>{setLoading(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
 
       const prevMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()-1);setCurrentDate(d);};
       const nextMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()+1);setCurrentDate(d);};
       const goToday=()=>setCurrentDate(new Date());
-
-
-      // Baseline Inventory Math
-      const baselineInventory = {};
-      const roomToTypeMap = {};
-      rooms.forEach(r => {
-        if (r.status !== 'Maintenance' && r.roomType) {
-          baselineInventory[r.roomType] = (baselineInventory[r.roomType] || 0) + 1;
-          roomToTypeMap[r.roomNo] = r.roomType;
-        }
-      });
 
       const year=currentDate.getFullYear();const month=currentDate.getMonth();
       const firstDay=new Date(year,month,1).getDay();
@@ -3622,75 +3594,13 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       for(let d=1;d<=daysInMonth;d++)cells.push({day:d,isOther:false,date:new Date(year,month,d)});
       const rem=7-(cells.length%7);if(rem<7)for(let i=1;i<=rem;i++)cells.push({day:i,isOther:true,date:new Date(year,month+1,i)});
 
-      const getAvailabilityForDate = (date) => {
-        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const dayEnd = new Date(dayStart);
-        dayEnd.setDate(dayEnd.getDate() + 1);
-
-        // Clone baseline
-        const availability = { ...baselineInventory };
-
-        // Subtract Active Check-Ins
-        checkIns.forEach(ci => {
-          if (!ci.checkInDate) return;
-          const ciDate = new Date(ci.checkInDate);
-          const coDate = ci.checkOutDate ? new Date(ci.checkOutDate) : new Date(dayEnd.getFullYear() + 1, 0, 1);
-
-          // Using same actualCheckout logic as before: room is free on the checkout day afternoon
-          const actualCheckoutStart = new Date(coDate.getFullYear(), coDate.getMonth(), coDate.getDate());
-
-          if (ciDate < dayEnd && actualCheckoutStart > dayStart) {
-            if (ci.roomNumbers) {
-              const rNums = ci.roomNumbers.split(',').map(s => s.trim());
-              rNums.forEach(num => {
-                const type = roomToTypeMap[num];
-                if (type && availability[type] !== undefined) {
-                  availability[type]--;
-                }
-              });
-            }
-          }
-        });
-
-        // Subtract Advance Bookings
-        bookings.forEach(b => {
-          if (b.status !== 'Booked' && b.status !== 'Confirmed') return;
-          if (!b.checkIn || !b.checkOut) return;
-
-          const ciDate = new Date(b.checkIn);
-          const coDate = new Date(b.checkOut);
-          const actualCheckoutStart = new Date(coDate.getFullYear(), coDate.getMonth(), coDate.getDate());
-
-          if (ciDate < dayEnd && actualCheckoutStart > dayStart) {
-            if (b.roomNo) {
-              const roomStr = String(b.roomNo).trim();
-
-              // Handle format like "Standard (2)"
-              const typeMatch = roomStr.match(/([a-zA-Z\s]+)\s*\((\d+)\)/);
-              if (typeMatch) {
-                const type = typeMatch[1].trim();
-                const qty = parseInt(typeMatch[2], 10);
-                if (availability[type] !== undefined) {
-                  availability[type] -= qty;
-                }
-              } else {
-                // Handle format like "105" (physical room)
-                const nums = roomStr.split(',').map(s => s.trim());
-                nums.forEach(num => {
-                  const type = roomToTypeMap[num];
-                  if (type && availability[type] !== undefined) {
-                    availability[type]--;
-                  }
-                });
-              }
-            }
-          }
-        });
-
-        return Object.keys(availability).map(type => ({
-          type,
-          count: availability[type]
-        }));
+      const getBookingsForDate=(date)=>{
+        const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+        const dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
+        return bookings.filter(b=>{if(!b.checkIn||!b.checkOut)return false;const ci=new Date(b.checkIn);const co=new Date(b.checkOut);
+        // Exclude the actual check-out day block from occupancy maps
+        const actualCheckoutStart = new Date(co.getFullYear(), co.getMonth(), co.getDate());
+        return ci < dayEnd && actualCheckoutStart > dayStart;});
       };
 
       const today=new Date();
@@ -3700,9 +3610,9 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-      const showMoreAvailability=(availability,dateStr)=>{
-        const html=availability.map(avail=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;"><span>'+avail.type+'</span> <strong style="color:'+(avail.count<=0?'red':'var(--navy-accent)')+'">'+avail.count+' available</strong></div>').join('');
-        Swal.fire({title:'Availability on '+dateStr,html:'<div style="max-height:300px;overflow-y:auto">'+html+'</div>',showConfirmButton:true,showCloseButton:true,width:420});
+      const showMoreBookings=(dayBookings,dateStr)=>{
+        const html=dayBookings.map(bk=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px" class="swal-bk-row" data-ticket="'+bk.ticketId+'"><span class="status-badge '+(bk.status==='Booked'?'status-booked':'status-checkedout')+'">'+bk.status+'</span> <strong>#'+bk.roomNo+'</strong> '+bk.guestName+'</div>').join('');
+        Swal.fire({title:'Bookings on '+dateStr,html:'<div style="max-height:300px;overflow-y:auto">'+html+'</div>',showConfirmButton:false,showCloseButton:true,width:420,didOpen:()=>{document.querySelectorAll('.swal-bk-row').forEach(el=>{el.addEventListener('click',()=>{const tid=el.getAttribute('data-ticket');const bk=dayBookings.find(b=>b.ticketId===tid);if(bk){Swal.close();setSelectedBooking(bk);}});});}});
       };
 
       if(loading)return <div className="data-section"><TableSkeleton rows={5} columns={7}/></div>;
@@ -3714,17 +3624,13 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         <div className="calendar-grid">
           {dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
           {cells.map((cell,idx)=>{
-            const dailyAvailability = cell.isOther ? [] : getAvailabilityForDate(cell.date);
+            const dayBookings=cell.isOther?[]:getBookingsForDate(cell.date);
             const cls=['calendar-cell'];if(cell.isOther)cls.push('other-month');if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
             const maxVisible=4;
             const dateStr=fmtDate(cell.date.toISOString());
             return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
-              {dailyAvailability.slice(0,maxVisible).map((avail,i)=>(
-                <div key={i} className={'calendar-booking'} style={{backgroundColor: 'transparent', color: avail.count <= 0 ? 'red' : 'var(--navy-accent)', fontWeight: 'bold', padding: '2px 4px', borderLeft: 'none', margin: '2px 0'}}>
-                  {avail.type}: {avail.count}
-                </div>
-              ))}
-              {dailyAvailability.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreAvailability(dailyAvailability,dateStr)}>+{dailyAvailability.length-maxVisible} more</div>}
+              {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
+              {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
             </div>);
           })}
         </div>
