@@ -3015,8 +3015,8 @@ function getDashboardData() {
           if (invDateStr.includes(localTodayStr) && invStatus === 'Paid') {
             const invoiceId = (invData[i][INV_ID_COL] || '').toString();
             const guestName = (invData[i][INV_GUEST_NAME_COL] || '').toString();
-            const totalSales = parseFloat(invData[i][INV_NET_AMOUNT_COL]) || 0;
-            const itemsStr = (invData[i][INV_ITEMS_JSON_COL] || '').toString();
+            const totalSales = parseFloat(invData[i][INV_TOTAL_COL]) || 0;
+            const itemsStr = (invData[i][INV_ITEMS_COL] || '').toString();
             
             let roomRent = 0;
             let foodRevenue = 0;
@@ -3037,11 +3037,35 @@ function getDashboardData() {
                 });
               } catch(e) {}
             }
-            todaysPaidSales.push({ invoiceId, guestName, roomRent, foodRevenue, totalSales });
+            todaysPaidSales.push({ invoiceId, guestName, roomRent, foodRevenue, advanceCollected: 0, totalSales });
           }
         }
       }
     } catch (invErr) { Logger.log("Could not aggregate todays sales: " + invErr); }
+
+    try {
+      const ciSheet = SpreadsheetApp.openById(SS_ID).getSheetByName(CHECKIN_SHEET_NAME);
+      if (ciSheet && ciSheet.getLastRow() > 1) {
+        const ciData = ciSheet.getDataRange().getValues();
+        const localTodayStr = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
+
+        for (let i = 1; i < ciData.length; i++) {
+          const createdAtStr = (ciData[i][CI_CREATED_AT_COL] || '').toString();
+          const advancePaid = parseFloat(ciData[i][CI_ADVANCE_PAID_COL]) || 0;
+
+          if (createdAtStr.includes(localTodayStr) && advancePaid > 0) {
+            todaysPaidSales.push({
+              invoiceId: "ADV-" + (ciData[i][CI_ID_COL] || '').toString(),
+              guestName: (ciData[i][CI_GUEST_NAME_COL] || '').toString() + " (Advance)",
+              roomRent: 0,
+              foodRevenue: 0,
+              advanceCollected: advancePaid,
+              totalSales: advancePaid
+            });
+          }
+        }
+      }
+    } catch (ciErr) { Logger.log("Could not aggregate advance collections: " + ciErr); }
 
     return {
       totalRooms,
