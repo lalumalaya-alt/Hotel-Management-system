@@ -1313,13 +1313,24 @@ return (ci < cCo && co > cCi);
         return()=>{if(tRef.current)try{tRef.current.destroy();}catch(e){}};
       },[]);
 
-      const loadCheckIns=()=>{setLd(true);google.script.run.withSuccessHandler(r=>{
-        setLd(false);
-        const data = Array.isArray(r) ? r : [];
-        const activeOnly = data.filter(ci => ci.status === 'Active');
-        setActiveCis(activeOnly);
-        initT(activeOnly);
-      }).withFailureHandler(e=>{setLd(false);Swal.fire({icon:'error',text:e.message});}).getActiveCheckInsWithStats();};
+      const loadCheckIns = () => {
+        setLd(true);
+        google.script.run.withSuccessHandler(r => {
+          setLd(false);
+          // Catch backend errors so the table doesn't silently fail
+          if (r && r.error) {
+             Swal.fire({icon: 'error', title: 'Backend Error', text: r.error});
+             return;
+          }
+          const data = Array.isArray(r) ? r : [];
+          const activeOnly = data.filter(ci => ci.status === 'Active');
+          setActiveCis(activeOnly);
+          initT(activeOnly);
+        }).withFailureHandler(e => {
+          setLd(false);
+          Swal.fire({icon:'error',text:e.message});
+        }).getActiveCheckInsWithStats();
+      };
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
         setTimeout(()=>{try{const t=$('#ciT').DataTable({data,destroy:true,columns:[
@@ -2765,6 +2776,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const [checkOutDate,setCheckOutDate]=useState(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); });
       const [checkOutTime,setCheckOutTime]=useState('12:00');
       const [discountPercent,setDiscountPercent]=useState(0);
+      const [use24HourBilling, setUse24HourBilling] = useState(false);
       const [advanceToApply,setAdvanceToApply]=useState(0);
       const [mg, setMg] = useState({ guestName:'', companyName:'', gstNumber:'', mobile:'', email:'', address:'', city:'', state:'', pinCode:'', country:'', gstType:'Excluding', billTo:'Individual', extraPerson: 0 });
 
@@ -2946,7 +2958,7 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
         
         const payload = {
           checkOutDate, checkOutTime, paymentMode:payMode, paymentStatus:payStatus, amountPaid:parseFloat(amtPaid)||0, 
-          discountPercent, advanceToApply: parseFloat(advanceToApply)||0, isPreview
+          discountPercent, advanceToApply: parseFloat(advanceToApply)||0, isPreview, use24HourBilling
         };
         
         const primaryGuestData = { ...mg };
@@ -3112,6 +3124,15 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
               <div className="form-group"><label>Check-Out Date</label><input type="date" value={checkOutDate} onChange={e=>setCheckOutDate(e.target.value)}/></div>
               <div className="form-group"><label>Check-Out Time</label><input type="time" value={checkOutTime} onChange={e=>setCheckOutTime(e.target.value)}/></div>
               <div className="form-group"><label>Overall Discount (%)</label><input type="number" step="0.01" min="0" max="100" value={discountPercent} onChange={e=>setDiscountPercent(e.target.value)}/></div>
+              <div className="form-group" style={{gridColumn: '1 / -1'}}>
+                 <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                   <input type="checkbox" checked={use24HourBilling} onChange={e=>setUse24HourBilling(e.target.checked)} style={{width: '18px', height: '18px', margin: 0}}/>
+                   Enable 24-Hour Billing Math
+                 </label>
+                 <div style={{fontSize: '12px', color: '#666', marginTop: '4px'}}>
+                   (Calculates nights based on exact 24-hour blocks from Check-In time)
+                 </div>
+              </div>
               <div className="form-group">
                  <label>Advance to Apply ({APP_CURRENCY})</label>
                  <div style={{fontSize:'11px', color:'#666', marginBottom:'4px'}}>Max available: {fmtCur(totalAdvanceAvailable)}</div>
@@ -3573,12 +3594,32 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
     }
 
     function CalendarView({user,role}){
-      const [loading,setLoading]=useState(true);const [bookings,setBookings]=useState([]);
-      const [currentDate,setCurrentDate]=useState(new Date());const [selectedBooking,setSelectedBooking]=useState(null);
+      const [loading,setLoading]=useState(true);
+      const [bookings,setBookings]=useState([]);
+      const [rooms,setRooms]=useState([]);
+      const [checkIns,setCheckIns]=useState([]);
+      const [currentDate,setCurrentDate]=useState(new Date());
       const isAdmin=role==='admin';
 
-      useEffect(()=>{loadBookings();},[]);
-      const loadBookings=()=>{setLoading(true);google.script.run.withSuccessHandler(r=>{setLoading(false);const data=Array.isArray(r)?r:[];const filtered=isAdmin?data:data.filter(b=>b.email===user);setBookings(filtered);}).withFailureHandler(e=>{setLoading(false);Swal.fire({icon:'error',text:e.message});}).getAllBookings();};
+      useEffect(()=>{
+        setLoading(true);
+        // Safely fetch all 3 datasets sequentially to prevent race conditions
+        google.script.run.withSuccessHandler(bks => {
+          const filteredBks = isAdmin ? bks : bks.filter(b=>b.email===user);
+          setBookings(Array.isArray(filteredBks) ? filteredBks : []);
+
+          google.script.run.withSuccessHandler(rms => {
+            setRooms(Array.isArray(rms) ? rms : []);
+
+            google.script.run.withSuccessHandler(cis => {
+              setCheckIns(Array.isArray(cis) ? cis : []);
+              setLoading(false);
+            }).withFailureHandler(()=>setLoading(false)).getAllCheckIns();
+
+          }).withFailureHandler(()=>setLoading(false)).getAllRooms();
+
+        }).withFailureHandler(e=>{setLoading(false); Swal.fire('Error', e.message, 'error');}).getAllBookings();
+      },[]);
 
       const prevMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()-1);setCurrentDate(d);};
       const nextMonth=()=>{const d=new Date(currentDate);d.setMonth(d.getMonth()+1);setCurrentDate(d);};
@@ -3594,13 +3635,67 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       for(let d=1;d<=daysInMonth;d++)cells.push({day:d,isOther:false,date:new Date(year,month,d)});
       const rem=7-(cells.length%7);if(rem<7)for(let i=1;i<=rem;i++)cells.push({day:i,isOther:true,date:new Date(year,month+1,i)});
 
-      const getBookingsForDate=(date)=>{
-        const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
-        const dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
-        return bookings.filter(b=>{if(!b.checkIn||!b.checkOut)return false;const ci=new Date(b.checkIn);const co=new Date(b.checkOut);
-        // Exclude the actual check-out day block from occupancy maps
-        const actualCheckoutStart = new Date(co.getFullYear(), co.getMonth(), co.getDate());
-        return ci < dayEnd && actualCheckoutStart > dayStart;});
+      // Complex Math: Calculates exact room type availability for any given day
+      const getAvailabilityForDate = (date) => {
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
+
+        // 1. Create Baseline Total Inventory
+        const inventory = {};
+        const roomTypeMap = {};
+        rooms.forEach(r => {
+          if ((r.roomStatus||'').toLowerCase() !== 'maintenance') {
+            inventory[r.roomType] = (inventory[r.roomType] || 0) + 1;
+          }
+          roomTypeMap[r.roomNo] = r.roomType;
+        });
+
+        // 2. Subtract Active Physical Check-Ins
+        checkIns.forEach(c => {
+          if (c.status !== 'Active') return;
+          const cCi = new Date(c.checkInDate);
+          let cCo = new Date(c.checkOutDate);
+
+          // Overstay logic: push to tomorrow if past checkout
+          const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+          if (cCo <= todayMidnight) {
+            cCo = new Date(todayMidnight); cCo.setDate(cCo.getDate() + 1);
+          }
+          const actualCiOutStart = new Date(cCo.getFullYear(), cCo.getMonth(), cCo.getDate());
+
+          if (cCi < dayEnd && actualCiOutStart > dayStart) {
+            const rNos = (c.roomNumbers||'').split(',').map(r=>r.trim()).filter(Boolean);
+            rNos.forEach(rn => {
+              const type = roomTypeMap[rn];
+              if (type && inventory[type] !== undefined) inventory[type] -= 1;
+            });
+          }
+        });
+
+        // 3. Subtract Advance Bookings
+        bookings.forEach(b => {
+          if (b.status !== 'Booked' && b.status !== 'Confirmed') return;
+          const bCi = new Date(b.checkIn);
+          const bCo = new Date(b.checkOut);
+          const actualBOutStart = new Date(bCo.getFullYear(), bCo.getMonth(), bCo.getDate());
+
+          if (bCi < dayEnd && actualBOutStart > dayStart) {
+            const rNos = (b.roomNo||'').split(',').map(r=>r.trim()).filter(Boolean);
+            rNos.forEach(r => {
+              const match = r.match(/(.+?)(?:\s*\((\d+)\))?$/);
+              if (match && match[2]) {
+                const type = match[1].trim();
+                const qty = parseInt(match[2], 10);
+                if (inventory[type] !== undefined) inventory[type] -= qty;
+              } else {
+                const type = roomTypeMap[r]; // Fallback for legacy physical room strings
+                if (type && inventory[type] !== undefined) inventory[type] -= 1;
+              }
+            });
+          }
+        });
+
+        return inventory;
       };
 
       const today=new Date();
@@ -3610,33 +3705,75 @@ if (cIn < actualCiOutStart && cOut > new Date(ci.checkInDate)) {
       const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
       const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-      const showMoreBookings=(dayBookings,dateStr)=>{
-        const html=dayBookings.map(bk=>'<div style="padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px" class="swal-bk-row" data-ticket="'+bk.ticketId+'"><span class="status-badge '+(bk.status==='Booked'?'status-booked':'status-checkedout')+'">'+bk.status+'</span> <strong>#'+bk.roomNo+'</strong> '+bk.guestName+'</div>').join('');
-        Swal.fire({title:'Bookings on '+dateStr,html:'<div style="max-height:300px;overflow-y:auto">'+html+'</div>',showConfirmButton:false,showCloseButton:true,width:420,didOpen:()=>{document.querySelectorAll('.swal-bk-row').forEach(el=>{el.addEventListener('click',()=>{const tid=el.getAttribute('data-ticket');const bk=dayBookings.find(b=>b.ticketId===tid);if(bk){Swal.close();setSelectedBooking(bk);}});});}});
+      const showMoreTypes=(availObj,dateStr)=>{
+        const html = Object.entries(availObj).map(([type, count]) => {
+          const color = count > 0 ? '#155724' : '#721c24';
+          const bg = count > 0 ? '#d4edda' : '#f8d7da';
+          return `<div style="padding:10px 12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:${bg}; color:${color}; margin-bottom:4px; border-radius:4px;">
+            <strong>${type}</strong> <span>${count} Available</span>
+          </div>`;
+        }).join('');
+        Swal.fire({title:'Availability on '+dateStr, html:'<div style="max-height:300px;overflow-y:auto;text-align:left;">'+html+'</div>', showConfirmButton:true, confirmButtonColor:'#001f3f'});
       };
 
       if(loading)return <div className="data-section"><TableSkeleton rows={5} columns={7}/></div>;
 
-      return(<div className="data-section"><div className="calendar-container">
-        <div className="calendar-header"><h3><i className="fas fa-calendar-alt" style={{marginRight:'10px'}}></i>{monthNames[month]} {year}</h3>
-          <div className="calendar-nav"><button onClick={prevMonth}><i className="fas fa-chevron-left"></i></button><button onClick={goToday}>Today</button><button onClick={nextMonth}><i className="fas fa-chevron-right"></i></button></div>
+      return(
+        <div className="data-section">
+          <div className="calendar-container">
+            <div className="calendar-header">
+              <h3><i className="fas fa-calendar-alt" style={{marginRight:'10px'}}></i>{monthNames[month]} {year}</h3>
+              <div className="calendar-nav">
+                <button onClick={prevMonth}><i className="fas fa-chevron-left"></i></button>
+                <button onClick={goToday}>Today</button>
+                <button onClick={nextMonth}><i className="fas fa-chevron-right"></i></button>
+              </div>
+            </div>
+            <div className="calendar-grid">
+              {dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
+              {cells.map((cell,idx)=>{
+                const avail = cell.isOther ? {} : getAvailabilityForDate(cell.date);
+                const availEntries = Object.entries(avail);
+                const cls=['calendar-cell'];
+
+                if(cell.isOther)cls.push('other-month');
+                if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}
+                else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');
+                else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
+
+                const maxVisible = 3;
+                const dateStr = fmtDate(cell.date.toISOString());
+
+                return(
+                  <div key={idx} className={cls.join(' ')}>
+                    <div className="calendar-date">{cell.day}</div>
+                    {availEntries.slice(0,maxVisible).map(([type, count], i)=>{
+                       const isZero = count <= 0;
+                       return (
+                         <div key={i} className="calendar-booking" style={{
+                           background: isZero ? '#f8d7da' : '#d4edda',
+                           color: isZero ? '#721c24' : '#155724',
+                           borderLeft: `3px solid ${isZero ? '#ea4335' : '#34a853'}`,
+                           display: 'flex', justifyContent: 'space-between',
+                           padding: '4px 6px'
+                         }}>
+                           <span style={{overflow:'hidden', textOverflow:'ellipsis'}}>{type}</span>
+                           <span>{count}</span>
+                         </div>
+                       )
+                    })}
+                    {availEntries.length > maxVisible &&
+                      <div style={{fontSize:'11px',color:'var(--navy-accent)',padding:'4px',cursor:'pointer',fontWeight:'600',textAlign:'center', background:'#f0f4ff', borderRadius:'3px', marginTop:'2px'}} onClick={()=>showMoreTypes(avail,dateStr)}>
+                        + {availEntries.length - maxVisible} more types
+                      </div>
+                    }
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div className="calendar-grid">
-          {dayNames.map(d=><div key={d} className="calendar-day-header">{d}</div>)}
-          {cells.map((cell,idx)=>{
-            const dayBookings=cell.isOther?[]:getBookingsForDate(cell.date);
-            const cls=['calendar-cell'];if(cell.isOther)cls.push('other-month');if(!cell.isOther&&isToday(cell.date)){cls.push('today');cls.push('current-date');}else if(!cell.isOther&&isPast(cell.date))cls.push('past-date');else if(!cell.isOther&&isFuture(cell.date))cls.push('future-date');
-            const maxVisible=4;
-            const dateStr=fmtDate(cell.date.toISOString());
-            return(<div key={idx} className={cls.join(' ')}><div className="calendar-date">{cell.day}</div>
-              {dayBookings.slice(0,maxVisible).map((bk,i)=>(<div key={bk.ticketId+'-'+i} className={'calendar-booking '+(bk.status==='Booked'?'cal-booked':'cal-checkedout')} onClick={()=>setSelectedBooking(bk)} title={bk.guestName+' - Room #'+bk.roomNo}>#{bk.roomNo} {(bk.guestName||'').split(' ')[0]}</div>))}
-              {dayBookings.length>maxVisible&&<div style={{fontSize:'10px',color:'var(--navy-accent)',padding:'2px 6px',cursor:'pointer',fontWeight:'600'}} onClick={()=>showMoreBookings(dayBookings,dateStr)}>+{dayBookings.length-maxVisible} more</div>}
-            </div>);
-          })}
-        </div>
-      </div>
-      {selectedBooking&&<BookingDetailModal booking={selectedBooking} onClose={()=>setSelectedBooking(null)}/>}
-      </div>);
+      );
     }
 
     function GstReportView({user}) {

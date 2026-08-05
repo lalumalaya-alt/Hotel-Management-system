@@ -1926,6 +1926,12 @@ function processFullCheckout(checkInId, checkoutData) {
 
     let billingMode = (ci[CI_BILLING_MODE_COL] || "Standard").toString();
     let nights = calculateNights(checkInDate.toISOString(), checkInTime, actualCheckOutDate.toISOString(), checkOutTime, billingMode);
+    if (checkoutData.use24HourBilling) {
+      let exactStart = new Date(checkInDate.toISOString().split('T')[0] + "T" + checkInTime);
+      let exactEnd = new Date(actualCheckOutDate.toISOString().split('T')[0] + "T" + checkOutTime);
+      let diffMs = exactEnd.getTime() - exactStart.getTime();
+      nights = Math.ceil(diffMs / 86400000);
+    }
     if (nights < 1) nights = 1;
 
     // Calculate room rent using StaySegments if available
@@ -2429,6 +2435,12 @@ function processAdvancedCheckout(primaryGuestData, selectedRoomsFlat, selectedOr
     // Calculate global Extra Bed total before subtotal
     if (!earliestCheckInDate) { earliestCheckInDate = actualCheckOutDate; }
     let combinedNights = daysBetween(earliestCheckInDate, actualCheckOutDate);
+    if (checkoutData.use24HourBilling) {
+      let exactStart = new Date(earliestCheckInDate.toISOString().split('T')[0] + "T" + latestCheckInTime);
+      let exactEnd = new Date(actualCheckOutDate.toISOString().split('T')[0] + "T" + checkOutTime);
+      let diffMs = exactEnd.getTime() - exactStart.getTime();
+      combinedNights = Math.ceil(diffMs / 86400000);
+    }
     if (combinedNights < 1) combinedNights = 1;
     let totalExtraBedCalculated = combinedNights * (parseInt(primaryGuestData.extraPerson) || 0) * DEFAULT_EXTRA_PERSON_RATE;
 
