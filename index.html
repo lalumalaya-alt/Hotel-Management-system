@@ -1316,20 +1316,31 @@ return (ci < cCo && co > cCi);
       const loadCheckIns = () => {
         setLd(true);
         google.script.run.withSuccessHandler(r => {
-          setLd(false);
-          // Catch backend errors so the table doesn't silently fail
           if (r && r.error) {
-             Swal.fire({icon: 'error', title: 'Backend Error', text: r.error});
-             return;
+            setLd(false);
+            Swal.fire({icon: 'error', title: 'Backend Error', text: r.error});
+            return;
           }
-          const data = Array.isArray(r) ? r : [];
-          const activeOnly = data.filter(ci => ci.status === 'Active');
-          setActiveCis(activeOnly);
-          initT(activeOnly);
+
+          const allData = Array.isArray(r) ? r : [];
+          initT(allData);
+
+          google.script.run.withSuccessHandler(stats => {
+            setLd(false);
+            if (stats && stats.error) {
+              setActiveCis(allData.filter(ci => ci.status === 'Active'));
+            } else {
+              setActiveCis(Array.isArray(stats) ? stats : []);
+            }
+          }).withFailureHandler(e => {
+            setLd(false);
+            setActiveCis(allData.filter(ci => ci.status === 'Active'));
+          }).getActiveCheckInsWithStats();
+
         }).withFailureHandler(e => {
           setLd(false);
-          Swal.fire({icon:'error',text:e.message});
-        }).getActiveCheckInsWithStats();
+          Swal.fire({icon: 'error', text: e.message});
+        }).getAllCheckIns();
       };
 
       const initT=(data)=>{if(tRef.current){try{tRef.current.destroy();tRef.current=null;$('#ciT').empty();}catch(e){}}
