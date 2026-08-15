@@ -385,90 +385,93 @@
     .bottom-sheet-btn.expense { color: var(--bs-danger); }
 
 
-    /* System-Aware Dark Mode */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --bs-body-bg: #121212;
-            --bs-body-color: #e0e0e0;
-            --bs-text-muted: #9ca3af;
-            --bs-text-dark: #e0e0e0;
-            --bs-bg-white: #1E1E1E;
-            --bs-bg-light: #2d2d2d;
-            --bs-table-light-bg: #2d2d2d;
-            --bs-border-color: #404040;
-        }
 
-        body { background-color: var(--bs-body-bg); color: var(--bs-body-color); }
+    /* Manual Dark Mode */
+    [data-theme="dark"] {
+        --bs-body-bg: #121212;
+        --bs-body-color: #e0e0e0;
+        --bs-text-muted: #9ca3af;
+        --bs-text-dark: #e0e0e0;
+        --bs-bg-white: #1E1E1E;
+        --bs-bg-light: #2d2d2d;
+        --bs-table-light-bg: #2d2d2d;
+        --bs-border-color: #404040;
+    }
 
-        /* Overriding Bootstrap Utility Classes */
-        .bg-white { background-color: var(--bs-bg-white) !important; }
-        .bg-light { background-color: var(--bs-bg-light) !important; }
-        .text-dark { color: var(--bs-text-dark) !important; }
-        .text-muted { color: var(--bs-text-muted) !important; }
-        .border, .border-bottom, .border-top, .border-start, .border-end { border-color: var(--bs-border-color) !important; }
+    [data-theme="dark"] body { background-color: var(--bs-body-bg); color: var(--bs-body-color); }
 
-        /* Cards */
-        .card { background-color: var(--bs-bg-white); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .card-income { background: linear-gradient(135deg, #1e1e1e 0%, #064e3b 100%); }
-        .card-expense { background: linear-gradient(135deg, #1e1e1e 0%, #881337 100%); }
-        .card-warning { background: linear-gradient(135deg, #1e1e1e 0%, #78350f 100%); }
+    /* Overriding Bootstrap Utility Classes */
+    [data-theme="dark"] .bg-white { background-color: var(--bs-bg-white) !important; }
+    [data-theme="dark"] .bg-light { background-color: var(--bs-bg-light) !important; }
+    [data-theme="dark"] .text-dark { color: var(--bs-text-dark) !important; }
+    [data-theme="dark"] .text-muted { color: var(--bs-text-muted) !important; }
+    [data-theme="dark"] .border,
+    [data-theme="dark"] .border-bottom,
+    [data-theme="dark"] .border-top,
+    [data-theme="dark"] .border-start,
+    [data-theme="dark"] .border-end { border-color: var(--bs-border-color) !important; }
 
-        /* Forms */
-        .form-control, .form-select {
-            background-color: var(--bs-bg-light);
-            border-color: var(--bs-border-color);
-            color: #ffffff;
-        }
-        .form-control:focus, .form-select:focus {
-            background-color: #3d3d3d;
-            color: #ffffff;
-            border-color: #6b7280;
-        }
-        .form-control::placeholder, .form-control::-webkit-input-placeholder { color: var(--bs-text-muted); }
-        .form-control:disabled, .form-select:disabled {
-            background-color: #1a1a1a;
-            color: #6b7280;
-        }
-        .form-floating > label { color: var(--bs-text-muted); }
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label,
-        .form-floating > .form-select ~ label {
-            color: #d1d5db;
-        }
+    /* Cards */
+    [data-theme="dark"] .card { background-color: var(--bs-bg-white); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    [data-theme="dark"] .card-income { background: linear-gradient(135deg, #1e1e1e 0%, #064e3b 100%); }
+    [data-theme="dark"] .card-expense { background: linear-gradient(135deg, #1e1e1e 0%, #881337 100%); }
+    [data-theme="dark"] .card-warning { background: linear-gradient(135deg, #1e1e1e 0%, #78350f 100%); }
 
-        /* Tables */
-        .table { color: var(--bs-body-color); }
-        .table thead th {
-            background-color: var(--bs-table-light-bg);
-            border-bottom-color: var(--bs-border-color);
-            color: #ffffff;
-        }
-        .table-light { --bs-table-bg: var(--bs-table-light-bg); --bs-table-color: #ffffff; }
-        .table-hover>tbody>tr:hover>* { --bs-table-bg-state: #3d3d3d; color: #ffffff;}
+    /* Forms */
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+        background-color: var(--bs-bg-light);
+        border-color: var(--bs-border-color);
+        color: #ffffff;
+    }
+    [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus {
+        background-color: #3d3d3d;
+        color: #ffffff;
+        border-color: #6b7280;
+    }
+    [data-theme="dark"] .form-control::placeholder, [data-theme="dark"] .form-control::-webkit-input-placeholder { color: var(--bs-text-muted); }
+    [data-theme="dark"] .form-control:disabled, [data-theme="dark"] .form-select:disabled {
+        background-color: #1a1a1a;
+        color: #6b7280;
+    }
+    [data-theme="dark"] .form-floating > label { color: var(--bs-text-muted); }
+    [data-theme="dark"] .form-floating > .form-control:focus ~ label,
+    [data-theme="dark"] .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    [data-theme="dark"] .form-floating > .form-select ~ label {
+        color: #d1d5db;
+    }
 
-        /* Navigation */
-        .nav-pills { background-color: var(--bs-bg-light); }
-        .nav-pills .nav-link { color: var(--bs-text-muted); }
-        .nav-pills .nav-link.active { background-color: var(--bs-border-color); color: #ffffff; }
+    /* Tables */
+    [data-theme="dark"] .table { color: var(--bs-body-color); }
+    [data-theme="dark"] .table thead th {
+        background-color: var(--bs-table-light-bg);
+        border-bottom-color: var(--bs-border-color);
+        color: #ffffff;
+    }
+    [data-theme="dark"] .table-light { --bs-table-bg: var(--bs-table-light-bg); --bs-table-color: #ffffff; }
+    [data-theme="dark"] .table-hover>tbody>tr:hover>* { --bs-table-bg-state: #3d3d3d; color: #ffffff;}
 
-        /* Modals & Offcanvas */
-        .modal-content, .offcanvas { background-color: var(--bs-bg-white); color: var(--bs-body-color); }
-        .modal-header, .offcanvas-header { border-bottom-color: var(--bs-border-color); }
-        .btn-close { filter: invert(1); }
+    /* Navigation */
+    [data-theme="dark"] .nav-pills { background-color: var(--bs-bg-light); }
+    [data-theme="dark"] .nav-pills .nav-link { color: var(--bs-text-muted); }
+    [data-theme="dark"] .nav-pills .nav-link.active { background-color: var(--bs-border-color); color: #ffffff; }
 
-        /* Inputs with groups */
-        .input-group-text { background-color: var(--bs-bg-light); border-color: var(--bs-border-color); color: var(--bs-text-dark); }
+    /* Modals & Offcanvas */
+    [data-theme="dark"] .modal-content, [data-theme="dark"] .offcanvas { background-color: var(--bs-bg-white); color: var(--bs-body-color); }
+    [data-theme="dark"] .modal-header, [data-theme="dark"] .offcanvas-header { border-bottom-color: var(--bs-border-color); }
+    [data-theme="dark"] .btn-close { filter: invert(1); }
 
-        /* Mobile specific overrides */
-        @media (max-width: 768px) {
-            .nav-container, .sticky-action-bar { background-color: var(--bs-bg-white); box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
-            .nav-pills .nav-link.active { color: var(--bs-primary); background: transparent; }
-            #unpaidTable tbody tr, #reportTable tbody tr { background: var(--bs-bg-white); border-color: #333; }
-            .bottom-sheet-btn { background: var(--bs-bg-light); color: var(--bs-body-color); }
-            /* Empty state mobile fix */
-            #unpaidTable tbody tr:has(.empty-state), #reportTable tbody tr:has(.empty-state) {
-                background: transparent;
-            }
+    /* Inputs with groups */
+    [data-theme="dark"] .input-group-text { background-color: var(--bs-bg-light); border-color: var(--bs-border-color); color: var(--bs-text-dark); }
+
+    /* Mobile specific overrides */
+    @media (max-width: 768px) {
+        [data-theme="dark"] .nav-container, [data-theme="dark"] .sticky-action-bar { background-color: var(--bs-bg-white); box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
+        [data-theme="dark"] .nav-pills .nav-link.active { color: var(--bs-primary); background: transparent; }
+        [data-theme="dark"] #unpaidTable tbody tr, [data-theme="dark"] #reportTable tbody tr { background: var(--bs-bg-white); border-color: #333; }
+        [data-theme="dark"] .bottom-sheet-btn { background: var(--bs-bg-light); color: var(--bs-body-color); }
+        /* Empty state mobile fix */
+        [data-theme="dark"] #unpaidTable tbody tr:has(.empty-state), [data-theme="dark"] #reportTable tbody tr:has(.empty-state) {
+            background: transparent;
         }
     }
 </style>
@@ -488,7 +491,10 @@
     <header class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="m-0 fw-bold text-primary"><i class="fa-solid fa-wallet me-2"></i>Finance Manager</h2>
       <div class="d-flex gap-2 d-none d-md-flex">
+
+        <button class="btn btn-outline-dark me-2" id="darkModeToggle" onclick="toggleDarkMode()"><i class="fa-solid fa-moon"></i></button>
         <button class="btn btn-outline-danger" id="globalClearBtn" style="display: none;" onclick="clearCurrentTab()"><i class="fa-solid fa-eraser me-1"></i> Clear</button>
+
         <button class="btn btn-outline-secondary" onclick="refreshDashboard()"><i class="fa-solid fa-rotate-right me-1"></i> Refresh</button>
       </div>
     </header>
@@ -1163,7 +1169,37 @@
     
     // Set default dates
 
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        const body = document.documentElement;
+        const currentTheme = body.getAttribute('data-theme');
+        const icon = document.querySelector('#darkModeToggle i');
+
+        if (currentTheme === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            icon.className = 'fa-solid fa-moon';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            icon.className = 'fa-solid fa-sun';
+        }
+    }
+
+    // Init Dark Mode
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        const icon = document.querySelector('#darkModeToggle i');
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            icon.className = 'fa-solid fa-sun';
+        }
+    // Rest of DOMContentLoaded
+
       const today = getToday();
       const currentMonth = today.substring(0, 7); // Extracts YYYY-MM
       document.getElementById('incDate').value = today;
