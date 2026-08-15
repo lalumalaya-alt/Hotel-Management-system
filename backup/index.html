@@ -5,13 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Income & Expense Manager</title>
-  
+
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
 
   <style>
     :root {
@@ -236,10 +236,10 @@
 
     <!-- Tab Contents -->
     <div class="tab-content" id="pills-tabContent">
-      
+
       <!-- Dashboard Tab -->
       <div class="tab-pane fade show active" id="pills-dashboard" role="tabpanel">
-        
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="fw-bold">Overview</h4>
           <div class="d-flex gap-2 align-items-center">
@@ -397,7 +397,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Cash Taken Section -->
         <h5 class="fw-bold mt-4 mb-3">Cash Taken (Monthly)</h5>
         <div class="row g-3">
@@ -450,7 +450,7 @@
   <label for="incEntryNum">Entry Number</label>
 </div>
                 </div>
-                
+
                 <div class="col-md-6 col-12">
                   <div class="form-floating">
   <input type="text" placeholder="Room Number" class="form-control form-control-lg" id="incRoomNum">
@@ -492,7 +492,7 @@
   <label for="incFooding">Fooding (₹)</label>
 </div>
                 </div>
-                
+
                 <div class="col-12">
                   <div class="p-3 bg-light rounded d-flex justify-content-between align-items-center">
                     <span class="fw-bold text-muted">Total Amount</span>
@@ -555,7 +555,7 @@
   <label for="expAmount">Amount (₹)</label>
 </div>
                 </div>
-                
+
                 <div class="col-md-6 col-12">
                   <div class="form-floating">
   <select class="form-select form-select-lg" id="expType" onchange="handleExpenseTypeChange()" required>
@@ -782,7 +782,7 @@
           <form id="markPaidForm" onsubmit="processMarkPaid(event)">
             <input type="hidden" id="mpRowIndex">
             <input type="hidden" id="mpType">
-            
+
             <div class="mb-3" id="mpPaidAmountDiv">
               <div class="form-floating">
   <input type="number" placeholder="Paid Amount" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
@@ -795,7 +795,7 @@
   <label for="mpDate">Payment Date</label>
 </div>
             </div>
-            
+
             <div class="mb-3">
               <div class="form-floating">
   <select class="form-select form-select-lg" id="mpMode" required>
@@ -869,7 +869,7 @@
       document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, false));
     }
     function getToday() { return new Date().toISOString().split('T')[0]; }
-    
+
     // Set default dates
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -889,7 +889,7 @@
       google.script.run.withSuccessHandler(function(settings) {
         window.roomDescriptions = settings.roomDescriptions || [];
         window.foodDescriptions = settings.foodDescriptions || [];
-        
+
         populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
         populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
         populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
@@ -948,9 +948,9 @@
     function handleExpenseTypeChange() {
       const type = document.getElementById('expType').value;
       const desc = document.getElementById('expDescription');
-      
+
       let options = '<option value="" selected disabled>Please Select</option>';
-      
+
       if (type === 'ROOM' && window.roomDescriptions) {
         window.roomDescriptions.forEach(opt => {
           options += `<option value="${opt}">${opt}</option>`;
@@ -960,7 +960,7 @@
           options += `<option value="${opt}">${opt}</option>`;
         });
       }
-      
+
       desc.innerHTML = options;
     }
 
@@ -995,7 +995,7 @@
       const btn = e.submitter || document.querySelector("#incomeForm button[type='submit']");
       setButtonLoading(btn, true);
       showLoading();
-      
+
       const data = {
         date: document.getElementById('incDate').value,
         entryNumber: document.getElementById('incEntryNum').value,
@@ -1038,7 +1038,7 @@
       const btn = e.submitter || document.querySelector("#expenseForm button[type='submit']");
       setButtonLoading(btn, true);
       showLoading();
-      
+
       const data = {
         date: document.getElementById('expDate').value,
         amount: document.getElementById('expAmount').value,
@@ -1076,7 +1076,7 @@
     function refreshDashboard() {
       showLoading();
       const monthValue = document.getElementById('monthFilter').value;
-      
+
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
@@ -1109,13 +1109,13 @@
 
     // Mark Paid functions
     let markPaidModal;
-    
+
     function loadUnpaidData() {
       const type = document.getElementById('markPaidCategory').value;
       const monthValue = document.getElementById('markPaidMonth').value;
       const head = document.getElementById('unpaidTableHead');
       const body = document.getElementById('unpaidTableBody');
-      
+
       if (!type) {
         body.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>';
         head.innerHTML = '';
@@ -1124,7 +1124,7 @@
 
       showLoading();
       body.innerHTML = '<tr><td colspan="6" class="text-center py-4">Loading...</td></tr>';
-      
+
       if (type === 'INCOME') {
         head.innerHTML = `
           <th>Date</th>
@@ -1163,7 +1163,7 @@
         body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-check-circle text-success"></i><h5>No unpaid bills found</h5></div></td></tr>';
         return;
       }
-      
+
       let html = '';
       data.forEach(row => {
         if (type === 'INCOME') {
@@ -1172,7 +1172,7 @@
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
             <td>${row.other || '-'}</td>
-            
+
             <td>₹${row.roomRent || 0}</td>
             <td>₹${row.fooding || 0}</td>
             <td class="fw-bold">₹${row.total || 0}</td>
@@ -1214,7 +1214,7 @@
       document.getElementById('markPaidForm').reset();
       document.getElementById('mpRowIndex').value = rowIndex;
       document.getElementById('mpType').value = type;
-      
+
       const sourceDiv = document.getElementById('mpSourceDiv');
       const paidAmountDiv = document.getElementById('mpPaidAmountDiv');
       const paidAmountInput = document.getElementById('mpPaidAmount');
@@ -1226,11 +1226,11 @@
         sourceDiv.style.display = 'none';
         document.getElementById('mpSource').required = false;
       }
-      
+
       paidAmountDiv.style.display = 'block';
       paidAmountInput.required = true;
       paidAmountInput.value = dueAmount;
-      
+
       document.getElementById('mpDate').value = getToday();
       markPaidModal = new bootstrap.Modal(document.getElementById('markPaidModal'));
       markPaidModal.show();
@@ -1239,7 +1239,7 @@
     function processMarkPaid(e) {
       e.preventDefault();
       showLoading();
-      
+
       const type = document.getElementById('mpType').value;
       const data = {
         rowIndex: parseInt(document.getElementById('mpRowIndex').value, 10),
@@ -1247,7 +1247,7 @@
         paymentDate: document.getElementById('mpDate').value,
         paidAmount: document.getElementById('mpPaidAmount').value
       };
-      
+
       if (type === 'EXPENSE') {
         data.sourceOfPayment = document.getElementById('mpSource').value;
         google.script.run.withSuccessHandler(handleMarkPaidResponse).markExpensePaid(data);
@@ -1270,7 +1270,7 @@
 
     function clearCurrentTab() {
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-bs-target');
-      
+
       if (activeTab === '#pills-income') {
         document.getElementById('incomeForm').reset();
         document.getElementById('incDate').value = getToday();
@@ -1300,7 +1300,7 @@
     function handleReportCategoryChange() {
       const category = document.getElementById('reportCategory').value;
       const expenseFilters = document.getElementById('reportExpenseFilters');
-      
+
       if (category === 'EXPENSE') {
         expenseFilters.style.display = 'flex';
       } else {
@@ -1314,9 +1314,9 @@
     function handleReportExpenseTypeChange() {
       const type = document.getElementById('reportExpenseType').value;
       const desc = document.getElementById('reportExpenseDesc');
-      
+
       let options = '<option value="">All Descriptions</option>';
-      
+
       if (type === 'ROOM' && window.roomDescriptions) {
         window.roomDescriptions.forEach(opt => {
           options += `<option value="${opt}">${opt}</option>`;
@@ -1326,7 +1326,7 @@
           options += `<option value="${opt}">${opt}</option>`;
         });
       }
-      
+
       desc.innerHTML = options;
       loadReportData();
     }
@@ -1336,10 +1336,10 @@
       const monthValue = document.getElementById('reportMonth').value;
       const expenseType = document.getElementById('reportExpenseType').value || '';
       const expenseDesc = document.getElementById('reportExpenseDesc').value || '';
-      
+
       const head = document.getElementById('reportTableHead');
       const body = document.getElementById('reportTableBody');
-      
+
       if (!type) {
         body.innerHTML = '<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>';
         head.innerHTML = '';
@@ -1348,7 +1348,7 @@
 
       showLoading();
       body.innerHTML = '<tr><td colspan="12" class="text-center py-4">Loading...</td></tr>';
-      
+
       if (type === 'INCOME') {
         head.innerHTML = `
           <th>Date</th>
@@ -1402,7 +1402,7 @@
         body.innerHTML = '<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-box-open"></i><h5>No records found</h5></div></td></tr>';
         return;
       }
-      
+
       let html = '';
       data.forEach(row => {
         let statusBadge = '';
@@ -1452,7 +1452,7 @@
       }
     }
 
-    
+
     // Financial Year Closing
     function closeFinancialYearConfirm() {
       if(confirm('WARNING: Are you sure you want to close the Financial Year? This action will permanently archive all previous financial year records to a separate sheet and DELETE them from the active dashboard. This action cannot be undone.')) {
@@ -1483,16 +1483,16 @@
 
       let csv = [];
       const rows = table.querySelectorAll('tr');
-      
+
       // If table is empty or just has the placeholder
       if (rows.length <= 2 && rows[1] && rows[1].innerText.includes('Select category to load data')) {
         showToast('No data to export.', 'warning');
         return;
       }
-      
+
       for (let i = 0; i < rows.length; i++) {
         let row = [], cols = rows[i].querySelectorAll('td, th');
-        
+
         // Skip placeholder rows
         if (cols.length === 1 && cols[0].innerText.includes('Select category to load data')) continue;
         if (cols.length === 1 && cols[0].innerText.includes('Loading...')) continue;
