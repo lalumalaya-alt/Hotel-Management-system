@@ -201,6 +201,238 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
+
+    /* Touch Target Optimization & Spacing */
+    .form-control, .form-select, .btn, .nav-pills .nav-link {
+        min-height: 48px;
+    }
+    @media (max-width: 768px) {
+        .mb-3, .row.g-3 > [class*='col-'] {
+            margin-bottom: 1.5rem !important;
+        }
+        body {
+            font-size: 1.05rem;
+        }
+    }
+
+    /* Card-Based Data Lists for Mobile */
+    @media (max-width: 768px) {
+        #unpaidTable thead, #reportTable thead {
+            display: none;
+        }
+        #unpaidTable tbody tr, #reportTable tbody tr {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "date status"
+                "details details"
+                "amount amount"
+                "action action";
+            gap: 10px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #edf2f7;
+        }
+        #unpaidTable tbody tr td, #reportTable tbody tr td {
+            display: block;
+            border: none;
+            padding: 0;
+            text-align: left !important;
+        }
+
+        /* Map specific columns based on index for Unpaid Income (9 cols total) */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; } /* Date */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(2), /* Entry No */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(3), /* Room No */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(4), /* Other */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(5), /* Room Rent */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(6), /* Fooding */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(7)  /* Total */
+        { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 10px; color: #475569; }
+
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(8) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; } /* Due Amount */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(9) { grid-area: action; } /* Action */
+
+        /* Map specific columns based on index for Unpaid Expense (6 cols total) */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; } /* Date */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(2) { grid-area: status; text-align: right !important; } /* Type */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(3) { grid-area: details; font-weight: 500; font-size: 1.1em; color: #1e293b; } /* Description */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(4) { display: none; } /* Amount (hide original) */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(5) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; } /* Due Amount */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(6) { grid-area: action; } /* Action */
+
+        #unpaidTableBody tr td button { width: 100%; min-height: 48px; }
+
+        /* Report Table Card Styling (Income - 11 cols) */
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(8) { grid-area: status; text-align: right !important; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(2),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(3),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(4),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(5),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(6) { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 5px; color: #475569; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(7) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-success); font-weight: bold; margin: 10px 0; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(9),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(10),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(11) { display: none; }
+
+        /* Report Table Card Styling (Expense - 10 cols) */
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(6) { grid-area: status; text-align: right !important; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(2),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(3),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(4) { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 5px; color: #475569; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(5) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(7),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(8),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(9),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(10) { display: none; }
+
+        /* Empty states should remain normal */
+        #unpaidTable tbody tr:has(.empty-state), #reportTable tbody tr:has(.empty-state) {
+            display: block;
+            box-shadow: none;
+            border: none;
+            background: transparent;
+        }
+    }
+
+    /* Sticky Bottom Action Buttons for Forms */
+    @media (max-width: 768px) {
+        .sticky-action-bar {
+            position: fixed;
+            bottom: 70px; /* Above mobile nav bar */
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 900;
+        }
+        #pills-income, #pills-expense {
+            padding-bottom: 120px; /* Prevent content from hiding */
+        }
+    }
+
+    /* Swipeable Card Carousels for Dashboard */
+    @media (max-width: 768px) {
+        .mobile-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+            padding-bottom: 10px;
+            margin-right: -15px; /* Extend to edge */
+            margin-left: -15px;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        .mobile-carousel::-webkit-scrollbar {
+            display: none; /* Chrome */
+        }
+        .mobile-carousel > div {
+            flex: 0 0 85%;
+            scroll-snap-align: center;
+            margin-right: 15px;
+        }
+    }
+
+    /* Floating Action Button & Bottom Sheet */
+    .fab-btn {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        z-index: 1050;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .fab-btn:active { transform: scale(0.9); }
+
+    .offcanvas-bottom {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+    .bottom-sheet-btn {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        text-decoration: none;
+        border-radius: 12px;
+        background: #f8f9fa;
+        margin-bottom: 15px;
+        transition: background 0.2s;
+    }
+    .bottom-sheet-btn i { font-size: 2rem; width: 40px; }
+    .bottom-sheet-btn.income { color: var(--bs-success); }
+    .bottom-sheet-btn.expense { color: var(--bs-danger); }
+
+    /* System-Aware Dark Mode */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bs-body-bg: #121212;
+            --bs-body-color: #e0e0e0;
+        }
+        .card {
+            background-color: #1E1E1E;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .card-income { background: linear-gradient(135deg, #1e1e1e 0%, #064e3b 100%); }
+        .card-expense { background: linear-gradient(135deg, #1e1e1e 0%, #881337 100%); }
+        .card-warning { background: linear-gradient(135deg, #1e1e1e 0%, #78350f 100%); }
+        .form-control, .form-select {
+            background-color: #2d2d2d;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #3d3d3d;
+            color: #fff;
+        }
+        .form-floating > label { color: #9ca3af; }
+        .text-muted { color: #9ca3af !important; }
+        .table { color: #e0e0e0; }
+        .table thead th { background-color: #2d2d2d; border-bottom-color: #404040; color: #fff;}
+        .table-light { --bs-table-bg: #2d2d2d; --bs-table-color: #fff; }
+        .table-hover>tbody>tr:hover>* { --bs-table-bg-state: #3d3d3d; color: #fff;}
+        .nav-pills { background-color: #2d2d2d; }
+        .nav-pills .nav-link { color: #9ca3af; }
+        .nav-pills .nav-link.active { background-color: #404040; color: #fff; }
+
+        @media (max-width: 768px) {
+            .nav-container, .sticky-action-bar { background-color: #1E1E1E; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
+            .nav-pills .nav-link { color: #9ca3af; }
+            .nav-pills .nav-link.active { color: var(--bs-primary); background: transparent; }
+            #unpaidTable tbody tr, #reportTable tbody tr { background: #1E1E1E; border-color: #333; }
+            .offcanvas { background-color: #1E1E1E; color: #fff; }
+            .bottom-sheet-btn { background: #2d2d2d; color: #fff; }
+        }
+
+        .modal-content { background-color: #1E1E1E; color: #fff; }
+        .modal-header { border-bottom-color: #404040; }
+        .btn-close { filter: invert(1); }
+        .input-group-text { background-color: #2d2d2d; border-color: #404040; color: #e0e0e0; }
+
+        .bg-white { background-color: #1E1E1E !important; }
+        .bg-light { background-color: #2d2d2d !important; }
+    }
 </style>
 </head>
 <body>
@@ -261,7 +493,7 @@
           </div>
         </div>
 
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 mobile-carousel">
           <div class="col-6 col-md-3">
             <div class="card stat-card h-100 card-income">
               <div class="card-body">
@@ -373,7 +605,7 @@
           </div>
         </div>
 
-        <div class="row g-3 mt-1">
+        <div class="row g-3 mt-1 mobile-carousel">
           <div class="col-6 col-md-4">
             <div class="card stat-card h-100 bg-light border-0 shadow-sm">
               <div class="card-body">
@@ -535,7 +767,7 @@
 </div>
                 </div>
 
-                <div class="col-12 mt-4">
+                <div class="col-12 mt-4 sticky-action-bar">
                   <button type="submit" class="btn btn-primary btn-lg w-100"><i class="fa-solid fa-plus me-2"></i> Save Income</button>
                 </div>
               </div>
@@ -628,7 +860,7 @@
 </div>
                 </div>
 
-                <div class="col-12 mt-4">
+                <div class="col-12 mt-4 sticky-action-bar">
                   <button type="submit" class="btn btn-danger btn-lg w-100"><i class="fa-solid fa-minus me-2"></i> Save Expense</button>
                 </div>
               </div>
@@ -835,6 +1067,17 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Utility functions
+
+    function switchToTab(target) {
+        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('bottomSheet'));
+        if (offcanvas) offcanvas.hide();
+        const tabTrigger = document.querySelector(`button[data-bs-target="${target}"]`);
+        if (tabTrigger) {
+            new bootstrap.Tab(tabTrigger).show();
+            toggleClearBtn();
+        }
+    }
+
 
     function showToast(message, type = 'success') {
       const toastContainer = document.getElementById('toastContainer');
@@ -1177,7 +1420,7 @@
       let html = '';
       data.forEach(row => {
         if (type === 'INCOME') {
-          html += `<tr>
+          html += `<tr data-type="${type}">
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
@@ -1194,7 +1437,7 @@
             </td>
           </tr>`;
         } else {
-          html += `<tr>
+          html += `<tr data-type="${type}">
             <td>${row.date}</td>
             <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
@@ -1422,7 +1665,7 @@
         else statusBadge = 'bg-secondary';
 
         if (type === 'INCOME') {
-          html += `<tr>
+          html += `<tr data-type="${type}">
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
@@ -1436,7 +1679,7 @@
             <td>${row.paymentDate || '-'}</td>
           </tr>`;
         } else {
-          html += `<tr>
+          html += `<tr data-type="${type}">
             <td>${row.date}</td>
             <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
@@ -1531,5 +1774,25 @@
     }
 
   </script>
+
+  <!-- Floating Action Button -->
+  <button class="fab-btn d-md-none" data-bs-toggle="offcanvas" data-bs-target="#bottomSheet"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- Bottom Sheet Offcanvas -->
+  <div class="offcanvas offcanvas-bottom h-auto" tabindex="-1" id="bottomSheet">
+    <div class="offcanvas-header pb-0">
+      <h5 class="offcanvas-title fw-bold">New Entry</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <a href="#" class="bottom-sheet-btn income" onclick="switchToTab('#pills-income')">
+        <i class="fa-solid fa-arrow-down-up-across-line me-3"></i> Add Income
+      </a>
+      <a href="#" class="bottom-sheet-btn expense" onclick="switchToTab('#pills-expense')">
+        <i class="fa-solid fa-money-bill-transfer me-3"></i> Add Expense
+      </a>
+    </div>
+  </div>
+
 </body>
 </html>
