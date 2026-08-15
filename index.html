@@ -463,16 +463,68 @@
             background: transparent;
         }
     }
+
+    /* Skeleton Loader */
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    .skeleton-box {
+        display: inline-block;
+        background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
+        border-radius: 4px;
+        color: transparent !important;
+    }
+    [data-theme="dark"] .skeleton-box {
+        background: linear-gradient(to right, #2d2d2d 8%, #3d3d3d 18%, #2d2d2d 33%);
+        background-size: 1000px 100%;
+    }
+    .skeleton-text { width: 100%; height: 20px; margin-bottom: 5px; }
+    .skeleton-number { width: 60%; height: 30px; }
+
+    /* Soft Colored Badges */
+    .badge { padding: 0.5em 0.8em; border-radius: 50rem; font-weight: 600; }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; }
+    .badge-soft-danger { background-color: #ffe4e6; color: #9f1239; }
+    .badge-soft-primary { background-color: #e0e7ff; color: #3730a3; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; }
+    .badge-soft-info { background-color: #e0f2fe; color: #075985; }
+    .badge-soft-secondary { background-color: #f1f5f9; color: #475569; }
+
+    [data-theme="dark"] .badge-soft-success { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+    [data-theme="dark"] .badge-soft-danger { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; }
+    [data-theme="dark"] .badge-soft-primary { background-color: rgba(79, 70, 229, 0.2); color: #818cf8; }
+    [data-theme="dark"] .badge-soft-warning { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    [data-theme="dark"] .badge-soft-info { background-color: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+    [data-theme="dark"] .badge-soft-secondary { background-color: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+
+    /* Interactive Row Completion Animations */
+    .row-completing {
+        animation: completeRow 0.5s forwards;
+    }
+    @keyframes completeRow {
+        0% { background-color: var(--bs-success); transform: translateX(0); opacity: 1; }
+        100% { transform: translateX(100px); opacity: 0; }
+    }
+
+    /* Table Sorting & Footer */
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background-color: rgba(0,0,0,0.05); }
+    [data-theme="dark"] th.sortable:hover { background-color: rgba(255,255,255,0.05); }
+    tfoot { position: sticky; bottom: 0; background-color: #f8fafc; z-index: 10; font-weight: bold; box-shadow: 0 -1px 0 #e2e8f0; }
+    [data-theme="dark"] tfoot { background-color: #2d2d2d; box-shadow: 0 -1px 0 #404040; color: #fff; }
+
+    /* Custom Form Validation UI */
+    .invalid-feedback { font-weight: bold; font-size: 0.85em; margin-top: 2px; display: none; color: var(--bs-danger); }
+    .is-invalid ~ .invalid-feedback { display: block; }
 </style>
 </head>
 <body>
   <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+
   </div>
 
   <div class="container py-4">
@@ -707,7 +759,7 @@
             <h5 class="m-0 fw-bold">Add Income Entry</h5>
           </div>
           <div class="card-body p-4">
-            <form id="incomeForm" onsubmit="submitIncome(event)">
+            <form id="incomeForm" novalidate onsubmit="submitIncome(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
                   <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
@@ -790,7 +842,7 @@
             <h5 class="m-0 fw-bold">Add Expense Entry</h5>
           </div>
           <div class="card-body p-4">
-            <form id="expenseForm" onsubmit="submitExpense(event)">
+            <form id="expenseForm" novalidate onsubmit="submitExpense(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
                   <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
@@ -905,6 +957,15 @@
                 <tbody id="unpaidTableBody">
                   <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>
                 </tbody>
+
+                <tfoot id="reportTableFoot" style="display:none;">
+                    <tr>
+                        <td colspan="4" class="text-end pe-3">Total Visible:</td>
+                        <td id="reportTableSum" class="fw-bold text-primary">0.00</td>
+                        <td colspan="7"></td>
+                    </tr>
+                </tfoot>
+
               </table>
             </div>
           </div>
@@ -980,6 +1041,15 @@
                 <tbody id="reportTableBody">
                   <tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>
                 </tbody>
+
+                <tfoot id="reportTableFoot" style="display:none;">
+                    <tr>
+                        <td colspan="4" class="text-end pe-3">Total Visible:</td>
+                        <td id="reportTableSum" class="fw-bold text-primary">0.00</td>
+                        <td colspan="7"></td>
+                    </tr>
+                </tfoot>
+
               </table>
             </div>
           </div>
@@ -998,7 +1068,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <form id="markPaidForm" onsubmit="processMarkPaid(event)">
+          <form id="markPaidForm" novalidate onsubmit="processMarkPaid(event)">
             <input type="hidden" id="mpRowIndex">
             <input type="hidden" id="mpType">
             
@@ -1036,7 +1106,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Utility functions
-
     function switchToTab(target) {
         const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('bottomSheet'));
         if (offcanvas) offcanvas.hide();
@@ -1047,6 +1116,33 @@
         }
     }
 
+    function showLoading() {
+      // Button loaders
+      document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, true));
+
+      // Dashboard Skeleton
+      if (document.querySelector('#pills-dashboard').classList.contains('active')) {
+          const stats = ['today-income', 'today-expenses', 'cash-counter', 'room-income', 'food-income', 'room-expense', 'food-expense', 'monthly-income', 'monthly-expenses', 'monthly-room-savings', 'monthly-food-savings', 'fy-income', 'fy-expenses', 'unpaid-income', 'unpaid-expenses', 'malaya', 'mdsir'];
+          stats.forEach(id => {
+              const el = document.getElementById(`dash-${id}`);
+              if(el) el.innerHTML = '<div class="skeleton-box skeleton-number"></div>';
+          });
+      }
+
+      // Tables Skeleton
+      const upBody = document.getElementById('unpaidTableBody');
+      if (upBody && document.querySelector('#pills-markpaid').classList.contains('active')) {
+          upBody.innerHTML = `<tr><td colspan="10" class="p-4"><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-text w-75"></div></td></tr>`;
+      }
+      const rpBody = document.getElementById('reportTableBody');
+      if (rpBody && document.querySelector('#pills-reports').classList.contains('active')) {
+          rpBody.innerHTML = `<tr><td colspan="12" class="p-4"><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-text w-75"></div></td></tr>`;
+      }
+    }
+
+    function hideLoading() {
+      document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, false));
+    }
 
     function showToast(message, type = 'success') {
       const toastContainer = document.getElementById('toastContainer');
@@ -1085,11 +1181,14 @@
       }
     }
 
-    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
-    function hideLoading() {
-      document.getElementById('loadingOverlay').style.display = 'none';
-      document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, false));
-    }
+
+
+
+
+
+
+
+
     function getToday() { return new Date().toISOString().split('T')[0]; }
     
     // Set default dates
@@ -1242,10 +1341,32 @@
       document.getElementById('incTotalDisplay').innerText = `${(r+f).toFixed(2)}`;
     }
 
+
+    function validateForm(formId) {
+        const form = document.getElementById(formId);
+        let isValid = true;
+
+        // Remove existing invalid states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+        // Check required fields
+        form.querySelectorAll('[required]').forEach(input => {
+            if (!input.value || input.value.trim() === '') {
+                isValid = false;
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Required field';
+                input.parentNode.appendChild(feedback);
+            }
+        });
+        return isValid;
+    }
+
     function submitIncome(e) {
       e.preventDefault();
-      const btn = e.submitter || document.querySelector("#incomeForm button[type='submit']");
-      setButtonLoading(btn, true);
+      if(!validateForm("incomeForm")) return;
       showLoading();
       
       const data = {
@@ -1265,8 +1386,7 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
-          const btn = document.querySelector("#incomeForm button[type='submit']");
-          if(btn) setButtonLoading(btn, false);
+
           if(res.success) {
             showToast(res.message, 'success');
             document.getElementById('incomeForm').reset();
@@ -1287,8 +1407,7 @@
     // Expense functions
     function submitExpense(e) {
       e.preventDefault();
-      const btn = e.submitter || document.querySelector("#expenseForm button[type='submit']");
-      setButtonLoading(btn, true);
+      if(!validateForm("expenseForm")) return;
       showLoading();
       
       const data = {
@@ -1306,8 +1425,7 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
-          const btn = document.querySelector("#incomeForm button[type='submit']");
-          if(btn) setButtonLoading(btn, false);
+
           if(res.success) {
             showToast(res.message, 'success');
             document.getElementById('expenseForm').reset();
@@ -1332,8 +1450,7 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
-          const btn = document.querySelector("#incomeForm button[type='submit']");
-          if(btn) setButtonLoading(btn, false);
+
           if(res.success) {
             const d = res.data;
             document.getElementById('dash-today-income').innerText = `${d.todayIncome.toFixed(2)}`;
@@ -1375,7 +1492,7 @@
       }
 
       showLoading();
-      body.innerHTML = '<tr><td colspan="6" class="text-center py-4">Loading...</td></tr>';
+
       
       if (type === 'INCOME') {
         head.innerHTML = `
@@ -1419,7 +1536,7 @@
       let html = '';
       data.forEach(row => {
         if (type === 'INCOME') {
-          html += `<tr data-type="${type}">
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
@@ -1436,9 +1553,9 @@
             </td>
           </tr>`;
         } else {
-          html += `<tr data-type="${type}">
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
-            <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
+            <td><span class="badge ${row.type === 'ROOM' ? 'badge-soft-primary' : 'badge-soft-secondary'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
             <td class="fw-bold">${row.amount || 0}</td>
             <td class="fw-bold text-danger">${row.dueAmount || 0}</td>
@@ -1490,6 +1607,7 @@
 
     function processMarkPaid(e) {
       e.preventDefault();
+      if(!validateForm("markPaidForm")) return;
       showLoading();
       
       const type = document.getElementById('mpType').value;
@@ -1508,13 +1626,26 @@
       }
     }
 
+
     function handleMarkPaidResponse(res) {
       hideLoading();
       if(res.success) {
         showToast(res.message, 'success');
         markPaidModal.hide();
-        loadUnpaidData();
-        refreshDashboard();
+
+        // Row animation
+        const rowIndex = document.getElementById('mpRowIndex').value;
+        const rowEl = document.getElementById(`unpaid-row-${rowIndex}`);
+        if(rowEl) {
+            rowEl.classList.add('row-completing');
+            setTimeout(() => {
+                loadUnpaidData();
+                refreshDashboard();
+            }, 500);
+        } else {
+            loadUnpaidData();
+            refreshDashboard();
+        }
       } else {
         showToast('Error: ' + res.message, 'danger');
       }
@@ -1599,44 +1730,47 @@
       }
 
       showLoading();
-      body.innerHTML = '<tr><td colspan="12" class="text-center py-4">Loading...</td></tr>';
+
       
       if (type === 'INCOME') {
         head.innerHTML = `
-          <th>Date</th>
+
+          <th class="sortable" onclick="sortReportTable('date', 'INCOME')">Date <span id="sort-icon-date" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Entry No.</th>
           <th>Room No.</th>
           <th>Other</th>
           <th>Room Rent</th>
           <th>Fooding</th>
-          <th>Total</th>
+          <th class="sortable" onclick="sortReportTable('amount', 'INCOME')">Total <span id="sort-icon-amount" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Status</th>
           <th>Mode</th>
           <th>Entry By</th>
           <th>Pay Date</th>
+
         `;
       } else {
         head.innerHTML = `
-          <th>Date</th>
+
+          <th class="sortable" onclick="sortReportTable('date', 'EXPENSE')">Date <span id="sort-icon-date" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Type</th>
           <th>Description</th>
           <th>Details</th>
-          <th>Amount</th>
+          <th class="sortable" onclick="sortReportTable('amount', 'EXPENSE')">Amount <span id="sort-icon-amount" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Status</th>
           <th>Source</th>
           <th>Mode</th>
           <th>Entry By</th>
           <th>Pay Date</th>
+
         `;
       }
 
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
-          const btn = document.querySelector("#incomeForm button[type='submit']");
-          if(btn) setButtonLoading(btn, false);
+
           if(res.success) {
-            renderReportTable(res.data, type);
+            renderReportTableWrapper(res.data, type);
           } else {
             showToast('Error loading reports: ' + res.message, 'danger');
           }
@@ -1646,6 +1780,98 @@
           showToast('Failed to connect to server.', 'danger');
         })
         .getReportData(type, monthValue, expenseType, expenseDesc);
+    }
+
+
+    let globalReportData = [];
+    let currentSortCol = '';
+    let currentSortAsc = true;
+
+    function renderReportTableWrapper(data, type) {
+        globalReportData = data || [];
+        renderReportTable(globalReportData, type);
+        calculateReportSum(type);
+    }
+
+    function sortReportTable(colName, type) {
+        if(currentSortCol === colName) {
+            currentSortAsc = !currentSortAsc;
+        } else {
+            currentSortCol = colName;
+            currentSortAsc = true;
+        }
+
+        globalReportData.sort((a, b) => {
+            let valA, valB;
+            if(colName === 'date') {
+                valA = new Date(a.date).getTime() || 0;
+                valB = new Date(b.date).getTime() || 0;
+            } else if (colName === 'amount') {
+                valA = parseFloat(a.total || a.amount) || 0;
+                valB = parseFloat(b.total || b.amount) || 0;
+            } else {
+                return 0;
+            }
+            if(valA < valB) return currentSortAsc ? -1 : 1;
+            if(valA > valB) return currentSortAsc ? 1 : -1;
+            return 0;
+        });
+
+        renderReportTable(globalReportData, type);
+        calculateReportSum(type);
+        updateSortIcons(colName);
+    }
+
+    function updateSortIcons(colName) {
+        document.querySelectorAll('.sort-icon').forEach(el => el.innerHTML = '<i class="fa-solid fa-sort text-muted ms-1"></i>');
+        const activeIcon = document.getElementById(`sort-icon-${colName}`);
+        if(activeIcon) {
+            activeIcon.innerHTML = currentSortAsc ? '<i class="fa-solid fa-sort-up ms-1"></i>' : '<i class="fa-solid fa-sort-down ms-1"></i>';
+        }
+    }
+
+    function calculateReportSum(type) {
+        const rows = document.getElementById('reportTableBody').getElementsByTagName('tr');
+        let sum = 0;
+        for(let i=0; i<rows.length; i++) {
+            if(rows[i].style.display !== 'none' && !rows[i].querySelector('.empty-state')) {
+                // Find amount cell: income is col 7 (idx 6), expense is col 5 (idx 4)
+                const amountColIdx = (type === 'INCOME') ? 6 : 4;
+                const cells = rows[i].getElementsByTagName('td');
+                if(cells.length > amountColIdx) {
+                    const textVal = cells[amountColIdx].innerText.replace(/[^0-9.-]+/g,"");
+                    sum += parseFloat(textVal) || 0;
+                }
+            }
+        }
+        document.getElementById('reportTableSum').innerText = sum.toFixed(2);
+        document.getElementById('reportTableFoot').style.display = (globalReportData.length > 0) ? 'table-footer-group' : 'none';
+
+        // Adjust footer colspan based on type
+        const tfoot = document.getElementById('reportTableFoot');
+        if(tfoot) {
+            const firstTd = tfoot.querySelector('td:first-child');
+            const lastTd = tfoot.querySelector('td:last-child');
+            if(type === 'INCOME') {
+                firstTd.setAttribute('colspan', '6');
+                lastTd.setAttribute('colspan', '4');
+            } else {
+                firstTd.setAttribute('colspan', '4');
+                lastTd.setAttribute('colspan', '5');
+            }
+        }
+    }
+
+    // Override filter function to calculate sum
+    function filterReportTable() {
+        const input = document.getElementById('searchReport').value.toLowerCase();
+        const rows = document.getElementById('reportTableBody').getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const text = rows[i].innerText.toLowerCase();
+            rows[i].style.display = text.includes(input) ? '' : 'none';
+        }
+        const type = document.getElementById('reportCategory').value;
+        calculateReportSum(type);
     }
 
     function renderReportTable(data, type) {
@@ -1658,10 +1884,10 @@
       let html = '';
       data.forEach(row => {
         let statusBadge = '';
-        if (row.paymentStatus === 'PAID') statusBadge = 'bg-success';
-        else if (row.paymentStatus === 'UNPAID') statusBadge = 'bg-danger';
-        else if (row.paymentStatus === 'ADVANCE') statusBadge = 'bg-info text-dark';
-        else statusBadge = 'bg-secondary';
+        if (row.paymentStatus === 'PAID') statusBadge = 'badge-soft-success';
+        else if (row.paymentStatus === 'UNPAID') statusBadge = 'badge-soft-danger';
+        else if (row.paymentStatus === 'ADVANCE') statusBadge = 'badge-soft-info';
+        else if (row.paymentStatus === 'PARTIAL') statusBadge = 'badge-soft-warning'; else statusBadge = 'badge-soft-secondary';
 
         if (type === 'INCOME') {
           html += `<tr data-type="${type}">
@@ -1678,9 +1904,9 @@
             <td>${row.paymentDate || '-'}</td>
           </tr>`;
         } else {
-          html += `<tr data-type="${type}">
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
-            <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
+            <td><span class="badge ${row.type === 'ROOM' ? 'badge-soft-primary' : 'badge-soft-secondary'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
             <td>${row.details || '-'}</td>
             <td class="fw-bold">${row.amount || 0}</td>
