@@ -520,8 +520,7 @@
           <div class="d-flex gap-2 align-items-center">
             <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter Month:</label>
   <input type="month" class="form-control w-auto" id="monthFilter" onchange="refreshDashboard()">
-            <button class="btn btn-danger d-none d-md-block" onclick="closeFinancialYearConfirm()"><i class="fa-solid fa-box-archive"></i> Close FY</button>
-          </div>
+            </div>
         </div>
 
         <div class="row g-3 mb-4 mobile-carousel">
@@ -699,8 +698,7 @@
         </div>
 
         <button class="btn btn-outline-secondary w-100 mt-3 d-md-none" onclick="refreshDashboard()"><i class="fa-solid fa-rotate-right me-1"></i> Refresh Dashboard</button>
-        <button class="btn btn-danger w-100 mt-2 d-md-none" onclick="closeFinancialYearConfirm()"><i class="fa-solid fa-box-archive"></i> Close Financial Year</button>
-      </div>
+        </div>
 
       <!-- Income Tab -->
       <div class="tab-pane fade" id="pills-income" role="tabpanel">
@@ -1707,25 +1705,7 @@
     }
 
     
-    // Financial Year Closing
-    function closeFinancialYearConfirm() {
-      if(confirm('WARNING: Are you sure you want to close the Financial Year? This action will permanently archive all previous financial year records to a separate sheet and DELETE them from the active dashboard. This action cannot be undone.')) {
-        showLoading();
-        google.script.run
-          .withSuccessHandler(res => {
-            hideLoading();
-            showToast(res.message, 'success');
-            if(res.success) {
-              refreshDashboard();
-            }
-          })
-          .withFailureHandler(err => {
-            hideLoading();
-            showToast('Failed to communicate with server.', 'danger');
-          })
-          .closeFinancialYear();
-      }
-    }
+
 
     function exportReportToExcel() {
       const table = document.getElementById('reportTable');
