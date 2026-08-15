@@ -138,14 +138,8 @@
       }
     }
 
-    .form-floating > .form-control,
-    .form-floating > .form-select {
-      height: calc(3.5rem + 2px);
-      line-height: 1.25;
-    }
-    .form-floating > label {
-      padding: 1rem 0.75rem;
-    }
+
+
 
     .btn {
       transition: transform 0.1s ease-in-out, background-color 0.2s, box-shadow 0.2s;
@@ -433,12 +427,7 @@
         background-color: #1a1a1a;
         color: #6b7280;
     }
-    [data-theme="dark"] .form-floating > label { color: var(--bs-text-muted); }
-    [data-theme="dark"] .form-floating > .form-control:focus ~ label,
-    [data-theme="dark"] .form-floating > .form-control:not(:placeholder-shown) ~ label,
-    [data-theme="dark"] .form-floating > .form-select ~ label {
-        color: #d1d5db;
-    }
+
 
     /* Tables */
     [data-theme="dark"] .table { color: var(--bs-body-color); }
@@ -529,10 +518,8 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="fw-bold">Overview</h4>
           <div class="d-flex gap-2 align-items-center">
-            <div class="form-floating">
-  <input type="month" placeholder="Filter Month:" class="form-control w-auto" id="monthFilter" onchange="refreshDashboard()">
-  <label for="monthFilter">Filter Month:</label>
-</div>
+            <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter Month:</label>
+  <input type="month" class="form-control w-auto" id="monthFilter" onchange="refreshDashboard()">
             <button class="btn btn-danger d-none d-md-block" onclick="closeFinancialYearConfirm()"><i class="fa-solid fa-box-archive"></i> Close FY</button>
           </div>
         </div>
@@ -725,58 +712,42 @@
             <form id="incomeForm" onsubmit="submitIncome(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="date" placeholder="Date" class="form-control form-control-lg" id="incDate" required>
-  <label for="incDate">Date</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
+  <input type="date" class="form-control form-control-lg" id="incDate" required>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="text" placeholder="Entry Number" class="form-control form-control-lg" id="incEntryNum">
-  <label for="incEntryNum">Entry Number</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry Number</label>
+  <input type="text" class="form-control form-control-lg" id="incEntryNum">
                 </div>
                 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="text" placeholder="Room Number" class="form-control form-control-lg" id="incRoomNum">
-  <label for="incRoomNum">Room Number</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Room Number</label>
+  <input type="text" class="form-control form-control-lg" id="incRoomNum">
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Coffee / Black Pepper</label>
   <select class="form-select form-select-lg" id="incCoffeePepper">
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="incCoffeePepper">Coffee / Black Pepper</label>
-</div>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Gst/Ngst</label>
   <select class="form-select form-select-lg" id="incGstNgst">
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="incGstNgst">Gst/Ngst</label>
-</div>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="text" placeholder="Other" class="form-control form-control-lg" id="incOther">
-  <label for="incOther">Other</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Other</label>
+  <input type="text" class="form-control form-control-lg" id="incOther">
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Room Rent (₹)</label>
   <input type="number" step="0.01" placeholder="Room Rent (₹)" class="form-control form-control-lg" id="incRoomRent" oninput="calcIncomeTotal()">
-  <label for="incRoomRent">Room Rent (₹)</label>
-</div>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Fooding (₹)</label>
   <input type="number" step="0.01" placeholder="Fooding (₹)" class="form-control form-control-lg" id="incFooding" oninput="calcIncomeTotal()">
-  <label for="incFooding">Fooding (₹)</label>
-</div>
                 </div>
                 
                 <div class="col-12">
@@ -787,28 +758,22 @@
                 </div>
 
                 <div class="col-md-4 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Status</label>
   <select class="form-select form-select-lg" id="incPaymentStatus" onchange="handleIncomePaymentStatusChange()" required>
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="incPaymentStatus">Payment Status</label>
-</div>
                 </div>
                 <div class="col-md-4 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
   <select class="form-select form-select-lg" id="incModeOfPayment">
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="incModeOfPayment">Mode Of Payment</label>
-</div>
                 </div>
                 <div class="col-md-4 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
   <select class="form-select form-select-lg" id="incEntryBy" required>
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="incEntryBy">Entry By</label>
-</div>
                 </div>
 
                 <div class="col-12 mt-4 sticky-action-bar">
@@ -830,78 +795,60 @@
             <form id="expenseForm" onsubmit="submitExpense(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="date" placeholder="Date" class="form-control form-control-lg" id="expDate" required>
-  <label for="expDate">Date</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
+  <input type="date" class="form-control form-control-lg" id="expDate" required>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Amount (₹)</label>
   <input type="number" step="0.01" placeholder="Amount (₹)" class="form-control form-control-lg" id="expAmount" required>
-  <label for="expAmount">Amount (₹)</label>
-</div>
                 </div>
                 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Type</label>
   <select class="form-select form-select-lg" id="expType" onchange="handleExpenseTypeChange()" required>
   <option value="" selected disabled>Please Select</option>
                     <option value="ROOM">ROOM</option>
                     <option value="FOOD">FOOD</option>
                   </select>
-  <label for="expType">Type</label>
-</div>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Description</label>
   <select class="form-select form-select-lg" id="expDescription" required>
   <option value="" selected disabled>Please Select Type First</option>
                   </select>
-  <label for="expDescription">Description</label>
-</div>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
-  <input type="text" placeholder="Details" class="form-control form-control-lg" id="expDetails">
-  <label for="expDetails">Details</label>
-</div>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Details</label>
+  <input type="text" class="form-control form-control-lg" id="expDetails">
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Status</label>
   <select class="form-select form-select-lg" id="expPaymentStatus" onchange="handleExpensePaymentStatusChange()" required>
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="expPaymentStatus">Payment Status</label>
-</div>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Source Of Payment</label>
   <select class="form-select form-select-lg" id="expSource" required>
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="expSource">Source Of Payment</label>
-</div>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
   <select class="form-select form-select-lg" id="expModeOfPayment">
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="expModeOfPayment">Mode Of Payment</label>
-</div>
                 </div>
                 <div class="col-md-6 col-12">
-                  <div class="form-floating">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
   <select class="form-select form-select-lg" id="expEntryBy" required>
   <option value="" selected disabled>Please Select</option>
                   </select>
-  <label for="expEntryBy">Entry By</label>
-</div>
                 </div>
 
                 <div class="col-12 mt-4 sticky-action-bar">
@@ -924,20 +871,16 @@
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Select Category</label>
   <select class="form-select form-select-lg" id="markPaidCategory" onchange="loadUnpaidData()">
   <option value="" selected disabled>Please Select</option>
                       <option value="INCOME">Income</option>
                       <option value="EXPENSE">Expenses</option>
                     </select>
-  <label for="markPaidCategory">Select Category</label>
-</div>
                   </div>
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter By Month (Optional)</label>
   <input type="month" placeholder="Filter By Month (Optional)" class="form-control form-control-lg" id="markPaidMonth" onchange="loadUnpaidData()">
-  <label for="markPaidMonth">Filter By Month (Optional)</label>
-</div>
                   </div>
                 </div>
               </div>
@@ -982,41 +925,33 @@
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Select Category</label>
   <select class="form-select form-select-lg" id="reportCategory" onchange="handleReportCategoryChange()">
   <option value="" selected disabled>Please Select</option>
                       <option value="INCOME">Income</option>
                       <option value="EXPENSE">Expenses</option>
                     </select>
-  <label for="reportCategory">Select Category</label>
-</div>
                   </div>
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
-  <input type="month" placeholder="Filter By Month" class="form-control form-control-lg" id="reportMonth" onchange="loadReportData()">
-  <label for="reportMonth">Filter By Month</label>
-</div>
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter By Month</label>
+  <input type="month" class="form-control form-control-lg" id="reportMonth" onchange="loadReportData()">
                   </div>
                 </div>
 
                 <div class="row g-3 mt-1" id="reportExpenseFilters" style="display: none;">
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Expense Type</label>
   <select class="form-select form-select-lg" id="reportExpenseType" onchange="handleReportExpenseTypeChange()">
   <option value="" selected>Please Select</option>
                       <option value="ROOM">ROOM</option>
                       <option value="FOOD">FOOD</option>
                     </select>
-  <label for="reportExpenseType">Expense Type</label>
-</div>
                   </div>
                   <div class="col-md-6 col-12">
-                    <div class="form-floating">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Description</label>
   <select class="form-select form-select-lg" id="reportExpenseDesc" onchange="loadReportData()">
   <option value="" selected disabled>Please Select Type First</option>
                     </select>
-  <label for="reportExpenseDesc">Description</label>
-</div>
                   </div>
                 </div>
 
@@ -1070,34 +1005,26 @@
             <input type="hidden" id="mpType">
             
             <div class="mb-3" id="mpPaidAmountDiv">
-              <div class="form-floating">
-  <input type="number" placeholder="Paid Amount" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
-  <label for="mpPaidAmount">Paid Amount</label>
-</div>
+              <label class="form-label text-uppercase fw-bold text-primary mb-1 small">Paid Amount</label>
+  <input type="number" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
             </div>
             <div class="mb-3">
-              <div class="form-floating">
-  <input type="date" placeholder="Payment Date" class="form-control form-control-lg" id="mpDate" required>
-  <label for="mpDate">Payment Date</label>
-</div>
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Date</label>
+  <input type="date" class="form-control form-control-lg" id="mpDate" required>
             </div>
             
             <div class="mb-3">
-              <div class="form-floating">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
   <select class="form-select form-select-lg" id="mpMode" required>
   <option value="" selected disabled>Please Select</option>
               </select>
-  <label for="mpMode">Mode Of Payment</label>
-</div>
             </div>
 
             <div class="mb-3" id="mpSourceDiv" style="display: none;">
-              <div class="form-floating">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Source Of Payment</label>
   <select class="form-select form-select-lg" id="mpSource">
   <option value="" selected disabled>Please Select</option>
               </select>
-  <label for="mpSource">Source Of Payment</label>
-</div>
             </div>
 
             <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Confirm Payment</button>
