@@ -519,6 +519,25 @@
     /* Custom Form Validation UI */
     .invalid-feedback { font-weight: bold; font-size: 0.85em; margin-top: 2px; display: none; color: var(--bs-danger); }
     .is-invalid ~ .invalid-feedback { display: block; }
+
+    /* Header Buttons Dark Mode Fixes */
+    [data-theme="dark"] .btn-outline-dark,
+    [data-theme="dark"] .btn-outline-secondary,
+    [data-theme="dark"] .btn-outline-danger {
+        color: #ffffff !important;
+        border-color: #6b7280 !important;
+    }
+    [data-theme="dark"] .btn-outline-dark:hover,
+    [data-theme="dark"] .btn-outline-secondary:hover {
+        background-color: #3d3d3d !important;
+        border-color: #9ca3af !important;
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] .btn-outline-danger:hover {
+        background-color: rgba(244, 63, 94, 0.2) !important;
+        border-color: #f43f5e !important;
+        color: #fb7185 !important;
+    }
 </style>
 </head>
 <body>
