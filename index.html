@@ -4,6 +4,10 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f8f9fa">
   <title>Income & Expense Manager</title>
   
   <!-- Bootstrap 5 CSS -->
@@ -976,14 +980,6 @@
                 <tbody id="unpaidTableBody">
                   <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>
                 </tbody>
-
-                <tfoot id="reportTableFoot" style="display:none;">
-                    <tr>
-                        <td colspan="4" class="text-end pe-3">Total Visible:</td>
-                        <td id="reportTableSum" class="fw-bold text-primary">0.00</td>
-                        <td colspan="7"></td>
-                    </tr>
-                </tfoot>
 
               </table>
             </div>
