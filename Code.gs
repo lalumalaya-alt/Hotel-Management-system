@@ -718,7 +718,14 @@ function getRoomStatus() {
     let masterRooms = settingsData.roomDescriptions || [];
 
     // Merge masterRooms with rooms already in the Rooms sheet
-    masterRooms = [...new Set([...masterRooms.map(String), ...roomNumbersInSheet])];
+    let mergedRooms = [...new Set([...masterRooms.map(String), ...roomNumbersInSheet])];
+
+    // Filter out non-room items (must contain at least one digit) and sort numerically
+    masterRooms = mergedRooms.filter(r => /\d/.test(r)).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+        return numA - numB;
+    });
 
     // Map status
     const result = masterRooms.map(roomNum => {
