@@ -1173,7 +1173,32 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Utility functions
+
+    // Dirty Form Tracker
+    let isFormDirty = false;
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    function markFormDirty() {
+        isFormDirty = true;
+    }
+
+    function resetFormDirty() {
+        isFormDirty = false;
+    }
+
     function switchToTab(target) {
+        if (isFormDirty) {
+            if (!confirm('You have unsaved changes. Are you sure you want to leave this tab?')) {
+                return;
+            }
+        }
+        resetFormDirty();
         const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('bottomSheet'));
         if (offcanvas) offcanvas.hide();
         const tabTrigger = document.querySelector(`button[data-bs-target="${target}"]`);
@@ -1182,6 +1207,7 @@
             toggleClearBtn();
         }
     }
+
 
     function showLoading() {
       // Button loaders
@@ -1353,6 +1379,7 @@
         const dateTime = document.getElementById('ciDateOnly').value + 'T' + document.getElementById('ciTimeOnly').value;
 
         if(checkInModal) checkInModal.hide();
+                resetFormDirty();
 
         // Show local spinner
         const card = document.getElementById(`room-card-${roomNum}`);
@@ -1380,6 +1407,7 @@
         const dateTime = document.getElementById('coDateOnly').value + 'T' + document.getElementById('coTimeOnly').value;
 
         if(checkOutModal) checkOutModal.hide();
+                resetFormDirty();
 
         // Show local spinner
         const card = document.getElementById(`room-card-${roomNum}`);
@@ -1399,6 +1427,13 @@
         }).processCheckOut(roomNum, dateTime);
     }
 
+
+        // Attach dirty trackers
+        document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+            el.addEventListener('input', markFormDirty);
+            el.addEventListener('change', markFormDirty);
+        });
+
     // Init Dark Mode
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -1411,6 +1446,21 @@
             icon.className = 'fa-solid fa-sun';
         }
     // Rest of DOMContentLoaded
+
+    document.querySelectorAll('.nav-link[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('show.bs.tab', function(e) {
+            if (isFormDirty) {
+                if (!confirm('You have unsaved changes. Are you sure you want to leave this tab?')) {
+                    e.preventDefault();
+                } else {
+                    resetFormDirty();
+                }
+            } else {
+                resetFormDirty();
+            }
+        });
+    });
+
 
       const today = getToday();
       const currentMonth = today.substring(0, 7); // Extracts YYYY-MM
@@ -1580,6 +1630,7 @@
           if(res.success) {
             showToast(res.message, 'success');
             document.getElementById('incomeForm').reset();
+            resetFormDirty();
             document.getElementById('incDate').value = getToday();
             document.getElementById('incTotalDisplay').innerText = '0.00';
             refreshDashboard();
@@ -1619,6 +1670,7 @@
           if(res.success) {
             showToast(res.message, 'success');
             document.getElementById('expenseForm').reset();
+            resetFormDirty();
             document.getElementById('expDate').value = getToday();
             refreshDashboard();
           } else {
@@ -1822,6 +1874,7 @@
       if(res.success) {
         showToast(res.message, 'success');
         markPaidModal.hide();
+        resetFormDirty();
 
         // Row animation
         const rowIndex = document.getElementById('mpRowIndex').value;
@@ -1842,14 +1895,17 @@
     }
 
     function clearCurrentTab() {
+      resetFormDirty();
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-bs-target');
       
       if (activeTab === '#pills-income') {
         document.getElementById('incomeForm').reset();
+            resetFormDirty();
         document.getElementById('incDate').value = getToday();
         document.getElementById('incTotalDisplay').innerText = '0.00';
       } else if (activeTab === '#pills-expense') {
         document.getElementById('expenseForm').reset();
+            resetFormDirty();
         document.getElementById('expDate').value = getToday();
         document.getElementById('expDescription').innerHTML = '<option value="" selected disabled>Please Select Type First</option>';
       } else if (activeTab === '#pills-markpaid') {
