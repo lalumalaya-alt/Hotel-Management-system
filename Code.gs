@@ -17,7 +17,17 @@ function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
 
-    // Setup Rooms Sheet
+
+    // Setup Stay Segment Sheet
+  let staySheet = ss.getSheetByName('Stay Segment');
+  if (!staySheet) {
+    staySheet = ss.insertSheet('Stay Segment');
+    const stayHeaders = ['Room Number', 'Check-In Date/Time', 'Check-Out Date/Time'];
+    staySheet.getRange(1, 1, 1, stayHeaders.length).setValues([stayHeaders]);
+    staySheet.getRange(1, 1, 1, stayHeaders.length).setFontWeight('bold');
+  }
+
+  // Setup Rooms Sheet
   let roomsSheet = ss.getSheetByName('Rooms');
   if (!roomsSheet) {
     roomsSheet = ss.insertSheet('Rooms');
@@ -746,11 +756,14 @@ function getRoomStatus() {
   }
 }
 
-function toggleRoomStatus(roomNumber, currentStatus) {
+function processCheckIn(roomNumber, dateTimeStr) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let roomsSheet = ss.getSheetByName('Rooms');
+    let staySheet = ss.getSheetByName('Stay Segment');
+
     if (!roomsSheet) throw new Error("Rooms sheet not found.");
+    if (!staySheet) throw new Error("Stay Segment sheet not found.");
 
     const roomsData = getSheetDataAsObjects('Rooms');
 
@@ -762,25 +775,68 @@ function toggleRoomStatus(roomNumber, currentStatus) {
       }
     }
 
-    const newStatus = currentStatus === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
-    const now = new Date();
+    const dateTime = new Date(dateTimeStr);
 
     if (rowIndex === -1) {
-       // Row doesn't exist, create it
-       let checkInDate = newStatus === 'OCCUPIED' ? now : '';
-       let checkOutDate = newStatus === 'AVAILABLE' ? now : '';
-       roomsSheet.appendRow([roomNumber, newStatus, checkInDate, checkOutDate]);
+       roomsSheet.appendRow([roomNumber, 'OCCUPIED', dateTime, '']);
     } else {
-       // Update existing row
-       roomsSheet.getRange(rowIndex, 2).setValue(newStatus);
-       if (newStatus === 'OCCUPIED') {
-           roomsSheet.getRange(rowIndex, 3).setValue(now);
-       } else {
-           roomsSheet.getRange(rowIndex, 4).setValue(now);
-       }
+       roomsSheet.getRange(rowIndex, 2).setValue('OCCUPIED');
+       roomsSheet.getRange(rowIndex, 3).setValue(dateTime);
     }
 
-    return { success: true, message: `Room ${roomNumber} is now ${newStatus}`, newStatus: newStatus };
+    staySheet.appendRow([roomNumber, dateTime, '']);
+
+    return { success: true, message: `Room ${roomNumber} Checked-In successfully.` };
+  } catch(err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+function processCheckOut(roomNumber, dateTimeStr) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let roomsSheet = ss.getSheetByName('Rooms');
+    let staySheet = ss.getSheetByName('Stay Segment');
+
+    if (!roomsSheet) throw new Error("Rooms sheet not found.");
+    if (!staySheet) throw new Error("Stay Segment sheet not found.");
+
+    const roomsData = getSheetDataAsObjects('Rooms');
+
+    let rowIndex = -1;
+    for (let i = 0; i < roomsData.length; i++) {
+      if (roomsData[i]['Room Number'].toString() === roomNumber.toString()) {
+        rowIndex = roomsData[i]._rowIndex;
+        break;
+      }
+    }
+
+    const dateTime = new Date(dateTimeStr);
+
+    if (rowIndex !== -1) {
+       roomsSheet.getRange(rowIndex, 2).setValue('AVAILABLE');
+       roomsSheet.getRange(rowIndex, 4).setValue(dateTime);
+    }
+
+    // Find the latest stay row for this room without a checkout date
+    const stayData = staySheet.getDataRange().getValues();
+    let stayRowIndex = -1;
+    // Iterate backwards to find the most recent checkin
+    for(let i = stayData.length - 1; i > 0; i--) {
+        if(stayData[i][0].toString() === roomNumber.toString() && stayData[i][2] === '') {
+            stayRowIndex = i + 1; // +1 because array is 0-indexed and sheet is 1-indexed
+            break;
+        }
+    }
+
+    if(stayRowIndex !== -1) {
+        staySheet.getRange(stayRowIndex, 3).setValue(dateTime);
+    } else {
+        // Fallback if we somehow checkout without a checkin record
+        staySheet.appendRow([roomNumber, '', dateTime]);
+    }
+
+    return { success: true, message: `Room ${roomNumber} Checked-Out successfully.` };
   } catch(err) {
     return { success: false, message: err.toString() };
   }

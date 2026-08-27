@@ -1273,7 +1273,9 @@
 
 
 
-    let roomToggleModal;
+    let checkInModal;
+    let checkOutModal;
+
 
     function loadRooms() {
         google.script.run.withSuccessHandler(res => {
@@ -1302,23 +1304,40 @@
         }).getRoomStatus();
     }
 
-    function handleRoomClick(roomNum, status) {
-        document.getElementById('rtRoomNum').value = roomNum;
-        document.getElementById('rtCurrentStatus').value = status;
-
-        const actionText = status === 'AVAILABLE' ? 'Check-In' : 'Check-Out';
-        document.getElementById('rtModalTitle').innerText = `Confirm ${actionText}`;
-        document.getElementById('rtModalText').innerText = `Are you sure you want to ${actionText.toLowerCase()} Room ${roomNum}?`;
-
-        if(!roomToggleModal) roomToggleModal = new bootstrap.Modal(document.getElementById('roomToggleModal'));
-        roomToggleModal.show();
+    function getNowDateTimeLocal() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
     }
 
-    function submitRoomToggle() {
-        const roomNum = document.getElementById('rtRoomNum').value;
-        const currentStatus = document.getElementById('rtCurrentStatus').value;
+    function handleRoomClick(roomNum, status) {
+        if (status === 'AVAILABLE') {
+            document.getElementById('checkInForm').reset();
+            document.getElementById('ciRoomNum').value = roomNum;
+            document.getElementById('ciRoomDisplay').innerText = roomNum;
+            document.getElementById('ciDateTime').value = getNowDateTimeLocal();
 
-        if(roomToggleModal) roomToggleModal.hide();
+            if(!checkInModal) checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
+            checkInModal.show();
+        } else if (status === 'OCCUPIED') {
+            document.getElementById('checkOutForm').reset();
+            document.getElementById('coRoomNum').value = roomNum;
+            document.getElementById('coRoomDisplay').innerText = roomNum;
+            document.getElementById('coDateTime').value = getNowDateTimeLocal();
+
+            if(!checkOutModal) checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
+            checkOutModal.show();
+        }
+    }
+
+    function submitCheckIn(e) {
+        e.preventDefault();
+        if(!validateForm("checkInForm")) return;
+
+        const roomNum = document.getElementById('ciRoomNum').value;
+        const dateTime = document.getElementById('ciDateTime').value;
+
+        if(checkInModal) checkInModal.hide();
 
         // Show local spinner
         const card = document.getElementById(`room-card-${roomNum}`);
@@ -1330,12 +1349,39 @@
         google.script.run.withSuccessHandler(res => {
             if(res.success) {
                 showToast(res.message);
-                loadRooms(); // Refresh the grid
+                loadRooms();
             } else {
                 showToast(res.message, 'danger');
-                loadRooms(); // Revert local spinner on error
+                loadRooms();
             }
-        }).toggleRoomStatus(roomNum, currentStatus);
+        }).processCheckIn(roomNum, dateTime);
+    }
+
+    function submitCheckOut(e) {
+        e.preventDefault();
+        if(!validateForm("checkOutForm")) return;
+
+        const roomNum = document.getElementById('coRoomNum').value;
+        const dateTime = document.getElementById('coDateTime').value;
+
+        if(checkOutModal) checkOutModal.hide();
+
+        // Show local spinner
+        const card = document.getElementById(`room-card-${roomNum}`);
+        if(card) {
+            card.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            card.style.pointerEvents = 'none';
+        }
+
+        google.script.run.withSuccessHandler(res => {
+            if(res.success) {
+                showToast(res.message);
+                loadRooms();
+            } else {
+                showToast(res.message, 'danger');
+                loadRooms();
+            }
+        }).processCheckOut(roomNum, dateTime);
     }
 
     // Init Dark Mode
@@ -2131,19 +2177,45 @@
   </div>
 
 
-  <!-- Room Toggle Modal -->
-  <div class="modal fade" id="roomToggleModal" tabindex="-1">
+  <!-- Check-In Modal -->
+  <div class="modal fade" id="checkInModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="rtModalTitle">Confirm Action</h5>
+          <h5 class="modal-title fw-bold">Check-In Room <span id="ciRoomDisplay"></span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body text-center">
-          <p id="rtModalText" class="fs-5 mb-4"></p>
-          <input type="hidden" id="rtRoomNum">
-          <input type="hidden" id="rtCurrentStatus">
-          <button type="button" class="btn btn-primary btn-lg w-100" onclick="submitRoomToggle()">Confirm</button>
+        <div class="modal-body">
+          <form id="checkInForm" novalidate onsubmit="submitCheckIn(event)">
+            <input type="hidden" id="ciRoomNum">
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date & Time</label>
+              <input type="datetime-local" class="form-control form-control-lg" id="ciDateTime" required>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Confirm Check-In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-Out Modal -->
+  <div class="modal fade" id="checkOutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Check-Out Room <span id="coRoomDisplay"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkOutForm" novalidate onsubmit="submitCheckOut(event)">
+            <input type="hidden" id="coRoomNum">
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date & Time</label>
+              <input type="datetime-local" class="form-control form-control-lg" id="coDateTime" required>
+            </div>
+            <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Confirm Check-Out</button>
+          </form>
         </div>
       </div>
     </div>
