@@ -576,6 +576,13 @@
     [data-theme="dark"] .room-available { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
     [data-theme="dark"] .room-occupied { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
 
+
+    /* Fix native calendar and clock icons visibility in dark mode */
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
 </style>
 </head>
 <body>
