@@ -543,15 +543,15 @@
         color: #fb7185 !important;
     }
 
-    /* Room Status Grid */
+        /* Room Status Grid */
     .room-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         gap: 15px;
         margin-bottom: 30px;
     }
     .room-card {
-        min-height: 80px;
+        aspect-ratio: 1 / 1;
         border-radius: 12px;
         display: flex;
         flex-direction: column;
@@ -567,16 +567,15 @@
         pointer-events: auto;
     }
     .room-card:active { transform: scale(0.95); }
-    .room-card h3 { margin: 0; font-weight: bold; }
-    .room-card p { margin: 0; font-size: 0.75rem; opacity: 0.8; }
+    .room-card h3 { margin: 0; font-weight: bold; font-size: 1.5rem; }
+    .room-card i { font-size: 1.5rem; margin-bottom: 5px; opacity: 0.7; }
 
     .room-available { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
     .room-occupied { background-color: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
-    .room-cleaning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
     [data-theme="dark"] .room-available { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
     [data-theme="dark"] .room-occupied { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
-    [data-theme="dark"] .room-cleaning { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+
 </style>
 </head>
 <body>
@@ -627,7 +626,7 @@
         
 
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="fw-bold">Room Status</h4>
+          <h4 class="fw-bold">Live Room Status</h4>
         </div>
         <div class="room-grid" id="roomStatusGrid">
            <!-- Rendered via JS -->
@@ -1273,7 +1272,8 @@
     }
 
 
-    let checkInModal, checkOutModal;
+
+    let roomToggleModal;
 
     function loadRooms() {
         google.script.run.withSuccessHandler(res => {
@@ -1282,112 +1282,61 @@
                 let html = '';
                 res.data.forEach(r => {
                     let cssClass = 'room-available';
-                    let subText = 'Available';
-                    if (r['Status'] === 'OCCUPIED') {
+                    let icon = 'fa-solid fa-door-open';
+                    if (r.status === 'OCCUPIED') {
                         cssClass = 'room-occupied';
-                        subText = r['Guest Name'] || 'Occupied';
-                    } else if (r['Status'] === 'CLEANING') {
-                        cssClass = 'room-cleaning';
-                        subText = 'Needs Cleaning';
+                        icon = 'fa-solid fa-bed';
                     }
 
                     html += `
-                        <div class="room-card ${cssClass}" onclick="handleRoomClick('${r['Room Number']}', '${r['Status']}', '${r['Guest Name']}', '${r['Check-In Date']}')">
-                            <h3>${r['Room Number']}</h3>
-                            <p>${subText}</p>
+                        <div class="room-card ${cssClass}" id="room-card-${r.roomNumber}" onclick="handleRoomClick('${r.roomNumber}', '${r.status}')">
+                            <i class="${icon}"></i>
+                            <h3>${r.roomNumber}</h3>
                         </div>
                     `;
                 });
                 grid.innerHTML = html;
             } else {
-                grid.innerHTML = '<p class="text-muted w-100" style="grid-column: 1 / -1;">No room data found. Run backend setup().</p>';
+                grid.innerHTML = '<p class="text-muted w-100" style="grid-column: 1 / -1;">No room data found in Settings.</p>';
             }
         }).getRoomStatus();
     }
 
-    function handleRoomClick(roomNum, status, guestName, checkInDate) {
-        if (status === 'AVAILABLE') {
-            document.getElementById('checkInForm').reset();
-            document.getElementById('ciRoomNum').value = roomNum;
-            document.getElementById('ciRoomDisplay').innerText = roomNum;
-            document.getElementById('ciDate').value = getToday();
+    function handleRoomClick(roomNum, status) {
+        document.getElementById('rtRoomNum').value = roomNum;
+        document.getElementById('rtCurrentStatus').value = status;
 
-            if(!checkInModal) checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
-            checkInModal.show();
-        } else if (status === 'OCCUPIED') {
-            document.getElementById('checkOutForm').reset();
-            document.getElementById('coRoomNum').value = roomNum;
-            document.getElementById('coRoomDisplay').innerText = roomNum;
-            document.getElementById('coDate').value = getToday();
+        const actionText = status === 'AVAILABLE' ? 'Check-In' : 'Check-Out';
+        document.getElementById('rtModalTitle').innerText = `Confirm ${actionText}`;
+        document.getElementById('rtModalText').innerText = `Are you sure you want to ${actionText.toLowerCase()} Room ${roomNum}?`;
 
-            if(!checkOutModal) checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
-            checkOutModal.show();
-        } else if (status === 'CLEANING') {
-            if(confirm(`Mark Room ${roomNum} as Clean and Available?`)) {
-                showLoading();
-                google.script.run.withSuccessHandler(res => {
-                    hideLoading();
-                    if(res.success) {
-                        showToast(res.message);
-                        loadRooms();
-                    } else {
-                        showToast(res.message, 'danger');
-                    }
-                }).markRoomClean(roomNum);
-            }
+        if(!roomToggleModal) roomToggleModal = new bootstrap.Modal(document.getElementById('roomToggleModal'));
+        roomToggleModal.show();
+    }
+
+    function submitRoomToggle() {
+        const roomNum = document.getElementById('rtRoomNum').value;
+        const currentStatus = document.getElementById('rtCurrentStatus').value;
+
+        if(roomToggleModal) roomToggleModal.hide();
+
+        // Show local spinner
+        const card = document.getElementById(`room-card-${roomNum}`);
+        if(card) {
+            card.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            card.style.pointerEvents = 'none';
         }
-    }
 
-    function submitCheckIn(e) {
-        e.preventDefault();
-        if(!validateForm("checkInForm")) return;
-        showLoading();
-        const data = {
-            roomNumber: document.getElementById('ciRoomNum').value,
-            guestName: '',
-            date: document.getElementById('ciDate').value,
-            advancePaid: 0,
-            modeOfPayment: '',
-            entryBy: ''
-        };
         google.script.run.withSuccessHandler(res => {
-            hideLoading();
             if(res.success) {
                 showToast(res.message);
-                if(checkInModal) checkInModal.hide();
-                loadRooms();
-                refreshDashboard();
+                loadRooms(); // Refresh the grid
             } else {
                 showToast(res.message, 'danger');
+                loadRooms(); // Revert local spinner on error
             }
-        }).processCheckIn(data);
+        }).toggleRoomStatus(roomNum, currentStatus);
     }
-
-    function submitCheckOut(e) {
-        e.preventDefault();
-        if(!validateForm("checkOutForm")) return;
-        showLoading();
-        const data = {
-            roomNumber: document.getElementById('coRoomNum').value,
-            guestName: '',
-            date: document.getElementById('coDate').value,
-            finalPayment: 0,
-            modeOfPayment: '',
-            entryBy: ''
-        };
-        google.script.run.withSuccessHandler(res => {
-            hideLoading();
-            if(res.success) {
-                showToast(res.message);
-                if(checkOutModal) checkOutModal.hide();
-                loadRooms();
-                refreshDashboard();
-            } else {
-                showToast(res.message, 'danger');
-            }
-        }).processCheckOut(data);
-    }
-
 
     // Init Dark Mode
     const savedTheme = localStorage.getItem('theme');
@@ -2182,45 +2131,19 @@
   </div>
 
 
-  <!-- Check-In Modal -->
-  <div class="modal fade" id="checkInModal" tabindex="-1">
+  <!-- Room Toggle Modal -->
+  <div class="modal fade" id="roomToggleModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold">Check-In Room <span id="ciRoomDisplay"></span></h5>
+          <h5 class="modal-title fw-bold" id="rtModalTitle">Confirm Action</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
-          <form id="checkInForm" novalidate onsubmit="submitCheckIn(event)">
-            <input type="hidden" id="ciRoomNum">
-            <div class="mb-3">
-              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date</label>
-              <input type="date" class="form-control form-control-lg" id="ciDate" required>
-            </div>
-            <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Process Check-In</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Check-Out Modal -->
-  <div class="modal fade" id="checkOutModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold">Check-Out Room <span id="coRoomDisplay"></span></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form id="checkOutForm" novalidate onsubmit="submitCheckOut(event)">
-            <input type="hidden" id="coRoomNum">
-            <div class="mb-3">
-              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date</label>
-              <input type="date" class="form-control form-control-lg" id="coDate" required>
-            </div>
-            <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Process Check-Out</button>
-          </form>
+        <div class="modal-body text-center">
+          <p id="rtModalText" class="fs-5 mb-4"></p>
+          <input type="hidden" id="rtRoomNum">
+          <input type="hidden" id="rtCurrentStatus">
+          <button type="button" class="btn btn-primary btn-lg w-100" onclick="submitRoomToggle()">Confirm</button>
         </div>
       </div>
     </div>

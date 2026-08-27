@@ -17,26 +17,16 @@ function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
 
-  // Setup Rooms Sheet
+    // Setup Rooms Sheet
   let roomsSheet = ss.getSheetByName('Rooms');
   if (!roomsSheet) {
     roomsSheet = ss.insertSheet('Rooms');
-    const roomsHeaders = ['Room Number', 'Status', 'Guest Name', 'Check-In Date', 'Advance Paid'];
+    const roomsHeaders = ['Room Number', 'Current Status', 'Last Check-In', 'Last Check-Out'];
     roomsSheet.getRange(1, 1, 1, roomsHeaders.length).setValues([roomsHeaders]);
     roomsSheet.getRange(1, 1, 1, roomsHeaders.length).setFontWeight('bold');
-
-    // Seed default rooms for convenience
-    const initialRooms = [
-        [101, 'AVAILABLE', '', '', ''],
-        [102, 'AVAILABLE', '', '', ''],
-        [103, 'AVAILABLE', '', '', ''],
-        [104, 'AVAILABLE', '', '', ''],
-        [105, 'AVAILABLE', '', '', '']
-    ];
-    roomsSheet.getRange(2, 1, initialRooms.length, 5).setValues(initialRooms);
   }
 
-  // Setup Income Sheet
+// Setup Income Sheet
   let incomeSheet = ss.getSheetByName('Income');
   if (!incomeSheet) {
     incomeSheet = ss.insertSheet('Income');
@@ -712,96 +702,41 @@ function getDropdownSettings() {
  */
 function getRoomStatus() {
   try {
-    const data = getSheetDataAsObjects('Rooms');
-    return { success: true, data: data };
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Get master list of rooms from Settings
+    const settingsData = getDropdownSettings();
+    const masterRooms = settingsData.roomDescriptions || [];
+
+    // Get current room status
+    const roomsSheet = ss.getSheetByName('Rooms');
+    let statusData = [];
+    if (roomsSheet) {
+      statusData = getSheetDataAsObjects('Rooms');
+    }
+
+    // Map status
+    const result = masterRooms.map(roomNum => {
+      let status = 'AVAILABLE';
+      const existing = statusData.find(r => r['Room Number'].toString() === roomNum.toString());
+      if (existing && existing['Current Status']) {
+        status = existing['Current Status'];
+      }
+      return { roomNumber: roomNum, status: status };
+    });
+
+    return { success: true, data: result };
   } catch (error) {
     return { success: false, message: error.toString() };
   }
 }
 
-function processCheckIn(data) {
+function toggleRoomStatus(roomNumber, currentStatus) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const roomsSheet = ss.getSheetByName('Rooms');
-    const roomsData = getSheetDataAsObjects('Rooms');
+    let roomsSheet = ss.getSheetByName('Rooms');
+    if (!roomsSheet) throw new Error("Rooms sheet not found.");
 
-    let rowIndex = -1;
-    for (let i = 0; i < roomsData.length; i++) {
-      if (roomsData[i]['Room Number'].toString() === data.roomNumber.toString()) {
-        rowIndex = roomsData[i]._rowIndex;
-        break;
-      }
-    }
-
-    if (rowIndex === -1) {
-       roomsSheet.appendRow([data.roomNumber, 'OCCUPIED', data.guestName, data.date, data.advancePaid]);
-    } else {
-       roomsSheet.getRange(rowIndex, 2).setValue('OCCUPIED');
-       roomsSheet.getRange(rowIndex, 3).setValue(data.guestName);
-       roomsSheet.getRange(rowIndex, 4).setValue(data.date);
-       roomsSheet.getRange(rowIndex, 5).setValue(data.advancePaid);
-    }
-
-    // Append to Income if advance > 0
-    if (parseFloat(data.advancePaid) > 0) {
-      const incSheet = ss.getSheetByName('Income');
-      const incData = [
-        data.date, '', data.roomNumber, '', '', 'Advance: ' + data.guestName,
-        0, 0, data.advancePaid, data.advancePaid, 0, 'ADVANCE',
-        data.modeOfPayment, data.entryBy, data.date
-      ];
-      incSheet.appendRow(incData);
-      sortSheetByDate(incSheet);
-    }
-
-    return { success: true, message: 'Check-in processed successfully' };
-  } catch(err) {
-    return { success: false, message: err.toString() };
-  }
-}
-
-function processCheckOut(data) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const roomsSheet = ss.getSheetByName('Rooms');
-    const roomsData = getSheetDataAsObjects('Rooms');
-
-    let rowIndex = -1;
-    for (let i = 0; i < roomsData.length; i++) {
-      if (roomsData[i]['Room Number'].toString() === data.roomNumber.toString()) {
-        rowIndex = roomsData[i]._rowIndex;
-        break;
-      }
-    }
-
-    if (rowIndex !== -1) {
-       roomsSheet.getRange(rowIndex, 2).setValue('CLEANING');
-       roomsSheet.getRange(rowIndex, 3).setValue('');
-       roomsSheet.getRange(rowIndex, 4).setValue('');
-       roomsSheet.getRange(rowIndex, 5).setValue('');
-    }
-
-    if (parseFloat(data.finalPayment) > 0) {
-      const incSheet = ss.getSheetByName('Income');
-      const incData = [
-        data.date, '', data.roomNumber, '', '', 'Final Payment: ' + data.guestName,
-        data.finalPayment, 0, data.finalPayment, data.finalPayment, 0, 'PAID',
-        data.modeOfPayment, data.entryBy, data.date
-      ];
-      incSheet.appendRow(incData);
-      sortSheetByDate(incSheet);
-    }
-
-    return { success: true, message: 'Check-out processed successfully' };
-  } catch(err) {
-    return { success: false, message: err.toString() };
-  }
-}
-
-function markRoomClean(roomNumber) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const roomsSheet = ss.getSheetByName('Rooms');
     const roomsData = getSheetDataAsObjects('Rooms');
 
     let rowIndex = -1;
@@ -812,11 +747,25 @@ function markRoomClean(roomNumber) {
       }
     }
 
-    if (rowIndex !== -1) {
-       roomsSheet.getRange(rowIndex, 2).setValue('AVAILABLE');
+    const newStatus = currentStatus === 'AVAILABLE' ? 'OCCUPIED' : 'AVAILABLE';
+    const now = new Date();
+
+    if (rowIndex === -1) {
+       // Row doesn't exist, create it
+       let checkInDate = newStatus === 'OCCUPIED' ? now : '';
+       let checkOutDate = newStatus === 'AVAILABLE' ? now : '';
+       roomsSheet.appendRow([roomNumber, newStatus, checkInDate, checkOutDate]);
+    } else {
+       // Update existing row
+       roomsSheet.getRange(rowIndex, 2).setValue(newStatus);
+       if (newStatus === 'OCCUPIED') {
+           roomsSheet.getRange(rowIndex, 3).setValue(now);
+       } else {
+           roomsSheet.getRange(rowIndex, 4).setValue(now);
+       }
     }
 
-    return { success: true, message: 'Room marked as available' };
+    return { success: true, message: `Room ${roomNumber} is now ${newStatus}`, newStatus: newStatus };
   } catch(err) {
     return { success: false, message: err.toString() };
   }
