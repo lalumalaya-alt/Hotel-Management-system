@@ -704,16 +704,21 @@ function getRoomStatus() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // Get master list of rooms from Settings
-    const settingsData = getDropdownSettings();
-    const masterRooms = settingsData.roomDescriptions || [];
-
-    // Get current room status
+    // Get current room status from Rooms sheet
     const roomsSheet = ss.getSheetByName('Rooms');
     let statusData = [];
+    let roomNumbersInSheet = [];
     if (roomsSheet) {
       statusData = getSheetDataAsObjects('Rooms');
+      roomNumbersInSheet = statusData.map(r => r['Room Number'].toString());
     }
+
+    // Get master list of rooms from Settings
+    const settingsData = getDropdownSettings();
+    let masterRooms = settingsData.roomDescriptions || [];
+
+    // Merge masterRooms with rooms already in the Rooms sheet
+    masterRooms = [...new Set([...masterRooms.map(String), ...roomNumbersInSheet])];
 
     // Map status
     const result = masterRooms.map(roomNum => {
@@ -725,7 +730,10 @@ function getRoomStatus() {
       return { roomNumber: roomNum, status: status };
     });
 
-    return { success: true, data: result };
+    // Filter out any empty strings that might have come from settings or sheets
+    const finalResult = result.filter(r => r.roomNumber && r.roomNumber.trim() !== '');
+
+    return { success: true, data: finalResult };
   } catch (error) {
     return { success: false, message: error.toString() };
   }
