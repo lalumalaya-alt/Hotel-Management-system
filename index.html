@@ -542,6 +542,38 @@
         border-color: #f43f5e !important;
         color: #fb7185 !important;
     }
+
+    /* Room Status Grid */
+    .room-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    .room-card {
+        min-height: 80px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-align: center;
+        padding: 10px;
+    }
+    .room-card:active { transform: scale(0.95); }
+    .room-card h3 { margin: 0; font-weight: bold; }
+    .room-card p { margin: 0; font-size: 0.75rem; opacity: 0.8; }
+
+    .room-available { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .room-occupied { background-color: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+    .room-cleaning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    [data-theme="dark"] .room-available { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+    [data-theme="dark"] .room-occupied { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+    [data-theme="dark"] .room-cleaning { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
 </style>
 </head>
 <body>
@@ -590,6 +622,17 @@
       <!-- Dashboard Tab -->
       <div class="tab-pane fade show active" id="pills-dashboard" role="tabpanel">
         
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold">Room Status</h4>
+        </div>
+        <div class="room-grid" id="roomStatusGrid">
+           <!-- Rendered via JS -->
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="fw-bold">Overview</h4>
           <div class="d-flex gap-2 align-items-center">
@@ -1226,6 +1269,140 @@
         }
     }
 
+
+    let checkInModal, checkOutModal;
+
+    function loadRooms() {
+        google.script.run.withSuccessHandler(res => {
+            const grid = document.getElementById('roomStatusGrid');
+            if(res.success && res.data.length > 0) {
+                let html = '';
+                res.data.forEach(r => {
+                    let cssClass = 'room-available';
+                    let subText = 'Available';
+                    if (r['Status'] === 'OCCUPIED') {
+                        cssClass = 'room-occupied';
+                        subText = r['Guest Name'] || 'Occupied';
+                    } else if (r['Status'] === 'CLEANING') {
+                        cssClass = 'room-cleaning';
+                        subText = 'Needs Cleaning';
+                    }
+
+                    html += `
+                        <div class="room-card ${cssClass}" onclick="handleRoomClick('${r['Room Number']}', '${r['Status']}', '${r['Guest Name']}', '${r['Check-In Date']}')">
+                            <h3>${r['Room Number']}</h3>
+                            <p>${subText}</p>
+                        </div>
+                    `;
+                });
+                grid.innerHTML = html;
+            } else {
+                grid.innerHTML = '<p class="text-muted w-100" style="grid-column: 1 / -1;">No room data found. Run backend setup().</p>';
+            }
+        }).getRoomStatus();
+    }
+
+    function handleRoomClick(roomNum, status, guestName, checkInDate) {
+        if (status === 'AVAILABLE') {
+            document.getElementById('checkInForm').reset();
+            document.getElementById('ciRoomNum').value = roomNum;
+            document.getElementById('ciRoomDisplay').innerText = roomNum;
+            document.getElementById('ciDate').value = getToday();
+
+            if(!checkInModal) checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
+            checkInModal.show();
+        } else if (status === 'OCCUPIED') {
+            document.getElementById('checkOutForm').reset();
+            document.getElementById('coRoomNum').value = roomNum;
+            document.getElementById('coRoomDisplay').innerText = roomNum;
+            document.getElementById('coGuestDisplay').innerText = guestName || '-';
+
+            let dStr = '-';
+            let days = '-';
+            if (checkInDate) {
+                const ciD = new Date(checkInDate);
+                if(!isNaN(ciD)) {
+                    dStr = ciD.toLocaleDateString();
+                    const now = new Date();
+                    const diffTime = Math.abs(now - ciD);
+                    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 0) diffDays = 1;
+                    days = diffDays + ' Day(s)';
+                }
+            }
+            document.getElementById('coDateDisplay').innerText = dStr;
+            document.getElementById('coStayDisplay').innerText = days;
+            document.getElementById('coDate').value = getToday();
+
+            if(!checkOutModal) checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
+            checkOutModal.show();
+        } else if (status === 'CLEANING') {
+            if(confirm(`Mark Room ${roomNum} as Clean and Available?`)) {
+                showLoading();
+                google.script.run.withSuccessHandler(res => {
+                    hideLoading();
+                    if(res.success) {
+                        showToast(res.message);
+                        loadRooms();
+                    } else {
+                        showToast(res.message, 'danger');
+                    }
+                }).markRoomClean(roomNum);
+            }
+        }
+    }
+
+    function submitCheckIn(e) {
+        e.preventDefault();
+        if(!validateForm("checkInForm")) return;
+        showLoading();
+        const data = {
+            roomNumber: document.getElementById('ciRoomNum').value,
+            guestName: document.getElementById('ciGuestName').value,
+            date: document.getElementById('ciDate').value,
+            advancePaid: document.getElementById('ciAdvance').value,
+            modeOfPayment: document.getElementById('ciMode').value,
+            entryBy: document.getElementById('ciEntryBy').value
+        };
+        google.script.run.withSuccessHandler(res => {
+            hideLoading();
+            if(res.success) {
+                showToast(res.message);
+                if(checkInModal) checkInModal.hide();
+                loadRooms();
+                refreshDashboard();
+            } else {
+                showToast(res.message, 'danger');
+            }
+        }).processCheckIn(data);
+    }
+
+    function submitCheckOut(e) {
+        e.preventDefault();
+        if(!validateForm("checkOutForm")) return;
+        showLoading();
+        const data = {
+            roomNumber: document.getElementById('coRoomNum').value,
+            guestName: document.getElementById('coGuestDisplay').innerText,
+            date: document.getElementById('coDate').value,
+            finalPayment: document.getElementById('coFinal').value,
+            modeOfPayment: document.getElementById('coMode').value,
+            entryBy: document.getElementById('coEntryBy').value
+        };
+        google.script.run.withSuccessHandler(res => {
+            hideLoading();
+            if(res.success) {
+                showToast(res.message);
+                if(checkOutModal) checkOutModal.hide();
+                loadRooms();
+                refreshDashboard();
+            } else {
+                showToast(res.message, 'danger');
+            }
+        }).processCheckOut(data);
+    }
+
+
     // Init Dark Mode
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -1247,6 +1424,7 @@
       document.getElementById('monthFilter').value = currentMonth;
       document.getElementById('reportMonth').value = currentMonth;
       refreshDashboard();
+      loadRooms();
       toggleClearBtn();
       loadDropdownSettings();
     });
@@ -1257,8 +1435,9 @@
         window.foodDescriptions = settings.foodDescriptions || [];
         
         populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
-        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
-        populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
+
+        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode', 'ciMode', 'coMode'], settings.modeOfPayment);
+        populateDropdowns(['incEntryBy', 'expEntryBy', 'ciEntryBy', 'coEntryBy'], settings.entryBy);
         populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
         populateDropdowns(['incCoffeePepper'], settings.coffeePepperOptions);
         populateDropdowns(['incGstNgst'], settings.gstNgstOptions);
@@ -2013,6 +2192,100 @@
       <a href="#" class="bottom-sheet-btn expense" onclick="switchToTab('#pills-expense')">
         <i class="fa-solid fa-money-bill-transfer me-3"></i> Add Expense
       </a>
+    </div>
+  </div>
+
+
+  <!-- Check-In Modal -->
+  <div class="modal fade" id="checkInModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Check-In Room <span id="ciRoomDisplay"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkInForm" novalidate onsubmit="submitCheckIn(event)">
+            <input type="hidden" id="ciRoomNum">
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Guest Name</label>
+              <input type="text" class="form-control form-control-lg" id="ciGuestName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date</label>
+              <input type="date" class="form-control form-control-lg" id="ciDate" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Advance Payment</label>
+              <input type="number" step="0.01" class="form-control form-control-lg" id="ciAdvance" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
+              <select class="form-select form-select-lg" id="ciMode" required>
+                 <option value="" selected disabled>Please Select</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
+              <select class="form-select form-select-lg" id="ciEntryBy" required>
+                 <option value="" selected disabled>Please Select</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Process Check-In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-Out Modal -->
+  <div class="modal fade" id="checkOutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Check-Out Room <span id="coRoomDisplay"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkOutForm" novalidate onsubmit="submitCheckOut(event)">
+            <input type="hidden" id="coRoomNum">
+            <div class="alert alert-info mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <strong>Guest:</strong> <span id="coGuestDisplay"></span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <strong>Check-In:</strong> <span id="coDateDisplay"></span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <strong>Stay Duration:</strong> <span id="coStayDisplay"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date</label>
+              <input type="date" class="form-control form-control-lg" id="coDate" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Final Payment Amount</label>
+              <input type="number" step="0.01" class="form-control form-control-lg" id="coFinal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
+              <select class="form-select form-select-lg" id="coMode" required>
+                 <option value="" selected disabled>Please Select</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
+              <select class="form-select form-select-lg" id="coEntryBy" required>
+                 <option value="" selected disabled>Please Select</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Process Check-Out</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
