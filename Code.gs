@@ -775,7 +775,8 @@ function processCheckIn(roomNumber, dateTimeStr) {
       }
     }
 
-    const dateTime = new Date(dateTimeStr);
+    const rawDate = new Date(dateTimeStr);
+    const dateTime = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'dd-MMM-yyyy hh:mm a');
 
     if (rowIndex === -1) {
        roomsSheet.appendRow([roomNumber, 'OCCUPIED', dateTime, '']);
@@ -811,7 +812,8 @@ function processCheckOut(roomNumber, dateTimeStr) {
       }
     }
 
-    const dateTime = new Date(dateTimeStr);
+    const rawDate = new Date(dateTimeStr);
+    const dateTime = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'dd-MMM-yyyy hh:mm a');
 
     if (rowIndex !== -1) {
        roomsSheet.getRange(rowIndex, 2).setValue('AVAILABLE');

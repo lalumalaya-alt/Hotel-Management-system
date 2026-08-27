@@ -1304,10 +1304,16 @@
         }).getRoomStatus();
     }
 
-    function getNowDateTimeLocal() {
+    function getNowDateLocal() {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        return now.toISOString().slice(0, 16);
+        return now.toISOString().slice(0, 10);
+    }
+
+    function getNowTimeLocal() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(11, 16);
     }
 
     function handleRoomClick(roomNum, status) {
@@ -1315,7 +1321,8 @@
             document.getElementById('checkInForm').reset();
             document.getElementById('ciRoomNum').value = roomNum;
             document.getElementById('ciRoomDisplay').innerText = roomNum;
-            document.getElementById('ciDateTime').value = getNowDateTimeLocal();
+            document.getElementById('ciDateOnly').value = getNowDateLocal();
+            document.getElementById('ciTimeOnly').value = getNowTimeLocal();
 
             if(!checkInModal) checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
             checkInModal.show();
@@ -1323,7 +1330,8 @@
             document.getElementById('checkOutForm').reset();
             document.getElementById('coRoomNum').value = roomNum;
             document.getElementById('coRoomDisplay').innerText = roomNum;
-            document.getElementById('coDateTime').value = getNowDateTimeLocal();
+            document.getElementById('coDateOnly').value = getNowDateLocal();
+            document.getElementById('coTimeOnly').value = getNowTimeLocal();
 
             if(!checkOutModal) checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
             checkOutModal.show();
@@ -1335,7 +1343,7 @@
         if(!validateForm("checkInForm")) return;
 
         const roomNum = document.getElementById('ciRoomNum').value;
-        const dateTime = document.getElementById('ciDateTime').value;
+        const dateTime = document.getElementById('ciDateOnly').value + 'T' + document.getElementById('ciTimeOnly').value;
 
         if(checkInModal) checkInModal.hide();
 
@@ -1362,7 +1370,7 @@
         if(!validateForm("checkOutForm")) return;
 
         const roomNum = document.getElementById('coRoomNum').value;
-        const dateTime = document.getElementById('coDateTime').value;
+        const dateTime = document.getElementById('coDateOnly').value + 'T' + document.getElementById('coTimeOnly').value;
 
         if(checkOutModal) checkOutModal.hide();
 
@@ -2188,9 +2196,15 @@
         <div class="modal-body">
           <form id="checkInForm" novalidate onsubmit="submitCheckIn(event)">
             <input type="hidden" id="ciRoomNum">
-            <div class="mb-3">
-              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date & Time</label>
-              <input type="datetime-local" class="form-control form-control-lg" id="ciDateTime" required>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date</label>
+                <input type="date" class="form-control form-control-lg" id="ciDateOnly" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Time</label>
+                <input type="time" class="form-control form-control-lg" id="ciTimeOnly" required>
+              </div>
             </div>
             <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Confirm Check-In</button>
           </form>
@@ -2210,9 +2224,15 @@
         <div class="modal-body">
           <form id="checkOutForm" novalidate onsubmit="submitCheckOut(event)">
             <input type="hidden" id="coRoomNum">
-            <div class="mb-3">
-              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date & Time</label>
-              <input type="datetime-local" class="form-control form-control-lg" id="coDateTime" required>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date</label>
+                <input type="date" class="form-control form-control-lg" id="coDateOnly" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Time</label>
+                <input type="time" class="form-control form-control-lg" id="coTimeOnly" required>
+              </div>
             </div>
             <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Confirm Check-Out</button>
           </form>
