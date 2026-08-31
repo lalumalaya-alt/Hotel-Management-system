@@ -15,34 +15,14 @@ function doGet() {
  */
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  
 
-
-    // Setup Stay Segment Sheet
-  let staySheet = ss.getSheetByName('Stay Segment');
-  if (!staySheet) {
-    staySheet = ss.insertSheet('Stay Segment');
-    const stayHeaders = ['Room Number', 'Check-In Date/Time', 'Check-Out Date/Time'];
-    staySheet.getRange(1, 1, 1, stayHeaders.length).setValues([stayHeaders]);
-    staySheet.getRange(1, 1, 1, stayHeaders.length).setFontWeight('bold');
-  }
-
-  // Setup Rooms Sheet
-  let roomsSheet = ss.getSheetByName('Rooms');
-  if (!roomsSheet) {
-    roomsSheet = ss.insertSheet('Rooms');
-    const roomsHeaders = ['Room Number', 'Current Status', 'Last Check-In', 'Last Check-Out'];
-    roomsSheet.getRange(1, 1, 1, roomsHeaders.length).setValues([roomsHeaders]);
-    roomsSheet.getRange(1, 1, 1, roomsHeaders.length).setFontWeight('bold');
-  }
-
-// Setup Income Sheet
+  // Setup Income Sheet
   let incomeSheet = ss.getSheetByName('Income');
   if (!incomeSheet) {
     incomeSheet = ss.insertSheet('Income');
     const incomeHeaders = [
-      'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Gst/Ngst', 'Other', 
-      'Room Rent', 'Fooding', 'Total', 'Paid Amount', 'Due Amount', 'Payment Status', 'Mode Of Payment', 
+      'Date', 'Entry Number', 'Room Number', 'Coffee / Black Pepper', 'Gst/Ngst', 'Other',
+      'Room Rent', 'Fooding', 'Total', 'Paid Amount', 'Due Amount', 'Payment Status', 'Mode Of Payment',
       'Entry By', 'Payment Date'
     ];
     incomeSheet.getRange(1, 1, 1, incomeHeaders.length).setValues([incomeHeaders]);
@@ -52,17 +32,17 @@ function setup() {
     let headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
     let roomNumIndex = headers.indexOf('Room Number');
     let coffeeIndex = headers.indexOf('Coffee / Black Pepper');
-    
+
     if (roomNumIndex !== -1 && coffeeIndex === -1) {
       incomeSheet.insertColumnAfter(roomNumIndex + 1);
       incomeSheet.getRange(1, roomNumIndex + 2).setValue('Coffee / Black Pepper').setFontWeight('bold');
       headers = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0]; // reload headers
     }
-    
+
     // Migration: Check if 'Gst/Ngst' exists, if not insert it after 'Coffee / Black Pepper'
     coffeeIndex = headers.indexOf('Coffee / Black Pepper');
     const gstNgstIndex = headers.indexOf('Gst/Ngst');
-    
+
     if (coffeeIndex !== -1 && gstNgstIndex === -1) {
       incomeSheet.insertColumnAfter(coffeeIndex + 1);
       incomeSheet.getRange(1, coffeeIndex + 2).setValue('Gst/Ngst').setFontWeight('bold');
@@ -72,12 +52,12 @@ function setup() {
     // Migration: Check if 'Paid Amount' and 'Due Amount' exist
     const totalIndex = headers.indexOf('Total');
     const paidIndex = headers.indexOf('Paid Amount');
-    
+
     if (totalIndex !== -1 && paidIndex === -1) {
       incomeSheet.insertColumnsAfter(totalIndex + 1, 2);
       incomeSheet.getRange(1, totalIndex + 2).setValue('Paid Amount').setFontWeight('bold');
       incomeSheet.getRange(1, totalIndex + 3).setValue('Due Amount').setFontWeight('bold');
-      
+
       // Auto-fill existing rows
       const lastRow = incomeSheet.getLastRow();
       if (lastRow > 1) {
@@ -86,7 +66,7 @@ function setup() {
         const newHeaders = incomeSheet.getRange(1, 1, 1, incomeSheet.getLastColumn()).getValues()[0];
         const statusIdx = newHeaders.indexOf('Payment Status');
         const totalIdx = newHeaders.indexOf('Total');
-        
+
         for (let i = 0; i < sheetData.length; i++) {
           const status = sheetData[i][statusIdx];
           const totalVal = parseFloat(sheetData[i][totalIdx]) || 0;
@@ -108,7 +88,7 @@ function setup() {
     expenseSheet = ss.insertSheet('Expenses');
     const expenseHeaders = [
       'Date', 'Type', 'Description', 'Details', 'Amount', 'Paid Amount', 'Due Amount',
-      'Payment Status', 'Source Of Payment', 'Mode Of Payment', 
+      'Payment Status', 'Source Of Payment', 'Mode Of Payment',
       'Entry By', 'Payment Date'
     ];
     expenseSheet.getRange(1, 1, 1, expenseHeaders.length).setValues([expenseHeaders]);
@@ -118,12 +98,12 @@ function setup() {
     const expHeaders = expenseSheet.getRange(1, 1, 1, expenseSheet.getLastColumn()).getValues()[0];
     const amountIndex = expHeaders.indexOf('Amount');
     const expPaidIndex = expHeaders.indexOf('Paid Amount');
-    
+
     if (amountIndex !== -1 && expPaidIndex === -1) {
       expenseSheet.insertColumnsAfter(amountIndex + 1, 2);
       expenseSheet.getRange(1, amountIndex + 2).setValue('Paid Amount').setFontWeight('bold');
       expenseSheet.getRange(1, amountIndex + 3).setValue('Due Amount').setFontWeight('bold');
-      
+
       // Auto-fill existing rows
       const lastRow = expenseSheet.getLastRow();
       if (lastRow > 1) {
@@ -132,7 +112,7 @@ function setup() {
         const newHeaders = expenseSheet.getRange(1, 1, 1, expenseSheet.getLastColumn()).getValues()[0];
         const statusIdx = newHeaders.indexOf('Payment Status');
         const amountIdx = newHeaders.indexOf('Amount');
-        
+
         for (let i = 0; i < sheetData.length; i++) {
           const status = sheetData[i][statusIdx];
           const amountVal = parseFloat(sheetData[i][amountIdx]) || 0;
@@ -155,7 +135,7 @@ function setup() {
 function sortSheetByDate(sheet) {
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
-  
+
   if (lastRow > 1) {
     // Sort everything from row 2 (skipping header) by column 1 (Date)
     const range = sheet.getRange(2, 1, lastRow - 1, lastCol);
@@ -170,14 +150,14 @@ function addIncome(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Income');
-    
+
     // Auto calculate total
     const roomRent = parseFloat(data.roomRent) || 0;
     const fooding = parseFloat(data.fooding) || 0;
     const total = roomRent + fooding;
-    
+
     const paymentDate = (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') ? data.date : '';
-    
+
     let paidAmount = 0;
     let dueAmount = total;
     if (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') {
@@ -202,7 +182,7 @@ function addIncome(data) {
       data.entryBy,
       paymentDate
     ];
-    
+
     sheet.appendRow(rowData);
     sortSheetByDate(sheet);
     return { success: true, message: 'Saved successfully' };
@@ -218,10 +198,10 @@ function addExpense(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Expenses');
-    
+
     const amount = parseFloat(data.amount) || 0;
     const paymentDate = (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') ? data.date : '';
-    
+
     let paidAmount = 0;
     let dueAmount = amount;
     if (data.paymentStatus === 'PAID' || data.paymentStatus === 'ADVANCE') {
@@ -243,7 +223,7 @@ function addExpense(data) {
       data.entryBy,
       paymentDate
     ];
-    
+
     sheet.appendRow(rowData);
     sortSheetByDate(sheet);
     return { success: true, message: 'Saved successfully' };
@@ -261,7 +241,7 @@ function getSheetDataAsObjects(sheetName) {
   if (!sheet) return [];
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
-  
+
   const headers = data[0];
   const rows = data.slice(1);
   return rows.map((row, index) => {
@@ -298,7 +278,7 @@ function getDashboardData(monthValue = '') {
   try {
     const incomeData = getSheetDataAsObjects('Income');
     const expenseData = getSheetDataAsObjects('Expenses');
-    
+
     let targetMonth, targetYear;
     if (monthValue) {
       const parts = monthValue.split('-');
@@ -309,17 +289,17 @@ function getDashboardData(monthValue = '') {
       targetMonth = now.getMonth();
       targetYear = now.getFullYear();
     }
-    
+
     const now = new Date();
     const todayStr = formatDateToLocal(now);
-    
+
     // Calculate Financial Year (April 1 to March 31) based on current real date
     let fyStartYear = now.getFullYear();
     if (now.getMonth() < 3) { // Jan, Feb, Mar are months 0, 1, 2
       fyStartYear -= 1;
     }
     const fyStartDate = new Date(fyStartYear, 3, 1); // April 1st
-    
+
     let dashboard = {
       todayIncome: 0,
       todayExpenses: 0,
@@ -339,7 +319,7 @@ function getDashboardData(monthValue = '') {
       cashTakenMalaya: 0,
       cashTakenMDSir: 0
     };
-    
+
     let totalCashCollection = 0;
     let cashExpensesFromCounter = 0;
 
@@ -349,20 +329,20 @@ function getDashboardData(monthValue = '') {
       const isToday = d && formatDateToLocal(d) === todayStr;
       const isTargetMonth = d && d.getMonth() === targetMonth && d.getFullYear() === targetYear;
       const isFy = d && d >= fyStartDate;
-      
+
       const amount = parseFloat(row['Total']) || 0;
       const roomRent = parseFloat(row['Room Rent']) || 0;
       const fooding = parseFloat(row['Fooding']) || 0;
-      
+
       if (isToday) dashboard.todayIncome += amount;
       if (isFy) dashboard.totalFyIncome += amount;
-      
+
       if (isTargetMonth) {
         dashboard.monthlyIncome += amount;
         dashboard.totalRoomRentIncome += roomRent;
         dashboard.totalFoodingIncome += fooding;
       }
-      
+
       if (row['Payment Status'] === 'UNPAID') {
         dashboard.totalUnpaidIncome += amount;
       } else if (row['Mode Of Payment'] === 'CASH') {
@@ -376,14 +356,14 @@ function getDashboardData(monthValue = '') {
       const isToday = d && formatDateToLocal(d) === todayStr;
       const isTargetMonth = d && d.getMonth() === targetMonth && d.getFullYear() === targetYear;
       const isFy = d && d >= fyStartDate;
-      
+
       const amount = parseFloat(row['Amount']) || 0;
       const type = row['Type'];
       const description = row['Description'];
-      
+
       if (isToday) dashboard.todayExpenses += amount;
       if (isFy) dashboard.totalFyExpenses += amount;
-      
+
       if (isTargetMonth) {
         dashboard.monthlyExpenses += amount;
         if (type === 'ROOM') dashboard.totalRoomExpenses += amount;
@@ -391,7 +371,7 @@ function getDashboardData(monthValue = '') {
         if (description === 'Malaya') dashboard.cashTakenMalaya += amount;
         if (description === 'MD Sir') dashboard.cashTakenMDSir += amount;
       }
-      
+
       if (row['Payment Status'] === 'UNPAID') {
         dashboard.totalUnpaidExpenses += amount;
       } else if (row['Mode Of Payment'] === 'CASH' && row['Source Of Payment'] === 'COUNTER') {
@@ -402,7 +382,7 @@ function getDashboardData(monthValue = '') {
     dashboard.netMonthlyRoomSavings = dashboard.totalRoomRentIncome - dashboard.totalRoomExpenses;
     dashboard.netMonthlyFoodSavings = dashboard.totalFoodingIncome - dashboard.totalFoodExpenses;
     dashboard.cashInCounter = totalCashCollection - cashExpensesFromCounter;
-    
+
     return { success: true, data: dashboard };
   } catch (error) {
     return { success: false, message: error.toString() };
@@ -415,7 +395,7 @@ function getDashboardData(monthValue = '') {
 function getUnpaidIncome(monthValue = '') {
   try {
     const data = getSheetDataAsObjects('Income');
-    
+
     let targetMonth, targetYear;
     if (monthValue) {
       const parts = monthValue.split('-');
@@ -459,7 +439,7 @@ function getUnpaidIncome(monthValue = '') {
 function getUnpaidExpenses(monthValue = '') {
   try {
     const data = getSheetDataAsObjects('Expenses');
-    
+
     let targetMonth, targetYear;
     if (monthValue) {
       const parts = monthValue.split('-');
@@ -499,14 +479,14 @@ function getReportData(category, monthValue, expenseType = '', expenseDesc = '')
   try {
     const sheetName = category === 'INCOME' ? 'Income' : 'Expenses';
     const data = getSheetDataAsObjects(sheetName);
-    
+
     let targetMonth, targetYear;
     if (monthValue) {
       const parts = monthValue.split('-');
       targetYear = parseInt(parts[0], 10);
       targetMonth = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
     }
-    
+
     const filteredData = data.filter(r => {
       if (monthValue) {
         const d = parseDate(r['Date']);
@@ -554,7 +534,7 @@ function getReportData(category, monthValue, expenseType = '', expenseDesc = '')
         };
       }
     });
-    
+
     return { success: true, data: filteredData };
   } catch (error) {
     return { success: false, message: error.toString() };
@@ -570,7 +550,7 @@ function markIncomePaid(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Income');
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    
+
     const statusCol = headers.indexOf('Payment Status') + 1;
     const modeCol = headers.indexOf('Mode Of Payment') + 1;
     const dateCol = headers.indexOf('Payment Date') + 1;
@@ -584,11 +564,11 @@ function markIncomePaid(data) {
 
     const currentTotal = parseFloat(sheet.getRange(data.rowIndex, totalCol).getValue()) || 0;
     const currentPaid = parseFloat(sheet.getRange(data.rowIndex, paidCol).getValue()) || 0;
-    
+
     const newPaidAmount = parseFloat(data.paidAmount) || 0;
     const totalPaid = currentPaid + newPaidAmount;
     let newDue = currentTotal - totalPaid;
-    
+
     if (newDue < 0) newDue = 0; // Prevent negative due
 
     let newStatus = 'PARTIAL';
@@ -601,7 +581,7 @@ function markIncomePaid(data) {
     sheet.getRange(data.rowIndex, statusCol).setValue(newStatus);
     sheet.getRange(data.rowIndex, modeCol).setValue(data.modeOfPayment);
     sheet.getRange(data.rowIndex, dateCol).setValue(data.paymentDate);
-    
+
     return { success: true, message: 'Saved successfully' };
   } catch (error) {
     return { success: false, message: error.toString() };
@@ -617,7 +597,7 @@ function markExpensePaid(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Expenses');
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    
+
     const statusCol = headers.indexOf('Payment Status') + 1;
     const sourceCol = headers.indexOf('Source Of Payment') + 1;
     const modeCol = headers.indexOf('Mode Of Payment') + 1;
@@ -632,11 +612,11 @@ function markExpensePaid(data) {
 
     const currentTotal = parseFloat(sheet.getRange(data.rowIndex, amountCol).getValue()) || 0;
     const currentPaid = parseFloat(sheet.getRange(data.rowIndex, paidCol).getValue()) || 0;
-    
+
     const newPaidAmount = parseFloat(data.paidAmount) || 0;
     const totalPaid = currentPaid + newPaidAmount;
     let newDue = currentTotal - totalPaid;
-    
+
     if (newDue < 0) newDue = 0; // Prevent negative due
 
     let newStatus = 'PARTIAL';
@@ -650,8 +630,88 @@ function markExpensePaid(data) {
     sheet.getRange(data.rowIndex, sourceCol).setValue(data.sourceOfPayment);
     sheet.getRange(data.rowIndex, modeCol).setValue(data.modeOfPayment);
     sheet.getRange(data.rowIndex, dateCol).setValue(data.paymentDate);
-    
+
     return { success: true, message: 'Saved successfully' };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
+ * Close Financial Year
+ * Archives all records with a Date older than April 1 of the CURRENT Financial Year
+ * to separate 'Income_Archive' and 'Expenses_Archive' sheets.
+ */
+function closeFinancialYear() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const now = new Date();
+
+    // Calculate start of current financial year (April 1st)
+    let fyStartYear = now.getFullYear();
+    if (now.getMonth() < 3) { // Jan, Feb, Mar
+      fyStartYear -= 1;
+    }
+    const currentFyStartDate = new Date(fyStartYear, 3, 1); // April 1st of current FY
+
+    // Archive logic helper
+    function archiveSheet(sheetName, archiveSheetName) {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return 0;
+
+      const lastRow = sheet.getLastRow();
+      const lastCol = sheet.getLastColumn();
+      if (lastRow <= 1) return 0; // Only headers
+
+      const dataRange = sheet.getRange(2, 1, lastRow - 1, lastCol);
+      const data = dataRange.getValues();
+
+      let rowsToArchive = [];
+      let rowsToDelete = [];
+
+      // Identify rows to archive (Date < currentFyStartDate)
+      for (let i = 0; i < data.length; i++) {
+        const rowDateStr = data[i][0]; // Column A is Date
+        const rowDate = parseDate(rowDateStr);
+        if (rowDate && rowDate < currentFyStartDate) {
+          rowsToArchive.push(data[i]);
+          rowsToDelete.push(i + 2); // +2 because data array is 0-indexed and row 1 is header
+        }
+      }
+
+      if (rowsToArchive.length > 0) {
+        // Get or create archive sheet
+        let archiveSheet = ss.getSheetByName(archiveSheetName);
+        if (!archiveSheet) {
+          archiveSheet = ss.insertSheet(archiveSheetName);
+          // Copy headers
+          const headers = sheet.getRange(1, 1, 1, lastCol).getValues();
+          archiveSheet.getRange(1, 1, 1, lastCol).setValues(headers);
+          archiveSheet.getRange(1, 1, 1, lastCol).setFontWeight('bold');
+        }
+
+        // Append all identified rows to archive
+        const startRow = archiveSheet.getLastRow() + 1;
+        archiveSheet.getRange(startRow, 1, rowsToArchive.length, lastCol).setValues(rowsToArchive);
+
+        // Delete rows from the main sheet (Must iterate backwards to avoid shifting indices)
+        for (let j = rowsToDelete.length - 1; j >= 0; j--) {
+          sheet.deleteRow(rowsToDelete[j]);
+        }
+      }
+      return rowsToArchive.length;
+    }
+
+    const archivedIncomeCount = archiveSheet('Income', 'Income_Archive');
+    const archivedExpenseCount = archiveSheet('Expenses', 'Expenses_Archive');
+
+    const totalArchived = archivedIncomeCount + archivedExpenseCount;
+
+    if (totalArchived === 0) {
+       return { success: true, message: 'No previous financial year data found to close.' };
+    }
+
+    return { success: true, message: `Financial Year closed successfully! Archived ${archivedIncomeCount} Income records and ${archivedExpenseCount} Expense records.` };
   } catch (error) {
     return { success: false, message: error.toString() };
   }
@@ -666,14 +726,14 @@ function getDropdownSettings() {
   if (!sheet) {
     return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [], gstNgstOptions: [] };
   }
-  
+
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) {
     return { paymentStatus: [], modeOfPayment: [], entryBy: [], roomDescriptions: [], foodDescriptions: [], sourceOfPayment: [], coffeePepperOptions: [], gstNgstOptions: [] };
   }
-  
+
   const data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
-  
+
   const paymentStatus = [];
   const modeOfPayment = [];
   const entryBy = [];
@@ -682,7 +742,7 @@ function getDropdownSettings() {
   const sourceOfPayment = [];
   const coffeePepperOptions = [];
   const gstNgstOptions = [];
-  
+
   data.forEach(row => {
     if (row[0] && row[0].toString().trim() !== '') paymentStatus.push(row[0].toString().trim());
     if (row[1] && row[1].toString().trim() !== '') modeOfPayment.push(row[1].toString().trim());
@@ -693,7 +753,7 @@ function getDropdownSettings() {
     if (row[7] && row[7].toString().trim() !== '') coffeePepperOptions.push(row[7].toString().trim());
     if (row[8] && row[8].toString().trim() !== '') gstNgstOptions.push(row[8].toString().trim());
   });
-  
+
   return {
     paymentStatus: paymentStatus,
     modeOfPayment: modeOfPayment,
@@ -704,142 +764,4 @@ function getDropdownSettings() {
     coffeePepperOptions: coffeePepperOptions,
     gstNgstOptions: gstNgstOptions
   };
-}
-
-
-/**
- * Room Status Database Functions
- */
-function getRoomStatus() {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-    // Get current room status from Rooms sheet
-    const roomsSheet = ss.getSheetByName('Rooms');
-    let statusData = [];
-    let roomNumbersInSheet = [];
-    if (roomsSheet) {
-      statusData = getSheetDataAsObjects('Rooms');
-      roomNumbersInSheet = statusData.map(r => r['Room Number'].toString());
-    }
-
-    // Get master list of rooms from Settings
-    const settingsData = getDropdownSettings();
-    let masterRooms = settingsData.roomDescriptions || [];
-
-    // Merge masterRooms with rooms already in the Rooms sheet
-    let mergedRooms = [...new Set([...masterRooms.map(String), ...roomNumbersInSheet])];
-
-    // Filter out non-room items (must contain at least one digit) and sort numerically
-    masterRooms = mergedRooms.filter(r => /\d/.test(r)).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
-        const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
-        return numA - numB;
-    });
-
-    // Map status
-    const result = masterRooms.map(roomNum => {
-      let status = 'AVAILABLE';
-      const existing = statusData.find(r => r['Room Number'].toString() === roomNum.toString());
-      if (existing && existing['Current Status']) {
-        status = existing['Current Status'];
-      }
-      return { roomNumber: roomNum, status: status };
-    });
-
-    // Filter out any empty strings that might have come from settings or sheets
-    const finalResult = result.filter(r => r.roomNumber && r.roomNumber.trim() !== '');
-
-    return { success: true, data: finalResult };
-  } catch (error) {
-    return { success: false, message: error.toString() };
-  }
-}
-
-function processCheckIn(roomNumber, dateTimeStr) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let roomsSheet = ss.getSheetByName('Rooms');
-    let staySheet = ss.getSheetByName('Stay Segment');
-
-    if (!roomsSheet) throw new Error("Rooms sheet not found.");
-    if (!staySheet) throw new Error("Stay Segment sheet not found.");
-
-    const roomsData = getSheetDataAsObjects('Rooms');
-
-    let rowIndex = -1;
-    for (let i = 0; i < roomsData.length; i++) {
-      if (roomsData[i]['Room Number'].toString() === roomNumber.toString()) {
-        rowIndex = roomsData[i]._rowIndex;
-        break;
-      }
-    }
-
-    const rawDate = new Date(dateTimeStr);
-    const dateTime = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'dd-MMM-yyyy hh:mm a');
-
-    if (rowIndex === -1) {
-       roomsSheet.appendRow([roomNumber, 'OCCUPIED', dateTime, '']);
-    } else {
-       roomsSheet.getRange(rowIndex, 2).setValue('OCCUPIED');
-       roomsSheet.getRange(rowIndex, 3).setValue(dateTime);
-    }
-
-    staySheet.appendRow([roomNumber, dateTime, '']);
-
-    return { success: true, message: `Room ${roomNumber} Checked-In successfully.` };
-  } catch(err) {
-    return { success: false, message: err.toString() };
-  }
-}
-
-function processCheckOut(roomNumber, dateTimeStr) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let roomsSheet = ss.getSheetByName('Rooms');
-    let staySheet = ss.getSheetByName('Stay Segment');
-
-    if (!roomsSheet) throw new Error("Rooms sheet not found.");
-    if (!staySheet) throw new Error("Stay Segment sheet not found.");
-
-    const roomsData = getSheetDataAsObjects('Rooms');
-
-    let rowIndex = -1;
-    for (let i = 0; i < roomsData.length; i++) {
-      if (roomsData[i]['Room Number'].toString() === roomNumber.toString()) {
-        rowIndex = roomsData[i]._rowIndex;
-        break;
-      }
-    }
-
-    const rawDate = new Date(dateTimeStr);
-    const dateTime = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'dd-MMM-yyyy hh:mm a');
-
-    if (rowIndex !== -1) {
-       roomsSheet.getRange(rowIndex, 2).setValue('AVAILABLE');
-       roomsSheet.getRange(rowIndex, 4).setValue(dateTime);
-    }
-
-    // Find the latest stay row for this room without a checkout date
-    const stayData = staySheet.getDataRange().getValues();
-    let stayRowIndex = -1;
-    // Iterate backwards to find the most recent checkin
-    for(let i = stayData.length - 1; i > 0; i--) {
-        if(stayData[i][0].toString() === roomNumber.toString() && stayData[i][2] === '') {
-            stayRowIndex = i + 1; // +1 because array is 0-indexed and sheet is 1-indexed
-            break;
-        }
-    }
-
-    if(stayRowIndex !== -1) {
-        staySheet.getRange(stayRowIndex, 3).setValue(dateTime);
-    } else {
-        // Fallback if we somehow checkout without a checkin record
-        staySheet.appendRow([roomNumber, '', dateTime]);
-    }
-
-    return { success: true, message: `Room ${roomNumber} Checked-Out successfully.` };
-  } catch(err) {
-    return { success: false, message: err.toString() };
-  }
 }

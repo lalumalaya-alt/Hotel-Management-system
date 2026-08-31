@@ -4,6 +4,10 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f8f9fa">
   <title>Income & Expense Manager</title>
   
   <!-- Bootstrap 5 CSS -->
@@ -12,70 +16,579 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+
   <style>
+    :root {
+      --bs-primary: #4F46E5;
+      --bs-primary-rgb: 79, 70, 229;
+      --bs-success: #10B981;
+      --bs-success-rgb: 16, 185, 129;
+      --bs-danger: #F43F5E;
+      --bs-danger-rgb: 244, 63, 94;
+      --bs-warning: #F59E0B;
+      --bs-warning-rgb: 245, 158, 11;
+      --bs-body-bg: #F3F4F6;
+      --bs-body-color: #1f2937;
+    }
     body {
-      background-color: #f8f9fa;
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-bottom: 80px;
     }
     .card {
       border: none;
       border-radius: 12px;
+      background-color: #ffffff;
       box-shadow: 0 4px 6px rgba(0,0,0,0.05);
       margin-bottom: 20px;
     }
     .stat-card {
-      transition: transform 0.2s;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      border: none !important;
     }
     .stat-card:hover {
       transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
-    .nav-pills .nav-link {
-      border-radius: 50px;
-      padding: 10px 20px;
-      font-weight: 500;
-      color: #495057;
-      margin-right: 5px;
+    .stat-card .bg-icon {
+      position: absolute;
+      bottom: -15px;
+      right: -15px;
+      font-size: 5rem;
+      opacity: 0.1;
+      z-index: 0;
     }
-    .nav-pills .nav-link.active {
-      background-color: #0d6efd;
-      color: white;
+    .stat-card .card-body {
+      position: relative;
+      z-index: 1;
     }
-    .nav-container {
-      overflow-x: auto;
-      white-space: nowrap;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 10px;
+    .card-income { background: linear-gradient(135deg, #ffffff 0%, #d1fae5 100%); }
+    .card-expense { background: linear-gradient(135deg, #ffffff 0%, #ffe4e6 100%); }
+    .card-warning { background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%); }
+    .card-primary { background: linear-gradient(135deg, #4F46E5 0%, #4338ca 100%); color: white; }
+    .card-primary .text-muted { color: #e0e7ff !important; }
+
+    @media (min-width: 769px) {
+      .nav-pills {
+        background-color: #e5e7eb;
+        border-radius: 50px;
+        padding: 5px;
+        display: inline-flex;
+      }
+      .nav-pills .nav-link {
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: 600;
+        color: #4b5563;
+        transition: all 0.3s;
+        margin: 0;
+      }
+      .nav-pills .nav-link:hover {
+        color: var(--bs-primary);
+      }
+      .nav-pills .nav-link.active {
+        background-color: #ffffff;
+        color: var(--bs-primary);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
     }
-    .form-control, .form-select {
-      border-radius: 8px;
+    @media (max-width: 768px) {
+      .nav-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #ffffff;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        padding: 0;
+        margin: 0 !important;
+      }
+      .nav-pills {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .nav-item {
+        flex: 1;
+        text-align: center;
+      }
+      .nav-pills .nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0;
+        font-size: 0.65rem;
+        color: #6b7280;
+        border-radius: 0;
+        margin: 0;
+      }
+      .nav-pills .nav-link i {
+        font-size: 1.25rem;
+        margin-bottom: 2px;
+        margin-right: 0 !important;
+      }
+      .nav-pills .nav-link.active {
+        background-color: transparent;
+        color: var(--bs-primary);
+        font-weight: bold;
+      }
     }
+
+
+
+
     .btn {
-      border-radius: 8px;
-      font-weight: 500;
-      padding: 10px 20px;
+      transition: transform 0.1s ease-in-out, background-color 0.2s, box-shadow 0.2s;
     }
-    .table th {
-      background-color: #f1f3f5;
-      font-weight: 600;
+    .btn:active {
+      transform: scale(0.95);
     }
-    .loading-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.8);
-      z-index: 9999;
-      display: none;
-      justify-content: center;
+
+    .table-responsive {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #f8fafc;
+      box-shadow: 0 1px 0 #e2e8f0;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      color: #94a3b8;
     }
-  </style>
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #cbd5e1;
+    }
+
+    .toast-container {
+      z-index: 1055;
+    }
+    @media (max-width: 768px) {
+      .toast-container {
+        bottom: 80px !important;
+        top: auto !important;
+        right: 50% !important;
+        transform: translateX(50%);
+      }
+    }
+
+    /* Hide number input arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Touch Target Optimization & Spacing */
+    .form-control, .form-select, .btn, .nav-pills .nav-link {
+        min-height: 48px;
+    }
+    @media (max-width: 768px) {
+        .mb-3, .row.g-3 > [class*='col-'] {
+            margin-bottom: 1.5rem !important;
+        }
+        body {
+            font-size: 1.05rem;
+        }
+    }
+
+    /* Card-Based Data Lists for Mobile */
+    @media (max-width: 768px) {
+        #unpaidTable thead, #reportTable thead {
+            display: none;
+        }
+        #unpaidTable tbody tr, #reportTable tbody tr {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "date status"
+                "details details"
+                "amount amount"
+                "action action";
+            gap: 10px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #edf2f7;
+        }
+        #unpaidTable tbody tr td, #reportTable tbody tr td {
+            display: block;
+            border: none;
+            padding: 0;
+            text-align: left !important;
+        }
+
+        /* Map specific columns based on index for Unpaid Income (9 cols total) */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; } /* Date */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(2), /* Entry No */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(3), /* Room No */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(4), /* Other */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(5), /* Room Rent */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(6), /* Fooding */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(7)  /* Total */
+        { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 10px; color: #475569; }
+
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(8) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; } /* Due Amount */
+        #unpaidTableBody tr[data-type="INCOME"] td:nth-child(9) { grid-area: action; } /* Action */
+
+        /* Map specific columns based on index for Unpaid Expense (6 cols total) */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; } /* Date */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(2) { grid-area: status; text-align: right !important; } /* Type */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(3) { grid-area: details; font-weight: 500; font-size: 1.1em; color: #1e293b; } /* Description */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(4) { display: none; } /* Amount (hide original) */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(5) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; } /* Due Amount */
+        #unpaidTableBody tr[data-type="EXPENSE"] td:nth-child(6) { grid-area: action; } /* Action */
+
+        #unpaidTableBody tr td button { width: 100%; min-height: 48px; }
+
+        /* Report Table Card Styling (Income - 11 cols) */
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(8) { grid-area: status; text-align: right !important; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(2),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(3),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(4),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(5),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(6) { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 5px; color: #475569; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(7) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-success); font-weight: bold; margin: 10px 0; }
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(9),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(10),
+        #reportTableBody tr[data-type="INCOME"] td:nth-child(11) { display: none; }
+
+        /* Report Table Card Styling (Expense - 10 cols) */
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(1) { grid-area: date; font-weight: bold; color: #64748b; font-size: 0.9em; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(6) { grid-area: status; text-align: right !important; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(2),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(3),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(4) { grid-area: details; font-size: 0.9em; display: inline-block; margin-right: 5px; color: #475569; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(5) { grid-area: amount; text-align: center !important; font-size: 1.5em; color: var(--bs-danger); font-weight: bold; margin: 10px 0; }
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(7),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(8),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(9),
+        #reportTableBody tr[data-type="EXPENSE"] td:nth-child(10) { display: none; }
+
+        /* Empty states should remain normal */
+        #unpaidTable tbody tr:has(.empty-state), #reportTable tbody tr:has(.empty-state) {
+            display: block;
+            box-shadow: none;
+            border: none;
+            background: transparent;
+        }
+    }
+
+    /* Sticky Bottom Action Buttons for Forms */
+    @media (max-width: 768px) {
+        .sticky-action-bar {
+            position: fixed;
+            bottom: 70px; /* Above mobile nav bar */
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 900;
+        }
+        #pills-income, #pills-expense {
+            padding-bottom: 120px; /* Prevent content from hiding */
+        }
+    }
+
+    /* Swipeable Card Carousels for Dashboard */
+    @media (max-width: 768px) {
+        .mobile-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+            padding-bottom: 10px;
+            margin-right: -15px; /* Extend to edge */
+            margin-left: -15px;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        .mobile-carousel::-webkit-scrollbar {
+            display: none; /* Chrome */
+        }
+        .mobile-carousel > div {
+            flex: 0 0 85%;
+            scroll-snap-align: center;
+            margin-right: 15px;
+        }
+    }
+
+    /* Floating Action Button & Bottom Sheet */
+    .fab-btn {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        z-index: 1050;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .fab-btn:active { transform: scale(0.9); }
+
+    .offcanvas-bottom {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
+    .bottom-sheet-btn {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        text-decoration: none;
+        border-radius: 12px;
+        background: #f8f9fa;
+        margin-bottom: 15px;
+        transition: background 0.2s;
+    }
+    .bottom-sheet-btn i { font-size: 2rem; width: 40px; }
+    .bottom-sheet-btn.income { color: var(--bs-success); }
+    .bottom-sheet-btn.expense { color: var(--bs-danger); }
+
+
+
+    /* Manual Dark Mode */
+    [data-theme="dark"] {
+        --bs-body-bg: #121212;
+        --bs-body-color: #e0e0e0;
+        --bs-text-muted: #9ca3af;
+        --bs-text-dark: #e0e0e0;
+        --bs-bg-white: #1E1E1E;
+        --bs-bg-light: #2d2d2d;
+        --bs-table-light-bg: #2d2d2d;
+        --bs-border-color: #404040;
+    }
+
+    [data-theme="dark"] body { background-color: var(--bs-body-bg); color: var(--bs-body-color); }
+
+    /* Overriding Bootstrap Utility Classes */
+    [data-theme="dark"] .bg-white { background-color: var(--bs-bg-white) !important; }
+    [data-theme="dark"] .bg-light { background-color: var(--bs-bg-light) !important; }
+    [data-theme="dark"] .text-dark { color: var(--bs-text-dark) !important; }
+    [data-theme="dark"] .text-muted { color: var(--bs-text-muted) !important; }
+    [data-theme="dark"] .border,
+    [data-theme="dark"] .border-bottom,
+    [data-theme="dark"] .border-top,
+    [data-theme="dark"] .border-start,
+    [data-theme="dark"] .border-end { border-color: var(--bs-border-color) !important; }
+
+    /* Cards */
+    [data-theme="dark"] .card { background-color: var(--bs-bg-white); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    [data-theme="dark"] .card-income { background: linear-gradient(135deg, #1e1e1e 0%, #064e3b 100%); }
+    [data-theme="dark"] .card-expense { background: linear-gradient(135deg, #1e1e1e 0%, #881337 100%); }
+    [data-theme="dark"] .card-warning { background: linear-gradient(135deg, #1e1e1e 0%, #78350f 100%); }
+
+    /* Forms */
+    [data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+        background-color: var(--bs-bg-light);
+        border-color: var(--bs-border-color);
+        color: #ffffff;
+    }
+    [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus {
+        background-color: #3d3d3d;
+        color: #ffffff;
+        border-color: #6b7280;
+    }
+    [data-theme="dark"] .form-control::placeholder, [data-theme="dark"] .form-control::-webkit-input-placeholder { color: var(--bs-text-muted); }
+    [data-theme="dark"] .form-control:disabled, [data-theme="dark"] .form-select:disabled {
+        background-color: #1a1a1a;
+        color: #6b7280;
+    }
+
+
+    /* Tables */
+    [data-theme="dark"] .table { color: var(--bs-body-color); }
+    [data-theme="dark"] .table thead th {
+        background-color: var(--bs-table-light-bg);
+        border-bottom-color: var(--bs-border-color);
+        color: #ffffff;
+    }
+    [data-theme="dark"] .table-light { --bs-table-bg: var(--bs-table-light-bg); --bs-table-color: #ffffff; }
+    [data-theme="dark"] .table-hover>tbody>tr:hover>* { --bs-table-bg-state: #3d3d3d; color: #ffffff;}
+
+    /* Navigation */
+    [data-theme="dark"] .nav-pills { background-color: var(--bs-bg-light); }
+    [data-theme="dark"] .nav-pills .nav-link { color: var(--bs-text-muted); }
+    [data-theme="dark"] .nav-pills .nav-link.active { background-color: var(--bs-border-color); color: #ffffff; }
+
+    /* Modals & Offcanvas */
+    [data-theme="dark"] .modal-content, [data-theme="dark"] .offcanvas { background-color: var(--bs-bg-white); color: var(--bs-body-color); }
+    [data-theme="dark"] .modal-header, [data-theme="dark"] .offcanvas-header { border-bottom-color: var(--bs-border-color); }
+    [data-theme="dark"] .btn-close { filter: invert(1); }
+
+    /* Inputs with groups */
+    [data-theme="dark"] .input-group-text { background-color: var(--bs-bg-light); border-color: var(--bs-border-color); color: var(--bs-text-dark); }
+
+    /* Mobile specific overrides */
+    @media (max-width: 768px) {
+        [data-theme="dark"] .nav-container, [data-theme="dark"] .sticky-action-bar { background-color: var(--bs-bg-white); box-shadow: 0 -2px 10px rgba(0,0,0,0.5); }
+        [data-theme="dark"] .nav-pills .nav-link.active { color: var(--bs-primary); background: transparent; }
+        [data-theme="dark"] #unpaidTable tbody tr, [data-theme="dark"] #reportTable tbody tr { background: var(--bs-bg-white); border-color: #333; }
+        [data-theme="dark"] .bottom-sheet-btn { background: var(--bs-bg-light); color: var(--bs-body-color); }
+        /* Empty state mobile fix */
+        [data-theme="dark"] #unpaidTable tbody tr:has(.empty-state), [data-theme="dark"] #reportTable tbody tr:has(.empty-state) {
+            background: transparent;
+        }
+    }
+
+    /* Skeleton Loader */
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    .skeleton-box {
+        display: inline-block;
+        background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
+        border-radius: 4px;
+        color: transparent !important;
+    }
+    [data-theme="dark"] .skeleton-box {
+        background: linear-gradient(to right, #2d2d2d 8%, #3d3d3d 18%, #2d2d2d 33%);
+        background-size: 1000px 100%;
+    }
+    .skeleton-text { width: 100%; height: 20px; margin-bottom: 5px; }
+    .skeleton-number { width: 60%; height: 30px; }
+
+    /* Soft Colored Badges */
+    .badge { padding: 0.5em 0.8em; border-radius: 50rem; font-weight: 600; }
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; }
+    .badge-soft-danger { background-color: #ffe4e6; color: #9f1239; }
+    .badge-soft-primary { background-color: #e0e7ff; color: #3730a3; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; }
+    .badge-soft-info { background-color: #e0f2fe; color: #075985; }
+    .badge-soft-secondary { background-color: #f1f5f9; color: #475569; }
+
+    [data-theme="dark"] .badge-soft-success { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+    [data-theme="dark"] .badge-soft-danger { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; }
+    [data-theme="dark"] .badge-soft-primary { background-color: rgba(79, 70, 229, 0.2); color: #818cf8; }
+    [data-theme="dark"] .badge-soft-warning { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    [data-theme="dark"] .badge-soft-info { background-color: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+    [data-theme="dark"] .badge-soft-secondary { background-color: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+
+    /* Interactive Row Completion Animations */
+    .row-completing {
+        animation: completeRow 0.5s forwards;
+    }
+    @keyframes completeRow {
+        0% { background-color: var(--bs-success); transform: translateX(0); opacity: 1; }
+        100% { transform: translateX(100px); opacity: 0; }
+    }
+
+    /* Table Sorting & Footer */
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background-color: rgba(0,0,0,0.05); }
+    [data-theme="dark"] th.sortable:hover { background-color: rgba(255,255,255,0.05); }
+    tfoot { position: sticky; bottom: 0; background-color: #f8fafc; z-index: 10; font-weight: bold; box-shadow: 0 -1px 0 #e2e8f0; }
+    [data-theme="dark"] tfoot { background-color: #2d2d2d; box-shadow: 0 -1px 0 #404040; color: #fff; }
+
+    /* Custom Form Validation UI */
+    .invalid-feedback { font-weight: bold; font-size: 0.85em; margin-top: 2px; display: none; color: var(--bs-danger); }
+    .is-invalid ~ .invalid-feedback { display: block; }
+
+    /* Header Buttons Dark Mode Fixes */
+    [data-theme="dark"] .btn-outline-dark,
+    [data-theme="dark"] .btn-outline-secondary,
+    [data-theme="dark"] .btn-outline-danger {
+        color: #ffffff !important;
+        border-color: #6b7280 !important;
+    }
+    [data-theme="dark"] .btn-outline-dark:hover,
+    [data-theme="dark"] .btn-outline-secondary:hover {
+        background-color: #3d3d3d !important;
+        border-color: #9ca3af !important;
+        color: #ffffff !important;
+    }
+    [data-theme="dark"] .btn-outline-danger:hover {
+        background-color: rgba(244, 63, 94, 0.2) !important;
+        border-color: #f43f5e !important;
+        color: #fb7185 !important;
+    }
+
+        /* Room Status Grid */
+    .room-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    .room-card {
+        aspect-ratio: 1 / 1;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-align: center;
+        padding: 5px;
+        position: relative;
+        z-index: 10;
+        pointer-events: auto;
+    }
+    .room-card:active { transform: scale(0.95); }
+    .room-card h3 { margin: 0; font-weight: bold; font-size: 0.9rem; }
+    .room-card i { font-size: 0.9rem; margin-bottom: 3px; opacity: 0.7; }
+
+    .room-available { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .room-occupied { background-color: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+
+    [data-theme="dark"] .room-available { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+    [data-theme="dark"] .room-occupied { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+
+
+    /* Fix native calendar and clock icons visibility in dark mode */
+    [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="month"]::-webkit-calendar-picker-indicator,
+    [data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+</style>
 </head>
 <body>
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+
   </div>
 
   <div class="container py-4">
@@ -83,7 +596,10 @@
     <header class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="m-0 fw-bold text-primary"><i class="fa-solid fa-wallet me-2"></i>Finance Manager</h2>
       <div class="d-flex gap-2 d-none d-md-flex">
+
+        <button class="btn btn-outline-dark me-2" id="darkModeToggle" onclick="toggleDarkMode()"><i class="fa-solid fa-moon"></i></button>
         <button class="btn btn-outline-danger" id="globalClearBtn" style="display: none;" onclick="clearCurrentTab()"><i class="fa-solid fa-eraser me-1"></i> Clear</button>
+
         <button class="btn btn-outline-secondary" onclick="refreshDashboard()"><i class="fa-solid fa-rotate-right me-1"></i> Refresh</button>
       </div>
     </header>
@@ -115,40 +631,52 @@
       <!-- Dashboard Tab -->
       <div class="tab-pane fade show active" id="pills-dashboard" role="tabpanel">
         
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold">Live Room Status</h4>
+        </div>
+        <div class="room-grid" id="roomStatusGrid">
+           <!-- Rendered via JS -->
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+           <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 12px;"></div>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="fw-bold">Overview</h4>
           <div class="d-flex gap-2 align-items-center">
-            <label class="form-label text-muted small fw-bold mb-0 d-none d-md-block">Filter Month:</label>
-            <input type="month" class="form-control w-auto" id="monthFilter" onchange="refreshDashboard()">
-            <button class="btn btn-danger d-none d-md-block" onclick="closeFinancialYearConfirm()"><i class="fa-solid fa-box-archive"></i> Close FY</button>
-          </div>
+            <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter Month:</label>
+  <input type="month" class="form-control w-auto" id="monthFilter" onchange="refreshDashboard()">
+            </div>
         </div>
 
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 mobile-carousel">
           <div class="col-6 col-md-3">
-            <div class="card stat-card h-100 border-start border-primary border-4">
+            <div class="card stat-card h-100 card-income">
               <div class="card-body">
                 <p class="text-muted mb-1 small text-uppercase fw-bold">Today Income</p>
-                <h3 class="mb-0 fw-bold" id="dash-today-income">₹0</h3>
+                <h3 class="mb-0 fw-bold" id="dash-today-income">0</h3>
               </div>
+              <i class="fa-solid fa-arrow-down bg-icon"></i>
             </div>
           </div>
           <div class="col-6 col-md-3">
-            <div class="card stat-card h-100 border-start border-danger border-4">
+            <div class="card stat-card h-100 card-expense">
               <div class="card-body">
                 <p class="text-muted mb-1 small text-uppercase fw-bold">Today Expenses</p>
-                <h3 class="mb-0 fw-bold" id="dash-today-expenses">₹0</h3>
+                <h3 class="mb-0 fw-bold" id="dash-today-expenses">0</h3>
               </div>
+              <i class="fa-solid fa-arrow-up bg-icon"></i>
             </div>
           </div>
           <div class="col-12 col-md-6">
-            <div class="card stat-card h-100 bg-primary text-white">
+            <div class="card stat-card h-100 card-primary text-white">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                   <p class="mb-1 small text-uppercase fw-bold opacity-75">Cash In Counter</p>
-                  <h2 class="mb-0 fw-bold" id="dash-cash-counter">₹0</h2>
+                  <h2 class="mb-0 fw-bold" id="dash-cash-counter">0</h2>
                 </div>
-                <i class="fa-solid fa-vault fa-3x opacity-50"></i>
+                <i class="fa-solid fa-vault bg-icon text-white"></i>
               </div>
             </div>
           </div>
@@ -162,7 +690,7 @@
               <div class="card-body text-center">
                 <i class="fa-solid fa-bed text-success mb-2 fs-4"></i>
                 <p class="text-muted mb-1 small fw-bold">Room Rent Income</p>
-                <h5 class="mb-0 fw-bold" id="dash-room-income">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-room-income">0</h5>
               </div>
             </div>
           </div>
@@ -171,7 +699,7 @@
               <div class="card-body text-center">
                 <i class="fa-solid fa-utensils text-success mb-2 fs-4"></i>
                 <p class="text-muted mb-1 small fw-bold">Fooding Income</p>
-                <h5 class="mb-0 fw-bold" id="dash-food-income">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-food-income">0</h5>
               </div>
             </div>
           </div>
@@ -180,7 +708,7 @@
               <div class="card-body text-center">
                 <i class="fa-solid fa-house-chimney text-danger mb-2 fs-4"></i>
                 <p class="text-muted mb-1 small fw-bold">Room Expenses</p>
-                <h5 class="mb-0 fw-bold" id="dash-room-expense">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-room-expense">0</h5>
               </div>
             </div>
           </div>
@@ -189,7 +717,7 @@
               <div class="card-body text-center">
                 <i class="fa-solid fa-burger text-danger mb-2 fs-4"></i>
                 <p class="text-muted mb-1 small fw-bold">Fooding Expenses</p>
-                <h5 class="mb-0 fw-bold" id="dash-food-expense">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-food-expense">0</h5>
               </div>
             </div>
           </div>
@@ -200,51 +728,57 @@
             <div class="card stat-card h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small">Total Monthly Income</p>
-                <h4 class="mb-0 text-success fw-bold" id="dash-monthly-income">₹0</h4>
+                <h4 class="mb-0 text-success fw-bold" id="dash-monthly-income">0</h4>
               </div>
+              <i class="fa-solid fa-calendar-check bg-icon"></i>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small">Total Monthly Expenses</p>
-                <h4 class="mb-0 text-danger fw-bold" id="dash-monthly-expenses">₹0</h4>
+                <h4 class="mb-0 text-danger fw-bold" id="dash-monthly-expenses">0</h4>
               </div>
+              <i class="fa-solid fa-calendar-minus bg-icon"></i>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small">Net Room Savings</p>
-                <h4 class="mb-0 text-primary fw-bold" id="dash-monthly-room-savings">₹0</h4>
+                <h4 class="mb-0 text-primary fw-bold" id="dash-monthly-room-savings">0</h4>
               </div>
+              <i class="fa-solid fa-bed bg-icon"></i>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card h-100">
               <div class="card-body">
                 <p class="text-muted mb-1 small">Net Food Savings</p>
-                <h4 class="mb-0 text-primary fw-bold" id="dash-monthly-food-savings">₹0</h4>
+                <h4 class="mb-0 text-primary fw-bold" id="dash-monthly-food-savings">0</h4>
               </div>
+              <i class="fa-solid fa-utensils bg-icon"></i>
             </div>
           </div>
         </div>
 
-        <div class="row g-3 mt-1">
+        <div class="row g-3 mt-1 mobile-carousel">
           <div class="col-6 col-md-4">
             <div class="card stat-card h-100 bg-light border-0 shadow-sm">
               <div class="card-body">
                 <p class="text-muted mb-1 small fw-bold"><i class="fa-solid fa-calendar-days text-success me-1"></i> FY Income</p>
-                <h5 class="mb-0 fw-bold" id="dash-fy-income">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-fy-income">0</h5>
               </div>
+              <i class="fa-solid fa-money-bill-wave bg-icon"></i>
             </div>
           </div>
           <div class="col-6 col-md-4">
             <div class="card stat-card h-100 bg-light border-0 shadow-sm">
               <div class="card-body">
                 <p class="text-muted mb-1 small fw-bold"><i class="fa-solid fa-calendar-days text-danger me-1"></i> FY Expenses</p>
-                <h5 class="mb-0 fw-bold" id="dash-fy-expenses">₹0</h5>
+                <h5 class="mb-0 fw-bold" id="dash-fy-expenses">0</h5>
               </div>
+              <i class="fa-solid fa-money-bill-transfer bg-icon"></i>
             </div>
           </div>
           <div class="col-12 col-md-4">
@@ -252,11 +786,11 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small fw-bold">Unpaid Income</span>
-                  <span class="fw-bold text-warning" id="dash-unpaid-income">₹0</span>
+                  <span class="fw-bold text-warning" id="dash-unpaid-income">0</span>
                 </div>
                 <div class="d-flex justify-content-between">
                   <span class="text-muted small fw-bold">Unpaid Expenses</span>
-                  <span class="fw-bold text-danger" id="dash-unpaid-expenses">₹0</span>
+                  <span class="fw-bold text-danger" id="dash-unpaid-expenses">0</span>
                 </div>
               </div>
             </div>
@@ -267,22 +801,22 @@
         <h5 class="fw-bold mt-4 mb-3">Cash Taken (Monthly)</h5>
         <div class="row g-3">
           <div class="col-6 col-md-6">
-            <div class="card stat-card h-100 border-start border-warning border-4 shadow-sm">
+            <div class="card stat-card h-100 card-warning shadow-sm">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                   <p class="text-muted mb-1 small text-uppercase fw-bold">Malaya</p>
-                  <h4 class="mb-0 fw-bold text-dark" id="dash-malaya">₹0</h4>
+                  <h4 class="mb-0 fw-bold text-dark" id="dash-malaya">0</h4>
                 </div>
                 <i class="fa-solid fa-user-tie fa-2x text-warning opacity-75"></i>
               </div>
             </div>
           </div>
           <div class="col-6 col-md-6">
-            <div class="card stat-card h-100 border-start border-info border-4 shadow-sm">
+            <div class="card stat-card h-100 card-income shadow-sm">
               <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                   <p class="text-muted mb-1 small text-uppercase fw-bold">MD Sir</p>
-                  <h4 class="mb-0 fw-bold text-dark" id="dash-mdsir">₹0</h4>
+                  <h4 class="mb-0 fw-bold text-dark" id="dash-mdsir">0</h4>
                 </div>
                 <i class="fa-solid fa-user-tie fa-2x text-info opacity-75"></i>
               </div>
@@ -291,8 +825,7 @@
         </div>
 
         <button class="btn btn-outline-secondary w-100 mt-3 d-md-none" onclick="refreshDashboard()"><i class="fa-solid fa-rotate-right me-1"></i> Refresh Dashboard</button>
-        <button class="btn btn-danger w-100 mt-2 d-md-none" onclick="closeFinancialYearConfirm()"><i class="fa-solid fa-box-archive"></i> Close Financial Year</button>
-      </div>
+        </div>
 
       <!-- Income Tab -->
       <div class="tab-pane fade" id="pills-income" role="tabpanel">
@@ -301,74 +834,74 @@
             <h5 class="m-0 fw-bold">Add Income Entry</h5>
           </div>
           <div class="card-body p-4">
-            <form id="incomeForm" onsubmit="submitIncome(event)">
+            <form id="incomeForm" novalidate onsubmit="submitIncome(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Date</label>
-                  <input type="date" class="form-control form-control-lg" id="incDate" required>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
+  <input type="date" class="form-control form-control-lg" id="incDate" required>
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Entry Number</label>
-                  <input type="text" class="form-control form-control-lg" id="incEntryNum">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry Number</label>
+  <input type="text" class="form-control form-control-lg" id="incEntryNum">
                 </div>
                 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Room Number</label>
-                  <input type="text" class="form-control form-control-lg" id="incRoomNum">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Room Number</label>
+  <input type="text" class="form-control form-control-lg" id="incRoomNum">
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Coffee / Black Pepper</label>
-                  <select class="form-select form-select-lg" id="incCoffeePepper">
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Coffee / Black Pepper</label>
+  <select class="form-select form-select-lg" id="incCoffeePepper">
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Gst/Ngst</label>
-                  <select class="form-select form-select-lg" id="incGstNgst">
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Gst/Ngst</label>
+  <select class="form-select form-select-lg" id="incGstNgst">
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Other</label>
-                  <input type="text" class="form-control form-control-lg" id="incOther">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Other</label>
+  <input type="text" class="form-control form-control-lg" id="incOther">
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Room Rent (₹)</label>
-                  <input type="number" step="0.01" class="form-control form-control-lg" id="incRoomRent" oninput="calcIncomeTotal()">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Room Rent</label>
+  <input type="number" step="0.01" placeholder="Room Rent" class="form-control form-control-lg" id="incRoomRent" oninput="calcIncomeTotal()">
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Fooding (₹)</label>
-                  <input type="number" step="0.01" class="form-control form-control-lg" id="incFooding" oninput="calcIncomeTotal()">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Fooding</label>
+  <input type="number" step="0.01" placeholder="Fooding" class="form-control form-control-lg" id="incFooding" oninput="calcIncomeTotal()">
                 </div>
                 
                 <div class="col-12">
                   <div class="p-3 bg-light rounded d-flex justify-content-between align-items-center">
                     <span class="fw-bold text-muted">Total Amount</span>
-                    <h3 class="m-0 fw-bold text-primary" id="incTotalDisplay">₹0.00</h3>
+                    <h3 class="m-0 fw-bold text-primary" id="incTotalDisplay">0.00</h3>
                   </div>
                 </div>
 
                 <div class="col-md-4 col-12">
-                  <label class="form-label text-muted small fw-bold">Payment Status</label>
-                  <select class="form-select form-select-lg" id="incPaymentStatus" onchange="handleIncomePaymentStatusChange()" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Status</label>
+  <select class="form-select form-select-lg" id="incPaymentStatus" onchange="handleIncomePaymentStatusChange()" required>
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
-                  <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
-                  <select class="form-select form-select-lg" id="incModeOfPayment">
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
+  <select class="form-select form-select-lg" id="incModeOfPayment">
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
                 <div class="col-md-4 col-12">
-                  <label class="form-label text-muted small fw-bold">Entry By</label>
-                  <select class="form-select form-select-lg" id="incEntryBy" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
+  <select class="form-select form-select-lg" id="incEntryBy" required>
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
 
-                <div class="col-12 mt-4">
+                <div class="col-12 mt-4 sticky-action-bar">
                   <button type="submit" class="btn btn-primary btn-lg w-100"><i class="fa-solid fa-plus me-2"></i> Save Income</button>
                 </div>
               </div>
@@ -384,66 +917,66 @@
             <h5 class="m-0 fw-bold">Add Expense Entry</h5>
           </div>
           <div class="card-body p-4">
-            <form id="expenseForm" onsubmit="submitExpense(event)">
+            <form id="expenseForm" novalidate onsubmit="submitExpense(event)">
               <div class="row g-3">
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Date</label>
-                  <input type="date" class="form-control form-control-lg" id="expDate" required>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Date</label>
+  <input type="date" class="form-control form-control-lg" id="expDate" required>
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Amount (₹)</label>
-                  <input type="number" step="0.01" class="form-control form-control-lg" id="expAmount" required>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Amount</label>
+  <input type="number" step="0.01" placeholder="Amount" class="form-control form-control-lg" id="expAmount" required>
                 </div>
                 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Type</label>
-                  <select class="form-select form-select-lg" id="expType" onchange="handleExpenseTypeChange()" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Type</label>
+  <select class="form-select form-select-lg" id="expType" onchange="handleExpenseTypeChange()" required>
+  <option value="" selected disabled>Please Select</option>
                     <option value="ROOM">ROOM</option>
                     <option value="FOOD">FOOD</option>
                   </select>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Description</label>
-                  <select class="form-select form-select-lg" id="expDescription" required>
-                    <option value="" selected disabled>Please Select Type First</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Description</label>
+  <select class="form-select form-select-lg" id="expDescription" required>
+  <option value="" selected disabled>Please Select Type First</option>
                   </select>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Details</label>
-                  <input type="text" class="form-control form-control-lg" id="expDetails">
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Details</label>
+  <input type="text" class="form-control form-control-lg" id="expDetails">
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Payment Status</label>
-                  <select class="form-select form-select-lg" id="expPaymentStatus" onchange="handleExpensePaymentStatusChange()" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Status</label>
+  <select class="form-select form-select-lg" id="expPaymentStatus" onchange="handleExpensePaymentStatusChange()" required>
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Source Of Payment</label>
-                  <select class="form-select form-select-lg" id="expSource" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Source Of Payment</label>
+  <select class="form-select form-select-lg" id="expSource" required>
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
 
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Mode Of Payment</label>
-                  <select class="form-select form-select-lg" id="expModeOfPayment">
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
+  <select class="form-select form-select-lg" id="expModeOfPayment">
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
                 <div class="col-md-6 col-12">
-                  <label class="form-label text-muted small fw-bold">Entry By</label>
-                  <select class="form-select form-select-lg" id="expEntryBy" required>
-                    <option value="" selected disabled>Please Select</option>
+                  <label class="form-label text-muted small text-uppercase fw-bold mb-1">Entry By</label>
+  <select class="form-select form-select-lg" id="expEntryBy" required>
+  <option value="" selected disabled>Please Select</option>
                   </select>
                 </div>
 
-                <div class="col-12 mt-4">
+                <div class="col-12 mt-4 sticky-action-bar">
                   <button type="submit" class="btn btn-danger btn-lg w-100"><i class="fa-solid fa-minus me-2"></i> Save Expense</button>
                 </div>
               </div>
@@ -463,16 +996,16 @@
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Select Category</label>
-                    <select class="form-select form-select-lg" id="markPaidCategory" onchange="loadUnpaidData()">
-                      <option value="" selected disabled>Please Select</option>
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Select Category</label>
+  <select class="form-select form-select-lg" id="markPaidCategory" onchange="loadUnpaidData()">
+  <option value="" selected disabled>Please Select</option>
                       <option value="INCOME">Income</option>
                       <option value="EXPENSE">Expenses</option>
                     </select>
                   </div>
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Filter By Month (Optional)</label>
-                    <input type="month" class="form-control form-control-lg" id="markPaidMonth" onchange="loadUnpaidData()">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter By Month (Optional)</label>
+  <input type="month" placeholder="Filter By Month (Optional)" class="form-control form-control-lg" id="markPaidMonth" onchange="loadUnpaidData()">
                   </div>
                 </div>
               </div>
@@ -497,8 +1030,9 @@
                   </tr>
                 </thead>
                 <tbody id="unpaidTableBody">
-                  <tr><td colspan="6" class="text-center py-4 text-muted">Select category to load data...</td></tr>
+                  <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>
                 </tbody>
+
               </table>
             </div>
           </div>
@@ -517,32 +1051,32 @@
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Select Category</label>
-                    <select class="form-select form-select-lg" id="reportCategory" onchange="handleReportCategoryChange()">
-                      <option value="" selected disabled>Please Select</option>
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Select Category</label>
+  <select class="form-select form-select-lg" id="reportCategory" onchange="handleReportCategoryChange()">
+  <option value="" selected disabled>Please Select</option>
                       <option value="INCOME">Income</option>
                       <option value="EXPENSE">Expenses</option>
                     </select>
                   </div>
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Filter By Month</label>
-                    <input type="month" class="form-control form-control-lg" id="reportMonth" onchange="loadReportData()">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Filter By Month</label>
+  <input type="month" class="form-control form-control-lg" id="reportMonth" onchange="loadReportData()">
                   </div>
                 </div>
 
                 <div class="row g-3 mt-1" id="reportExpenseFilters" style="display: none;">
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Expense Type</label>
-                    <select class="form-select form-select-lg" id="reportExpenseType" onchange="handleReportExpenseTypeChange()">
-                      <option value="" selected>Please Select</option>
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Expense Type</label>
+  <select class="form-select form-select-lg" id="reportExpenseType" onchange="handleReportExpenseTypeChange()">
+  <option value="" selected>Please Select</option>
                       <option value="ROOM">ROOM</option>
                       <option value="FOOD">FOOD</option>
                     </select>
                   </div>
                   <div class="col-md-6 col-12">
-                    <label class="form-label text-muted small fw-bold">Description</label>
-                    <select class="form-select form-select-lg" id="reportExpenseDesc" onchange="loadReportData()">
-                      <option value="" selected disabled>Please Select Type First</option>
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Description</label>
+  <select class="form-select form-select-lg" id="reportExpenseDesc" onchange="loadReportData()">
+  <option value="" selected disabled>Please Select Type First</option>
                     </select>
                   </div>
                 </div>
@@ -572,8 +1106,17 @@
                   </tr>
                 </thead>
                 <tbody id="reportTableBody">
-                  <tr><td colspan="12" class="text-center py-4 text-muted">Select category to load data...</td></tr>
+                  <tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>
                 </tbody>
+
+                <tfoot id="reportTableFoot" style="display:none;">
+                    <tr>
+                        <td colspan="4" class="text-end pe-3">Total Visible:</td>
+                        <td id="reportTableSum" class="fw-bold text-primary">0.00</td>
+                        <td colspan="7"></td>
+                    </tr>
+                </tfoot>
+
               </table>
             </div>
           </div>
@@ -592,30 +1135,30 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <form id="markPaidForm" onsubmit="processMarkPaid(event)">
+          <form id="markPaidForm" novalidate onsubmit="processMarkPaid(event)">
             <input type="hidden" id="mpRowIndex">
             <input type="hidden" id="mpType">
             
             <div class="mb-3" id="mpPaidAmountDiv">
-              <label class="form-label fw-bold text-primary">Paid Amount</label>
-              <input type="number" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
+              <label class="form-label text-uppercase fw-bold text-primary mb-1 small">Paid Amount</label>
+  <input type="number" class="form-control form-control-lg border-primary" id="mpPaidAmount" step="0.01">
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold">Payment Date</label>
-              <input type="date" class="form-control form-control-lg" id="mpDate" required>
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Payment Date</label>
+  <input type="date" class="form-control form-control-lg" id="mpDate" required>
             </div>
             
             <div class="mb-3">
-              <label class="form-label fw-bold">Mode Of Payment</label>
-              <select class="form-select form-select-lg" id="mpMode" required>
-                <option value="" selected disabled>Please Select</option>
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Mode Of Payment</label>
+  <select class="form-select form-select-lg" id="mpMode" required>
+  <option value="" selected disabled>Please Select</option>
               </select>
             </div>
 
             <div class="mb-3" id="mpSourceDiv" style="display: none;">
-              <label class="form-label fw-bold">Source Of Payment</label>
-              <select class="form-select form-select-lg" id="mpSource">
-                <option value="" selected disabled>Please Select</option>
+              <label class="form-label text-muted small text-uppercase fw-bold mb-1">Source Of Payment</label>
+  <select class="form-select form-select-lg" id="mpSource">
+  <option value="" selected disabled>Please Select</option>
               </select>
             </div>
 
@@ -630,13 +1173,295 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Utility functions
-    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
-    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+
+    // Dirty Form Tracker
+    let isFormDirty = false;
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    function markFormDirty() {
+        isFormDirty = true;
+    }
+
+    function resetFormDirty() {
+        isFormDirty = false;
+    }
+
+    function switchToTab(target) {
+        if (isFormDirty) {
+            if (!confirm('You have unsaved changes. Are you sure you want to leave this tab?')) {
+                return;
+            }
+        }
+        resetFormDirty();
+        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('bottomSheet'));
+        if (offcanvas) offcanvas.hide();
+        const tabTrigger = document.querySelector(`button[data-bs-target="${target}"]`);
+        if (tabTrigger) {
+            new bootstrap.Tab(tabTrigger).show();
+            toggleClearBtn();
+        }
+    }
+
+
+    function showLoading() {
+      // Button loaders
+      document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, true));
+
+      // Dashboard Skeleton
+      if (document.querySelector('#pills-dashboard').classList.contains('active')) {
+          const stats = ['today-income', 'today-expenses', 'cash-counter', 'room-income', 'food-income', 'room-expense', 'food-expense', 'monthly-income', 'monthly-expenses', 'monthly-room-savings', 'monthly-food-savings', 'fy-income', 'fy-expenses', 'unpaid-income', 'unpaid-expenses', 'malaya', 'mdsir'];
+          stats.forEach(id => {
+              const el = document.getElementById(`dash-${id}`);
+              if(el) el.innerHTML = '<div class="skeleton-box skeleton-number"></div>';
+          });
+      }
+
+      // Tables Skeleton
+      const upBody = document.getElementById('unpaidTableBody');
+      if (upBody && document.querySelector('#pills-markpaid').classList.contains('active')) {
+          upBody.innerHTML = `<tr><td colspan="10" class="p-4"><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-text w-75"></div></td></tr>`;
+      }
+      const rpBody = document.getElementById('reportTableBody');
+      if (rpBody && document.querySelector('#pills-reports').classList.contains('active')) {
+          rpBody.innerHTML = `<tr><td colspan="12" class="p-4"><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-text w-75"></div></td></tr>`;
+      }
+    }
+
+    function hideLoading() {
+      document.querySelectorAll("button[type='submit']").forEach(btn => setButtonLoading(btn, false));
+    }
+
+    function showToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toastEl = document.createElement('div');
+      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+      toastEl.setAttribute('role', 'alert');
+      toastEl.setAttribute('aria-live', 'assertive');
+      toastEl.setAttribute('aria-atomic', 'true');
+      toastEl.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body toast-msg-text">
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      toastEl.querySelector('.toast-msg-text').textContent = message;
+      toastContainer.appendChild(toastEl);
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+      toastEl.addEventListener('hidden.bs.toast', () => {
+        toastEl.remove();
+      });
+    }
+
+    function setButtonLoading(btn, isLoading) {
+      if (!btn) return;
+      if (isLoading) {
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        btn.disabled = true;
+      } else {
+        if(btn.dataset.originalHtml) {
+            btn.innerHTML = btn.dataset.originalHtml;
+        }
+        btn.disabled = false;
+      }
+    }
+
+
+
+
+
+
+
+
+
     function getToday() { return new Date().toISOString().split('T')[0]; }
     
     // Set default dates
 
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        const body = document.documentElement;
+        const currentTheme = body.getAttribute('data-theme');
+        const icon = document.querySelector('#darkModeToggle i');
+
+        if (currentTheme === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            icon.className = 'fa-solid fa-moon';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            icon.className = 'fa-solid fa-sun';
+        }
+    }
+
+
+
+    let checkInModal;
+    let checkOutModal;
+
+
+    function loadRooms() {
+        google.script.run.withSuccessHandler(res => {
+            const grid = document.getElementById('roomStatusGrid');
+            if(res.success && res.data.length > 0) {
+                let html = '';
+                res.data.forEach(r => {
+                    let cssClass = 'room-available';
+                    let icon = 'fa-solid fa-door-open';
+                    if (r.status === 'OCCUPIED') {
+                        cssClass = 'room-occupied';
+                        icon = 'fa-solid fa-bed';
+                    }
+
+                    html += `
+                        <div class="room-card ${cssClass}" id="room-card-${r.roomNumber}" onclick="handleRoomClick('${r.roomNumber}', '${r.status}')">
+                            <i class="${icon}"></i>
+                            <h3>${r.roomNumber}</h3>
+                        </div>
+                    `;
+                });
+                grid.innerHTML = html;
+            } else {
+                grid.innerHTML = '<p class="text-muted w-100" style="grid-column: 1 / -1;">No room data found in Settings.</p>';
+            }
+        }).getRoomStatus();
+    }
+
+    function getNowDateLocal() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 10);
+    }
+
+    function getNowTimeLocal() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(11, 16);
+    }
+
+    function handleRoomClick(roomNum, status) {
+        if (status === 'AVAILABLE') {
+            document.getElementById('checkInForm').reset();
+            document.getElementById('ciRoomNum').value = roomNum;
+            document.getElementById('ciRoomDisplay').innerText = roomNum;
+            document.getElementById('ciDateOnly').value = getNowDateLocal();
+            document.getElementById('ciTimeOnly').value = getNowTimeLocal();
+
+            if(!checkInModal) checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
+            checkInModal.show();
+        } else if (status === 'OCCUPIED') {
+            document.getElementById('checkOutForm').reset();
+            document.getElementById('coRoomNum').value = roomNum;
+            document.getElementById('coRoomDisplay').innerText = roomNum;
+            document.getElementById('coDateOnly').value = getNowDateLocal();
+            document.getElementById('coTimeOnly').value = getNowTimeLocal();
+
+            if(!checkOutModal) checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
+            checkOutModal.show();
+        }
+    }
+
+    function submitCheckIn(e) {
+        e.preventDefault();
+        if(!validateForm("checkInForm")) return;
+
+        const roomNum = document.getElementById('ciRoomNum').value;
+        const dateTime = document.getElementById('ciDateOnly').value + 'T' + document.getElementById('ciTimeOnly').value;
+
+        if(checkInModal) checkInModal.hide();
+                resetFormDirty();
+
+        // Show local spinner
+        const card = document.getElementById(`room-card-${roomNum}`);
+        if(card) {
+            card.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            card.style.pointerEvents = 'none';
+        }
+
+        google.script.run.withSuccessHandler(res => {
+            if(res.success) {
+                showToast(res.message);
+                loadRooms();
+            } else {
+                showToast(res.message, 'danger');
+                loadRooms();
+            }
+        }).processCheckIn(roomNum, dateTime);
+    }
+
+    function submitCheckOut(e) {
+        e.preventDefault();
+        if(!validateForm("checkOutForm")) return;
+
+        const roomNum = document.getElementById('coRoomNum').value;
+        const dateTime = document.getElementById('coDateOnly').value + 'T' + document.getElementById('coTimeOnly').value;
+
+        if(checkOutModal) checkOutModal.hide();
+                resetFormDirty();
+
+        // Show local spinner
+        const card = document.getElementById(`room-card-${roomNum}`);
+        if(card) {
+            card.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            card.style.pointerEvents = 'none';
+        }
+
+        google.script.run.withSuccessHandler(res => {
+            if(res.success) {
+                showToast(res.message);
+                loadRooms();
+            } else {
+                showToast(res.message, 'danger');
+                loadRooms();
+            }
+        }).processCheckOut(roomNum, dateTime);
+    }
+
+
+        // Attach dirty trackers
+        document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+            el.addEventListener('input', markFormDirty);
+            el.addEventListener('change', markFormDirty);
+        });
+
+    // Init Dark Mode
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        const icon = document.querySelector('#darkModeToggle i');
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            icon.className = 'fa-solid fa-sun';
+        }
+    // Rest of DOMContentLoaded
+
+    document.querySelectorAll('.nav-link[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('show.bs.tab', function(e) {
+            if (isFormDirty) {
+                if (!confirm('You have unsaved changes. Are you sure you want to leave this tab?')) {
+                    e.preventDefault();
+                } else {
+                    resetFormDirty();
+                }
+            } else {
+                resetFormDirty();
+            }
+        });
+    });
+
+
       const today = getToday();
       const currentMonth = today.substring(0, 7); // Extracts YYYY-MM
       document.getElementById('incDate').value = today;
@@ -645,6 +1470,7 @@
       document.getElementById('monthFilter').value = currentMonth;
       document.getElementById('reportMonth').value = currentMonth;
       refreshDashboard();
+      loadRooms();
       toggleClearBtn();
       loadDropdownSettings();
     });
@@ -655,8 +1481,9 @@
         window.foodDescriptions = settings.foodDescriptions || [];
         
         populateDropdowns(['incPaymentStatus', 'expPaymentStatus'], settings.paymentStatus);
-        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode'], settings.modeOfPayment);
-        populateDropdowns(['incEntryBy', 'expEntryBy'], settings.entryBy);
+
+        populateDropdowns(['incModeOfPayment', 'expModeOfPayment', 'mpMode', 'ciMode', 'coMode'], settings.modeOfPayment);
+        populateDropdowns(['incEntryBy', 'expEntryBy', 'ciEntryBy', 'coEntryBy'], settings.entryBy);
         populateDropdowns(['expSource', 'mpSource'], settings.sourceOfPayment);
         populateDropdowns(['incCoffeePepper'], settings.coffeePepperOptions);
         populateDropdowns(['incGstNgst'], settings.gstNgstOptions);
@@ -751,11 +1578,35 @@
     function calcIncomeTotal() {
       const r = parseFloat(document.getElementById('incRoomRent').value) || 0;
       const f = parseFloat(document.getElementById('incFooding').value) || 0;
-      document.getElementById('incTotalDisplay').innerText = `₹${(r+f).toFixed(2)}`;
+      document.getElementById('incTotalDisplay').innerText = (r+f).toFixed(2);
+    }
+
+
+    function validateForm(formId) {
+        const form = document.getElementById(formId);
+        let isValid = true;
+
+        // Remove existing invalid states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+        // Check required fields
+        form.querySelectorAll('[required]').forEach(input => {
+            if (!input.value || input.value.trim() === '') {
+                isValid = false;
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Required field';
+                input.parentNode.appendChild(feedback);
+            }
+        });
+        return isValid;
     }
 
     function submitIncome(e) {
       e.preventDefault();
+      if(!validateForm("incomeForm")) return;
       showLoading();
       
       const data = {
@@ -775,19 +1626,21 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
+
           if(res.success) {
-            alert(res.message);
+            showToast(res.message, 'success');
             document.getElementById('incomeForm').reset();
+            resetFormDirty();
             document.getElementById('incDate').value = getToday();
-            document.getElementById('incTotalDisplay').innerText = '₹0.00';
+            document.getElementById('incTotalDisplay').innerText = '0.00';
             refreshDashboard();
           } else {
-            alert('Error: ' + res.message);
+            showToast('Error: ' + res.message, 'danger');
           }
         })
         .withFailureHandler(err => {
           hideLoading();
-          alert('Failed to communicate with server.');
+          showToast('Failed to communicate with server.', 'danger');
         })
         .addIncome(data);
     }
@@ -795,6 +1648,7 @@
     // Expense functions
     function submitExpense(e) {
       e.preventDefault();
+      if(!validateForm("expenseForm")) return;
       showLoading();
       
       const data = {
@@ -812,18 +1666,20 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
+
           if(res.success) {
-            alert(res.message);
+            showToast(res.message, 'success');
             document.getElementById('expenseForm').reset();
+            resetFormDirty();
             document.getElementById('expDate').value = getToday();
             refreshDashboard();
           } else {
-            alert('Error: ' + res.message);
+            showToast('Error: ' + res.message, 'danger');
           }
         })
         .withFailureHandler(err => {
           hideLoading();
-          alert('Failed to communicate with server.');
+          showToast('Failed to communicate with server.', 'danger');
         })
         .addExpense(data);
     }
@@ -836,25 +1692,26 @@
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
+
           if(res.success) {
             const d = res.data;
-            document.getElementById('dash-today-income').innerText = `₹${d.todayIncome.toFixed(2)}`;
-            document.getElementById('dash-today-expenses').innerText = `₹${d.todayExpenses.toFixed(2)}`;
-            document.getElementById('dash-cash-counter').innerText = `₹${d.cashInCounter.toFixed(2)}`;
-            document.getElementById('dash-monthly-income').innerText = `₹${d.monthlyIncome.toFixed(2)}`;
-            document.getElementById('dash-monthly-expenses').innerText = `₹${d.monthlyExpenses.toFixed(2)}`;
-            document.getElementById('dash-monthly-room-savings').innerText = `₹${d.netMonthlyRoomSavings.toFixed(2)}`;
-            document.getElementById('dash-monthly-food-savings').innerText = `₹${d.netMonthlyFoodSavings.toFixed(2)}`;
-            document.getElementById('dash-fy-income').innerText = `₹${d.totalFyIncome.toFixed(2)}`;
-            document.getElementById('dash-fy-expenses').innerText = `₹${d.totalFyExpenses.toFixed(2)}`;
-            document.getElementById('dash-unpaid-income').innerText = `₹${d.totalUnpaidIncome.toFixed(2)}`;
-            document.getElementById('dash-unpaid-expenses').innerText = `₹${d.totalUnpaidExpenses.toFixed(2)}`;
-            document.getElementById('dash-room-income').innerText = `₹${d.totalRoomRentIncome.toFixed(2)}`;
-            document.getElementById('dash-food-income').innerText = `₹${d.totalFoodingIncome.toFixed(2)}`;
-            document.getElementById('dash-room-expense').innerText = `₹${d.totalRoomExpenses.toFixed(2)}`;
-            document.getElementById('dash-food-expense').innerText = `₹${d.totalFoodExpenses.toFixed(2)}`;
-            document.getElementById('dash-malaya').innerText = `₹${d.cashTakenMalaya.toFixed(2)}`;
-            document.getElementById('dash-mdsir').innerText = `₹${d.cashTakenMDSir.toFixed(2)}`;
+            document.getElementById('dash-today-income').innerText = d.todayIncome.toFixed(2);
+            document.getElementById('dash-today-expenses').innerText = d.todayExpenses.toFixed(2);
+            document.getElementById('dash-cash-counter').innerText = d.cashInCounter.toFixed(2);
+            document.getElementById('dash-monthly-income').innerText = d.monthlyIncome.toFixed(2);
+            document.getElementById('dash-monthly-expenses').innerText = d.monthlyExpenses.toFixed(2);
+            document.getElementById('dash-monthly-room-savings').innerText = d.netMonthlyRoomSavings.toFixed(2);
+            document.getElementById('dash-monthly-food-savings').innerText = d.netMonthlyFoodSavings.toFixed(2);
+            document.getElementById('dash-fy-income').innerText = d.totalFyIncome.toFixed(2);
+            document.getElementById('dash-fy-expenses').innerText = d.totalFyExpenses.toFixed(2);
+            document.getElementById('dash-unpaid-income').innerText = d.totalUnpaidIncome.toFixed(2);
+            document.getElementById('dash-unpaid-expenses').innerText = d.totalUnpaidExpenses.toFixed(2);
+            document.getElementById('dash-room-income').innerText = d.totalRoomRentIncome.toFixed(2);
+            document.getElementById('dash-food-income').innerText = d.totalFoodingIncome.toFixed(2);
+            document.getElementById('dash-room-expense').innerText = d.totalRoomExpenses.toFixed(2);
+            document.getElementById('dash-food-expense').innerText = d.totalFoodExpenses.toFixed(2);
+            document.getElementById('dash-malaya').innerText = d.cashTakenMalaya.toFixed(2);
+            document.getElementById('dash-mdsir').innerText = d.cashTakenMDSir.toFixed(2);
           }
         })
         .withFailureHandler(err => hideLoading())
@@ -871,13 +1728,13 @@
       const body = document.getElementById('unpaidTableBody');
       
       if (!type) {
-        body.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Select category to load data...</td></tr>';
+        body.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>';
         head.innerHTML = '';
         return;
       }
 
       showLoading();
-      body.innerHTML = '<tr><td colspan="6" class="text-center py-4">Loading...</td></tr>';
+
       
       if (type === 'INCOME') {
         head.innerHTML = `
@@ -914,23 +1771,23 @@
     function renderUnpaidTable(data, type) {
       const body = document.getElementById('unpaidTableBody');
       if (!data || data.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No unpaid bills found.</td></tr>';
+        body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-check-circle text-success"></i><h5>No unpaid bills found</h5></div></td></tr>';
         return;
       }
       
       let html = '';
       data.forEach(row => {
         if (type === 'INCOME') {
-          html += `<tr>
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
             <td>${row.other || '-'}</td>
             
-            <td>₹${row.roomRent || 0}</td>
-            <td>₹${row.fooding || 0}</td>
-            <td class="fw-bold">₹${row.total || 0}</td>
-            <td class="fw-bold text-danger">₹${row.dueAmount || 0}</td>
+            <td>${row.roomRent || 0}</td>
+            <td>${row.fooding || 0}</td>
+            <td class="fw-bold">${row.total || 0}</td>
+            <td class="fw-bold text-danger">${row.dueAmount || 0}</td>
             <td class="text-end">
               <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}', ${row.dueAmount || 0})">
                 Mark Paid
@@ -938,12 +1795,12 @@
             </td>
           </tr>`;
         } else {
-          html += `<tr>
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
-            <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
+            <td><span class="badge ${row.type === 'ROOM' ? 'badge-soft-primary' : 'badge-soft-secondary'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
-            <td class="fw-bold">₹${row.amount || 0}</td>
-            <td class="fw-bold text-danger">₹${row.dueAmount || 0}</td>
+            <td class="fw-bold">${row.amount || 0}</td>
+            <td class="fw-bold text-danger">${row.dueAmount || 0}</td>
             <td class="text-end">
               <button class="btn btn-sm btn-outline-success" onclick="openMarkPaidModal(${row.rowIndex}, '${type}', ${row.dueAmount || 0})">
                 Mark Paid
@@ -992,6 +1849,7 @@
 
     function processMarkPaid(e) {
       e.preventDefault();
+      if(!validateForm("markPaidForm")) return;
       showLoading();
       
       const type = document.getElementById('mpType').value;
@@ -1010,27 +1868,44 @@
       }
     }
 
+
     function handleMarkPaidResponse(res) {
       hideLoading();
       if(res.success) {
-        alert(res.message);
+        showToast(res.message, 'success');
         markPaidModal.hide();
-        loadUnpaidData();
-        refreshDashboard();
+        resetFormDirty();
+
+        // Row animation
+        const rowIndex = document.getElementById('mpRowIndex').value;
+        const rowEl = document.getElementById(`unpaid-row-${rowIndex}`);
+        if(rowEl) {
+            rowEl.classList.add('row-completing');
+            setTimeout(() => {
+                loadUnpaidData();
+                refreshDashboard();
+            }, 500);
+        } else {
+            loadUnpaidData();
+            refreshDashboard();
+        }
       } else {
-        alert('Error: ' + res.message);
+        showToast('Error: ' + res.message, 'danger');
       }
     }
 
     function clearCurrentTab() {
+      resetFormDirty();
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-bs-target');
       
       if (activeTab === '#pills-income') {
         document.getElementById('incomeForm').reset();
+            resetFormDirty();
         document.getElementById('incDate').value = getToday();
-        document.getElementById('incTotalDisplay').innerText = '₹0.00';
+        document.getElementById('incTotalDisplay').innerText = '0.00';
       } else if (activeTab === '#pills-expense') {
         document.getElementById('expenseForm').reset();
+            resetFormDirty();
         document.getElementById('expDate').value = getToday();
         document.getElementById('expDescription').innerHTML = '<option value="" selected disabled>Please Select Type First</option>';
       } else if (activeTab === '#pills-markpaid') {
@@ -1095,95 +1970,192 @@
       const body = document.getElementById('reportTableBody');
       
       if (!type) {
-        body.innerHTML = '<tr><td colspan="12" class="text-center py-4 text-muted">Select category to load data...</td></tr>';
+        body.innerHTML = '<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><h5>Select category to load data</h5></div></td></tr>';
         head.innerHTML = '';
         return;
       }
 
       showLoading();
-      body.innerHTML = '<tr><td colspan="12" class="text-center py-4">Loading...</td></tr>';
+
       
       if (type === 'INCOME') {
         head.innerHTML = `
-          <th>Date</th>
+
+          <th class="sortable" onclick="sortReportTable('date', 'INCOME')">Date <span id="sort-icon-date" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Entry No.</th>
           <th>Room No.</th>
           <th>Other</th>
           <th>Room Rent</th>
           <th>Fooding</th>
-          <th>Total</th>
+          <th class="sortable" onclick="sortReportTable('amount', 'INCOME')">Total <span id="sort-icon-amount" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Status</th>
           <th>Mode</th>
           <th>Entry By</th>
           <th>Pay Date</th>
+
         `;
       } else {
         head.innerHTML = `
-          <th>Date</th>
+
+          <th class="sortable" onclick="sortReportTable('date', 'EXPENSE')">Date <span id="sort-icon-date" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Type</th>
           <th>Description</th>
           <th>Details</th>
-          <th>Amount</th>
+          <th class="sortable" onclick="sortReportTable('amount', 'EXPENSE')">Amount <span id="sort-icon-amount" class="sort-icon"><i class="fa-solid fa-sort text-muted ms-1"></i></span></th>
           <th>Status</th>
           <th>Source</th>
           <th>Mode</th>
           <th>Entry By</th>
           <th>Pay Date</th>
+
         `;
       }
 
       google.script.run
         .withSuccessHandler(res => {
           hideLoading();
+
           if(res.success) {
-            renderReportTable(res.data, type);
+            renderReportTableWrapper(res.data, type);
           } else {
-            alert('Error loading reports: ' + res.message);
+            showToast('Error loading reports: ' + res.message, 'danger');
           }
         })
         .withFailureHandler(err => {
           hideLoading();
-          alert('Failed to connect to server.');
+          showToast('Failed to connect to server.', 'danger');
         })
         .getReportData(type, monthValue, expenseType, expenseDesc);
+    }
+
+
+    let globalReportData = [];
+    let currentSortCol = '';
+    let currentSortAsc = true;
+
+    function renderReportTableWrapper(data, type) {
+        globalReportData = data || [];
+        renderReportTable(globalReportData, type);
+        calculateReportSum(type);
+    }
+
+    function sortReportTable(colName, type) {
+        if(currentSortCol === colName) {
+            currentSortAsc = !currentSortAsc;
+        } else {
+            currentSortCol = colName;
+            currentSortAsc = true;
+        }
+
+        globalReportData.sort((a, b) => {
+            let valA, valB;
+            if(colName === 'date') {
+                valA = new Date(a.date).getTime() || 0;
+                valB = new Date(b.date).getTime() || 0;
+            } else if (colName === 'amount') {
+                valA = parseFloat(a.total || a.amount) || 0;
+                valB = parseFloat(b.total || b.amount) || 0;
+            } else {
+                return 0;
+            }
+            if(valA < valB) return currentSortAsc ? -1 : 1;
+            if(valA > valB) return currentSortAsc ? 1 : -1;
+            return 0;
+        });
+
+        renderReportTable(globalReportData, type);
+        calculateReportSum(type);
+        updateSortIcons(colName);
+    }
+
+    function updateSortIcons(colName) {
+        document.querySelectorAll('.sort-icon').forEach(el => el.innerHTML = '<i class="fa-solid fa-sort text-muted ms-1"></i>');
+        const activeIcon = document.getElementById(`sort-icon-${colName}`);
+        if(activeIcon) {
+            activeIcon.innerHTML = currentSortAsc ? '<i class="fa-solid fa-sort-up ms-1"></i>' : '<i class="fa-solid fa-sort-down ms-1"></i>';
+        }
+    }
+
+    function calculateReportSum(type) {
+        const rows = document.getElementById('reportTableBody').getElementsByTagName('tr');
+        let sum = 0;
+        for(let i=0; i<rows.length; i++) {
+            if(rows[i].style.display !== 'none' && !rows[i].querySelector('.empty-state')) {
+                // Find amount cell: income is col 7 (idx 6), expense is col 5 (idx 4)
+                const amountColIdx = (type === 'INCOME') ? 6 : 4;
+                const cells = rows[i].getElementsByTagName('td');
+                if(cells.length > amountColIdx) {
+                    const textVal = cells[amountColIdx].innerText.replace(/[^0-9.-]+/g,"");
+                    sum += parseFloat(textVal) || 0;
+                }
+            }
+        }
+        document.getElementById('reportTableSum').innerText = sum.toFixed(2);
+        document.getElementById('reportTableFoot').style.display = (globalReportData.length > 0) ? 'table-footer-group' : 'none';
+
+        // Adjust footer colspan based on type
+        const tfoot = document.getElementById('reportTableFoot');
+        if(tfoot) {
+            const firstTd = tfoot.querySelector('td:first-child');
+            const lastTd = tfoot.querySelector('td:last-child');
+            if(type === 'INCOME') {
+                firstTd.setAttribute('colspan', '6');
+                lastTd.setAttribute('colspan', '4');
+            } else {
+                firstTd.setAttribute('colspan', '4');
+                lastTd.setAttribute('colspan', '5');
+            }
+        }
+    }
+
+    // Override filter function to calculate sum
+    function filterReportTable() {
+        const input = document.getElementById('searchReport').value.toLowerCase();
+        const rows = document.getElementById('reportTableBody').getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const text = rows[i].innerText.toLowerCase();
+            rows[i].style.display = text.includes(input) ? '' : 'none';
+        }
+        const type = document.getElementById('reportCategory').value;
+        calculateReportSum(type);
     }
 
     function renderReportTable(data, type) {
       const body = document.getElementById('reportTableBody');
       if (!data || data.length === 0) {
-        body.innerHTML = '<tr><td colspan="12" class="text-center py-4 text-muted">No records found.</td></tr>';
+        body.innerHTML = '<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-box-open"></i><h5>No records found</h5></div></td></tr>';
         return;
       }
       
       let html = '';
       data.forEach(row => {
         let statusBadge = '';
-        if (row.paymentStatus === 'PAID') statusBadge = 'bg-success';
-        else if (row.paymentStatus === 'UNPAID') statusBadge = 'bg-danger';
-        else if (row.paymentStatus === 'ADVANCE') statusBadge = 'bg-info text-dark';
-        else statusBadge = 'bg-secondary';
+        if (row.paymentStatus === 'PAID') statusBadge = 'badge-soft-success';
+        else if (row.paymentStatus === 'UNPAID') statusBadge = 'badge-soft-danger';
+        else if (row.paymentStatus === 'ADVANCE') statusBadge = 'badge-soft-info';
+        else if (row.paymentStatus === 'PARTIAL') statusBadge = 'badge-soft-warning'; else statusBadge = 'badge-soft-secondary';
 
         if (type === 'INCOME') {
-          html += `<tr>
+          html += `<tr data-type="${type}">
             <td>${row.date}</td>
             <td>${row.entryNumber || '-'}</td>
             <td>${row.roomNumber || '-'}</td>
             <td>${row.other || '-'}</td>
-            <td>₹${row.roomRent || 0}</td>
-            <td>₹${row.fooding || 0}</td>
-            <td class="fw-bold">₹${row.total || 0}</td>
+            <td>${row.roomRent || 0}</td>
+            <td>${row.fooding || 0}</td>
+            <td class="fw-bold">${row.total || 0}</td>
             <td><span class="badge ${statusBadge}">${row.paymentStatus}</span></td>
             <td>${row.modeOfPayment || '-'}</td>
             <td>${row.entryBy}</td>
             <td>${row.paymentDate || '-'}</td>
           </tr>`;
         } else {
-          html += `<tr>
+          html += `<tr data-type="${type}" id="unpaid-row-${row.rowIndex}">
             <td>${row.date}</td>
-            <td><span class="badge ${row.type === 'ROOM' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type || '-'}</span></td>
+            <td><span class="badge ${row.type === 'ROOM' ? 'badge-soft-primary' : 'badge-soft-secondary'}">${row.type || '-'}</span></td>
             <td>${row.description || '-'}</td>
             <td>${row.details || '-'}</td>
-            <td class="fw-bold">₹${row.amount || 0}</td>
+            <td class="fw-bold">${row.amount || 0}</td>
             <td><span class="badge ${statusBadge}">${row.paymentStatus}</span></td>
             <td>${row.sourceOfPayment || '-'}</td>
             <td>${row.modeOfPayment || '-'}</td>
@@ -1205,25 +2177,7 @@
     }
 
     
-    // Financial Year Closing
-    function closeFinancialYearConfirm() {
-      if(confirm('WARNING: Are you sure you want to close the Financial Year? This action will permanently archive all previous financial year records to a separate sheet and DELETE them from the active dashboard. This action cannot be undone.')) {
-        showLoading();
-        google.script.run
-          .withSuccessHandler(res => {
-            hideLoading();
-            alert(res.message);
-            if(res.success) {
-              refreshDashboard();
-            }
-          })
-          .withFailureHandler(err => {
-            hideLoading();
-            alert('Failed to communicate with server.');
-          })
-          .closeFinancialYear();
-      }
-    }
+
 
     function exportReportToExcel() {
       const table = document.getElementById('reportTable');
@@ -1238,7 +2192,7 @@
       
       // If table is empty or just has the placeholder
       if (rows.length <= 2 && rows[1] && rows[1].innerText.includes('Select category to load data')) {
-        alert('No data to export.');
+        showToast('No data to export.', 'warning');
         return;
       }
       
@@ -1258,7 +2212,7 @@
       }
 
       if (csv.length === 0 || (csv.length === 1 && rows[0].querySelectorAll('th').length > 0)) {
-         alert('No data to export.');
+         showToast('No data to export.', 'warning');
          return;
       }
 
@@ -1273,5 +2227,82 @@
     }
 
   </script>
+
+  <!-- Floating Action Button -->
+  <button class="fab-btn d-md-none" data-bs-toggle="offcanvas" data-bs-target="#bottomSheet"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- Bottom Sheet Offcanvas -->
+  <div class="offcanvas offcanvas-bottom h-auto" tabindex="-1" id="bottomSheet">
+    <div class="offcanvas-header pb-0">
+      <h5 class="offcanvas-title fw-bold">New Entry</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <a href="#" class="bottom-sheet-btn income" onclick="switchToTab('#pills-income')">
+        <i class="fa-solid fa-arrow-down-up-across-line me-3"></i> Add Income
+      </a>
+      <a href="#" class="bottom-sheet-btn expense" onclick="switchToTab('#pills-expense')">
+        <i class="fa-solid fa-money-bill-transfer me-3"></i> Add Expense
+      </a>
+    </div>
+  </div>
+
+
+  <!-- Check-In Modal -->
+  <div class="modal fade" id="checkInModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Check-In Room <span id="ciRoomDisplay"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkInForm" novalidate onsubmit="submitCheckIn(event)">
+            <input type="hidden" id="ciRoomNum">
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Date</label>
+                <input type="date" class="form-control form-control-lg" id="ciDateOnly" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-In Time</label>
+                <input type="time" class="form-control form-control-lg" id="ciTimeOnly" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100 mt-2">Confirm Check-In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-Out Modal -->
+  <div class="modal fade" id="checkOutModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Check-Out Room <span id="coRoomDisplay"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="checkOutForm" novalidate onsubmit="submitCheckOut(event)">
+            <input type="hidden" id="coRoomNum">
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Date</label>
+                <input type="date" class="form-control form-control-lg" id="coDateOnly" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Check-Out Time</label>
+                <input type="time" class="form-control form-control-lg" id="coTimeOnly" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-danger btn-lg w-100 mt-2">Confirm Check-Out</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
