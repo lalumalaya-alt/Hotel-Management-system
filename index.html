@@ -545,12 +545,20 @@
 
         /* Room Status Grid */
     .room-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        display: flex;
+        overflow-x: auto;
+        flex-wrap: nowrap;
         gap: 10px;
         margin-bottom: 30px;
+        padding-bottom: 10px; /* Space for scrollbar */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    .room-grid::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
     }
     .room-card {
+        flex: 0 0 60px;
         aspect-ratio: 1 / 1;
         border-radius: 8px;
         display: flex;
